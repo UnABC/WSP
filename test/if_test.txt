@@ -1,0 +1,20 @@
+hogehoge = 1928+25
+if hogehoge > 1000{
+	tmp = hogehoge-1000
+	if (tmp >= 953){
+		a = 10*123
+	}
+}else{
+	tmp = hogehoge
+}
+/*
+if (tmp > 100){
+	tmp = 10*10
+}*/
+
+print(a)
+print(tmp)
+
+b = a = 10
+print(b)
+print(a-123)

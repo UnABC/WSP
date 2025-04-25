@@ -1,0 +1,20 @@
+#include "hey"
+
+const int hogehogehogehogehogehogehogehogehogehoge = \
+	123;
+
+//This is a Comment.Therefore, if you see this message, something is wrong.
+test = 10	//int var
+foo = "This is a test.";	/*String var*/
+if (test /*>*/== 3.1415){
+	/*
+	//This is a Comment.You can't see this message.
+	print("test")
+	exit()
+	*/
+};
+
+全角文字テスト,　\n
+
+//tmp = "Lexer exception.Unclosed string literal'
+

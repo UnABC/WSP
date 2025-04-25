@@ -1,0 +1,259 @@
+#include "parser.hpp"
+using namespace std;
+
+//文の解析
+AST* Parser::ParseStatement(TokenPtr token) {
+	currentToken = token;
+	if (currentToken->type == TokenType::EndOfFile) return nullptr; //EOFなら終了
+	return Statement(currentToken);
+}
+
+AST *Parser::ExprTernary(){
+	//三項演算子を解析する
+	AST *left = ExprBool();
+	if (currentToken->type == TokenType::Symbol && currentToken->value == "?") {
+		currentToken = lexer.ExtractNextToken(); //?をスキップ
+		AST *trueExpr = ExprBool();
+		if (currentToken->type != TokenType::Symbol || currentToken->value != ":") {
+			throw ParserException("Not found \":\".", currentToken->lineNumber, currentToken->columnNumber);
+		}
+		currentToken = lexer.ExtractNextToken(); //:をスキップ
+		AST *falseExpr = ExprBool();
+		return new TernaryOperatorNode("?", left, trueExpr, falseExpr); //三項演算子ノードを作成
+	}
+	return left;
+}
+
+AST *Parser::ExprBool(){
+	AST *left = ExprAdd();
+	map<string ,bool> operators = {
+		{">" ,true},{"<" ,true},
+		{"==",true},{"!=",true},{"<=",true},
+		{">=",true},{"&&",true},{"||",true},
+		{"<<",true},{">>",true}
+	};
+	while ((currentToken->type == TokenType::Operator) && ((bool)operators.count(currentToken->value))) {
+		string operatorType = currentToken->value;
+		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
+		AST *right = ExprAdd();
+		left = new BinaryOperatorNode(operatorType, left, right);
+	}
+	return left;
+}
+
+AST *Parser::ExprAdd() {
+	//加算式を解析する
+	AST *left = ExprMul();
+	while ((currentToken->type == TokenType::Operator) && (currentToken->value == "+" || currentToken->value == "-")) {
+		string operatorType = currentToken->value;
+		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
+		AST *right = ExprMul();
+		left = new BinaryOperatorNode(operatorType, left, right);
+	}
+	return left;
+}
+
+AST *Parser::ExprMul() {
+	//乗算式を解析する
+	AST *left = ExprPrimary();
+	while ((currentToken->type == TokenType::Operator) && (currentToken->value == "*" || currentToken->value == "/")) {
+		string operatorType = currentToken->value;
+		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
+		AST *right = ExprPrimary();
+		left = new BinaryOperatorNode(operatorType, left, right);
+	}
+	return left;
+}
+
+AST *Parser::ExprPrimary() {
+	TokenPtr nextToken = lexer.PeekTokens(0); //次のトークンを取得
+	//基本式を解析する
+	if (currentToken->type == TokenType::NumberLiteral) {
+		return ExprNumber(currentToken);
+	} else if (currentToken->type == TokenType::StringLiteral) {
+		return ExprString(currentToken);
+	} else if (currentToken->type == TokenType::Identifier) {
+		if (nextToken->type == TokenType::LParentheses) {
+			//関数の処理
+			return ExprFunction(currentToken);
+		}else if ((nextToken->type == TokenType::Operator) && (nextToken->value == "=")) {
+			//代入演算子の処理
+			return ExprAssignment(currentToken);
+		}else{
+			AST *ast = new VariableNode(currentToken->value); //変数ノードを作成
+			currentToken = lexer.ExtractNextToken(); //トークンを進める
+			return ast;
+		}
+	}else if (currentToken->type == TokenType::LParentheses) {
+		currentToken = lexer.ExtractNextToken(); //左括弧をスキップ
+		AST *left = ExprTernary();
+		if (currentToken->type != TokenType::RParentheses) {
+			throw ParserException("Not found right parenthesis.", currentToken->lineNumber, currentToken->columnNumber);
+		}
+		currentToken = lexer.ExtractNextToken(); //右括弧をスキップ
+		return left;
+	}else if ((currentToken->type == TokenType::Operator) && (currentToken->value == "-")) {
+		//負の数の処理
+		return new NumberNode("0");
+	}else{
+		throw ParserException("Invalid token.\""+currentToken->value+"\"", currentToken->lineNumber, currentToken->columnNumber);
+	}
+}
+
+AST *Parser::ExprNumber(TokenPtr token) {
+	//数値リテラルを解析する
+	AST *ast = new NumberNode(token->value);
+	currentToken = lexer.ExtractNextToken(); //トークンを進める
+	return ast;
+}
+
+AST *Parser::ExprString(TokenPtr token) {
+	//文字列リテラルを解析する
+	AST *ast = new StringNode(token->value);
+	currentToken = lexer.ExtractNextToken(); //トークンを進める
+	return ast;
+}
+
+AST *Parser::ExprAssignment(TokenPtr token) {
+	//代入演算子を解析する
+	string variableName = token->value;
+	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
+	currentToken = lexer.ExtractNextToken(); //演算子をスキップ
+	AST *right = ExprTernary(); //式を解析する
+	AST *ast = new AssignmentNode(variableName, right); //代入ノードを作成
+	return ast;
+}
+
+AST *Parser::ExprFunction(TokenPtr token) {
+	//関数を解析する
+	string functionName = token->value;
+	currentToken = lexer.ExtractNextToken(); //関数名をスキップ
+	AST *arg = ExprTernary();
+	AST *ast = new FunctionNode(functionName, arg); //関数ノードを作成
+	return ast;
+}
+
+AST *Parser::Statement(TokenPtr token) {
+	//文を解析する
+	if (currentToken->type == TokenType::Identifier){
+		//TODO:文の処理
+
+		//システムの予約語を処理する
+		//If文
+		if (currentToken->value == "if") {
+			currentToken = lexer.ExtractNextToken(); //ifをスキップ
+			AST *condition = ExprTernary(); //条件式を解析する
+			AST *trueExpr = nullptr;
+			//真の場合の文を解析する
+			trueExpr = (currentToken->type == TokenType::LBrace)?BlockStatement(currentToken):Statement(currentToken);
+			AST *falseExpr = nullptr;
+			//else以降が存在すれば処理する
+			if (currentToken->type == TokenType::Identifier && currentToken->value == "else") {
+				currentToken = lexer.ExtractNextToken(); //elseをスキップ
+				falseExpr = (currentToken->type == TokenType::LBrace)?BlockStatement(currentToken):Statement(currentToken);
+			}
+			return new IfStatementNode(condition, trueExpr, falseExpr);
+		}
+	}
+
+	//式の処理
+	AST *ast = ExprTernary(); //式を解析する
+	if ((currentToken->type != TokenType::EndOfFile) && (currentToken->type != TokenType::EndOfLine))
+		throw ParserException("Invalid token.\""+currentToken->value+"\"\nExpected EOF or EOL.", currentToken->lineNumber, currentToken->columnNumber);
+	return ast;
+}
+
+AST *Parser::BlockStatement(TokenPtr token) {
+	//ブロック文を解析する
+	currentToken = token;
+	currentToken = lexer.ExtractNextToken(); //左波括弧をスキップ
+	if (currentToken->type == TokenType::EndOfLine)
+		currentToken = lexer.ExtractNextToken(); //行末をスキップ
+	vector<AST*> statements;
+	while (currentToken->type != TokenType::RBrace) {
+		if (currentToken->type == TokenType::EndOfFile)
+			throw ParserException("Not found right brace.", currentToken->lineNumber, currentToken->columnNumber);
+		if (AST *ast = Statement(currentToken)) statements.push_back(ast);
+		if (currentToken->type == TokenType::EndOfLine) 
+			currentToken = lexer.ExtractNextToken(); //行末をスキップ
+	}
+	currentToken = lexer.ExtractNextToken(); //右波括弧をスキップ
+	return new BlockStatementNode(statements);
+}
+
+void Parser::show(AST *ast) {
+	//ASTを表示する
+	if (ast == nullptr) return;
+	switch (ast->GetNodeType()) {
+		case Node::Number: {
+			NumberNode *node = static_cast<NumberNode*>(ast);
+			cout << node->GetValue() << " ";
+			break;
+		}
+		case Node::String: {
+			StringNode *node = static_cast<StringNode*>(ast);
+			cout<< node->GetValue();
+			break;
+		}
+		case Node::BinaryOperator: {
+			BinaryOperatorNode *node = static_cast<BinaryOperatorNode*>(ast);
+			cout << "( " << node->GetOperatorType();
+			show(node->GetLeft());
+			show(node->GetRight());
+			printf(" )");
+			break;
+		}
+		case Node::Function: {
+			FunctionNode *node = static_cast<FunctionNode*>(ast);
+			cout << node->GetFunctionName() << "(";
+			show(node->GetArgument());
+			cout << ")";
+			break;
+		}
+		case Node::Assignment: {
+			AssignmentNode *node = static_cast<AssignmentNode*>(ast);
+			cout << node->GetVariableName() << " = ";
+			show(node->GetExpression());
+			break;
+		}
+		case Node::Variable: {
+			VariableNode *node = static_cast<VariableNode*>(ast);
+			cout << node->GetVariableName() << " ";
+			break;
+		}
+		case Node::IfStatement: {
+			IfStatementNode *node = static_cast<IfStatementNode*>(ast);
+			cout << "if ( ";
+			show(node->GetCondition());
+			cout << " ) { ";
+			show(node->GetTrueExpr());
+			cout << " }";
+			if (node->GetFalseExpr() != nullptr) {
+				cout << " else { ";
+				show(node->GetFalseExpr());
+				cout << " }";
+			}
+			break;
+		}
+		case Node::Statement: {
+			StatementNode *node = static_cast<StatementNode*>(ast);
+			show(node->GetExpression());
+			break;
+		}
+		case Node::BlockStatement: {
+			BlockStatementNode *node = static_cast<BlockStatementNode*>(ast);
+			cout << "{ ";
+			while (AST *statement = node->ReadStatement()) {
+				show(statement);
+			}
+			cout << " }";
+			break;
+		}
+		default:{
+			cout << "Unknown node type." << endl;
+			break;
+		}
+	}
+}
+
+
