@@ -26,9 +26,10 @@ void Evaluator::evaluate(AST *ast){
 	//式の処理
 	//cout << "Result: " << CalcExpr<long double>(ast) << endl;
 	throw EvaluatorException("RuntimeError: Invaild Statement.");
-	return;
 }
 
+
+//Tip:string型は別枠で処理する
 template<typename T>
 T Evaluator::CalcExpr(AST *ast){
 	//各種演算
@@ -45,71 +46,91 @@ T Evaluator::CalcExpr(AST *ast){
 		case Node::BinaryOperator: {
 			BinaryOperatorNode *node = static_cast<BinaryOperatorNode*>(ast);
 			string operatorType = node->GetOperatorType();
-			T left = CalcExpr<T>(node->GetLeft());
-			T right = CalcExpr<T>(node->GetRight());
-			if (operatorType == "+")return left + right;
-			if (operatorType == "-")return left - right;
-			if (operatorType == "*")return left * right;
-			if (operatorType == "/"){
-				if (right == 0){
-					throw EvaluatorException("RuntimeError: Division by zero.");
-				}
-				return left / right;
+			AST *left_node = node->GetLeft();
+			switch (left_node->GetType())
+			{
+			case 0:{
+				return ProcessBinaryOperator<long long>(CalcExpr<long long>(left_node), CalcExpr<long long>(node->GetRight()), operatorType, node);
 			}
-			if (operatorType == "<")return left < right;
-			if (operatorType == "<=") return left <= right;
-			if (operatorType == ">") return left > right;
-			if (operatorType == ">=") return left >= right;
-			if (operatorType == "==") return left == right;
-			if (operatorType == "!=") return left != right;
-			if constexpr (is_integral_v<T>){
-				if (operatorType == "&&") return left && right;
-				if (operatorType == "||") return left || right;
-				if (operatorType == "&") return left & right;
-				if (operatorType == "|") return left | right;
-				if (operatorType == "^") return left ^ right;
-				if (operatorType == "<<") return left << right;
-				if (operatorType == ">>") return left >> right;
-				if (operatorType == "%"){
-					if (right == 0){
-						throw EvaluatorException("RuntimeError: Division by zero.");
-					}
-					return left % right;
-				}
+			case 1:{
+				return ProcessBinaryOperator<long double>(CalcExpr<long double>(left_node), CalcExpr<long double>(node->GetRight()), operatorType, node);
 			}
-			throw EvaluatorException("Unknown Operator.");
+			case 2:{
+				//TODO:文字列演算子の処理
+			}
+			default:
+				break;
+			}
+			throw EvaluatorException("Unknown type:"+to_string(left_node->GetType()));
 		}
 		//三項演算子
 		case Node::TernaryOperator: {
 			TernaryOperatorNode *node = static_cast<TernaryOperatorNode*>(ast);
-			if (CalcExpr<T>(node->GetCondition())){
-				return CalcExpr<T>(node->GetTrueExpr());
-			}else{
-				return CalcExpr<T>(node->GetFalseExpr());
+			switch (node->GetType())
+			{
+			case 0:
+				if (CalcExpr<bool>(node->GetCondition())){
+					return CalcExpr<long long>(node->GetTrueExpr());
+				}else{
+					return CalcExpr<long long>(node->GetFalseExpr());
+				}
+			case 1:
+				if (CalcExpr<bool>(node->GetCondition())){
+					return CalcExpr<long double>(node->GetTrueExpr());
+				}else{
+					return CalcExpr<long double>(node->GetFalseExpr());
+				}
+			case 2:
+				//TODO:文字列演算子の処理
+			default:
+				break;
 			}
+			throw EvaluatorException("Unknown type");
 		}
 		case Node::Function: {
 			FunctionNode *node = static_cast<FunctionNode*>(ast);
 			string functionName = node->GetFunctionName();
 			AST *arg = node->GetArgument();
+
 			//各種数学関数
-			if (functionName == "abs") return abs(CalcExpr<T>(arg));
-			if (functionName == "sqrt") return sqrt(CalcExpr<T>(arg));
-			if (functionName == "sin") return sin(CalcExpr<T>(arg));
-			if (functionName == "cos") return cos(CalcExpr<T>(arg));
-			if (functionName == "tan") return tan(CalcExpr<T>(arg));
-			if (functionName == "asin") return asin(CalcExpr<T>(arg));
-			if (functionName == "acos") return acos(CalcExpr<T>(arg));
-			if (functionName == "atan") return atan(CalcExpr<T>(arg));
-			if (functionName == "exp") return exp(CalcExpr<T>(arg));
-			if (functionName == "log") return log(CalcExpr<T>(arg));
-			if (functionName == "log10") return log10(CalcExpr<T>(arg));
+			#define MATH_FUNC(func) if (functionName == #func){\
+				switch (arg->GetType()){\
+					case 0:return func(CalcExpr<long long>(arg));\
+					case 1:return func(CalcExpr<long double>(arg));\
+					default:throw RuntimeException("Invaild argumant.",node->lineNumber,node->columnNumber);\
+				}} 
+				MATH_FUNC(abs);
+				MATH_FUNC(sqrt);
+				MATH_FUNC(sin);
+				MATH_FUNC(cos);
+				MATH_FUNC(tan);
+				MATH_FUNC(asin);
+				MATH_FUNC(acos);
+				MATH_FUNC(atan);
+				MATH_FUNC(exp);
+				MATH_FUNC(log);
+				MATH_FUNC(log10);
+			#undef MATH_FUNC
 			//その他組み込み関数
 			if (functionName == "print") {
-				cout << CalcExpr<T>(arg) << endl;
+				switch (arg->GetType()){
+					case 0:{
+						cout << CalcExpr<long long>(arg) << endl;
+						break;
+					}
+					case 1:{
+						cout << CalcExpr<long double>(arg) << endl;
+					}
+					case 2:{
+						//TODO:文字列リテラルの処理
+					}
+					default:{
+						throw EvaluatorException("Unknown function argument type.");
+					}
+				}
 				return 0;
 			}
-			throw EvaluatorException("Unknown function.");
+			throw EvaluatorException("Unknown function:"+functionName);
 		}
 		case Node::Assignment: {
 			AssignmentNode *node = static_cast<AssignmentNode*>(ast);
@@ -123,7 +144,14 @@ T Evaluator::CalcExpr(AST *ast){
 			}else if (vars.count(variableName)){
 				//TODO:文字列リテラルの処理
 			}
-			return varld[variableName] = CalcExpr<long double>(expression);
+			switch (node->GetType())
+			{
+				case 0:return varll[variableName] = CalcExpr<long long>(expression);
+				case 1:return varld[variableName] = CalcExpr<long double>(expression);
+				case 2: //TODO:stringの処理
+				default:throw EvaluatorException("Unknown function variable type.");
+			}
+			throw EvaluatorException("Unknown type");
 		}
 		case Node::Variable: {
 			VariableNode *node = static_cast<VariableNode*>(ast);
@@ -151,7 +179,7 @@ T Evaluator::CalcExpr(AST *ast){
 			}else if (vars.count(variableName)){
 				//TODO:文字列リテラルの処理
 			}else{
-				throw EvaluatorException("Undefined variable: " + variableName);
+				throw RuntimeException("Undefined variable: " + variableName + ".",node->lineNumber,node->columnNumber);
 			}
 		}
 		default:{
@@ -159,6 +187,40 @@ T Evaluator::CalcExpr(AST *ast){
 		}
 	}
 	throw EvaluatorException("Fatal Error:This message should not be displayed.(´・ω・｀)");
+}
+
+template<typename T>
+T Evaluator::ProcessBinaryOperator(T left,T right,string operatorType,BinaryOperatorNode *node){
+	//演算子の処理
+	if (operatorType == "+")return left + right;
+	if (operatorType == "-")return left - right;
+	if (operatorType == "*")return left * right;
+	if (operatorType == "/"){
+		if (right == 0)
+			throw RuntimeException("Division by zero.",node->lineNumber,node->columnNumber);
+		return left / right;
+	}
+	if (operatorType == "<")return left < right;
+	if (operatorType == "<=") return left <= right;
+	if (operatorType == ">") return left > right;
+	if (operatorType == ">=") return left >= right;
+	if (operatorType == "==") return left == right;
+	if (operatorType == "!=") return left != right;
+	if constexpr (is_integral_v<T>){
+		if (operatorType == "&&") return left && right;
+		if (operatorType == "||") return left || right;
+		if (operatorType == "&") return left & right;
+		if (operatorType == "|") return left | right;
+		if (operatorType == "^") return left ^ right;
+		if (operatorType == "<<") return left << right;
+		if (operatorType == ">>") return left >> right;
+		if (operatorType == "%"){
+			if (right == 0)
+				throw RuntimeException("Division by zero.",node->lineNumber,node->columnNumber);
+			return left % right;
+		}
+	}
+	throw RuntimeException("Unknown Operator.",node->lineNumber,node->columnNumber);
 }
 
 void Evaluator::IfStatement(AST *ast){

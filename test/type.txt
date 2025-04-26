@@ -1,0 +1,20 @@
+a = 2+3*2	//int型
+b = 3.1415/4.0	//double型
+c = 4+2.8	//int型
+d = 4.2/0.3+123	//double型
+e = (3+2)/10	//int型
+f = -(120+3)/10-2		//int型
+g = -(2.0-0.04)/1.4-15.3	//double型
+h = -1.2*3	//double型
+i = -5*(-6.2)	//int型
+print(a)	//8
+print(b)	//0.785375
+print(c)	//6
+print(d)	//137
+print(e)	//0
+print(a+b)	//8
+print(b+a)	//8.785375
+print(f)	//-14
+print(g)	//-16.7
+print(h)	//-3.6
+print(i)	//30

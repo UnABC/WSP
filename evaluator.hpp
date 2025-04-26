@@ -9,6 +9,8 @@ class Evaluator{
 	std::map<std::string,std::string> vars;
 	template<typename T>
 	T CalcExpr(AST *ast);
+	template<typename T>
+	T ProcessBinaryOperator(T left,T right,std::string operatorType,BinaryOperatorNode *node);
 	void IfStatement(AST *node);
 	void VoidFunction(AST *ast);
 	void ProcessVariables(AST *ast);

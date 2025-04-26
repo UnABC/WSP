@@ -3,8 +3,8 @@ using namespace std;
 
 TokenPtr Lexer::ExtractNextToken() {
 	//トークンを取り出す
-	if (queue.empty()) LoadTokens(1); //トークンが空なら読み込む
-	if (queue.empty()) return EOFToken; //EOF
+	//トークンが空なら読み込み、これ以上のトークンがない場合はEOFを返す
+	if (queue.empty() && (!LoadTokens(1)))return EOFToken;
 
 	TokenPtr token = std::make_shared<Token>(queue.front());
 	queue.erase(queue.begin()); //先頭のトークンを削除
@@ -12,9 +12,8 @@ TokenPtr Lexer::ExtractNextToken() {
 }
 
 TokenPtr Lexer::PeekTokens(int ReadTokensNum) {
-	//トークンを指定数取り出す
-	if (ReadTokensNum >= queue.size()) LoadTokens(ReadTokensNum);
-	if (queue.empty()) return EOFToken; //EOF
+	//トークンを指定数取り出し、これ以上のトークンがない場合はEOFを返す
+	if ((ReadTokensNum >= queue.size()) && (!LoadTokens(ReadTokensNum))) return EOFToken;
 
 	TokenPtr token = std::make_shared<Token>(queue[ReadTokensNum]);
 	return token;

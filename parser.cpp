@@ -19,7 +19,7 @@ AST *Parser::ExprTernary(){
 		}
 		currentToken = lexer.ExtractNextToken(); //:をスキップ
 		AST *falseExpr = ExprBool();
-		return new TernaryOperatorNode("?", left, trueExpr, falseExpr); //三項演算子ノードを作成
+		return new TernaryOperatorNode("?", left, trueExpr, falseExpr, currentToken->lineNumber, currentToken->columnNumber); //三項演算子ノードを作成
 	}
 	return left;
 }
@@ -36,7 +36,7 @@ AST *Parser::ExprBool(){
 		string operatorType = currentToken->value;
 		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
 		AST *right = ExprAdd();
-		left = new BinaryOperatorNode(operatorType, left, right);
+		left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber); //二項演算子ノードを作成
 	}
 	return left;
 }
@@ -48,7 +48,7 @@ AST *Parser::ExprAdd() {
 		string operatorType = currentToken->value;
 		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
 		AST *right = ExprMul();
-		left = new BinaryOperatorNode(operatorType, left, right);
+		left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber); //二項演算子ノードを作成
 	}
 	return left;
 }
@@ -60,7 +60,7 @@ AST *Parser::ExprMul() {
 		string operatorType = currentToken->value;
 		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
 		AST *right = ExprPrimary();
-		left = new BinaryOperatorNode(operatorType, left, right);
+		left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber); //二項演算子ノードを作成
 	}
 	return left;
 }
@@ -80,7 +80,7 @@ AST *Parser::ExprPrimary() {
 			//代入演算子の処理
 			return ExprAssignment(currentToken);
 		}else{
-			AST *ast = new VariableNode(currentToken->value); //変数ノードを作成
+			AST *ast = new VariableNode(currentToken->value, currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
 			currentToken = lexer.ExtractNextToken(); //トークンを進める
 			return ast;
 		}
@@ -93,8 +93,8 @@ AST *Parser::ExprPrimary() {
 		currentToken = lexer.ExtractNextToken(); //右括弧をスキップ
 		return left;
 	}else if ((currentToken->type == TokenType::Operator) && (currentToken->value == "-")) {
-		//負の数の処理
-		return new NumberNode("0");
+		//負の数の処理(型は不定)
+		return new NumberNode("0",-1, currentToken->lineNumber, currentToken->columnNumber);
 	}else{
 		throw ParserException("Invalid token.\""+currentToken->value+"\"", currentToken->lineNumber, currentToken->columnNumber);
 	}
@@ -102,14 +102,15 @@ AST *Parser::ExprPrimary() {
 
 AST *Parser::ExprNumber(TokenPtr token) {
 	//数値リテラルを解析する
-	AST *ast = new NumberNode(token->value);
+	int type = (token->value.find(".") == string::npos)? 0 : 1;
+	AST *ast = new NumberNode(token->value,type, token->lineNumber, token->columnNumber);
 	currentToken = lexer.ExtractNextToken(); //トークンを進める
 	return ast;
 }
 
 AST *Parser::ExprString(TokenPtr token) {
 	//文字列リテラルを解析する
-	AST *ast = new StringNode(token->value);
+	AST *ast = new StringNode(token->value, token->lineNumber, token->columnNumber);
 	currentToken = lexer.ExtractNextToken(); //トークンを進める
 	return ast;
 }
@@ -120,7 +121,8 @@ AST *Parser::ExprAssignment(TokenPtr token) {
 	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
 	currentToken = lexer.ExtractNextToken(); //演算子をスキップ
 	AST *right = ExprTernary(); //式を解析する
-	AST *ast = new AssignmentNode(variableName, right); //代入ノードを作成
+	AST *veriable = new VariableNode(variableName, currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
+	AST *ast = new AssignmentNode(variableName,veriable, right, currentToken->lineNumber, currentToken->columnNumber); //代入ノードを作成
 	return ast;
 }
 
@@ -129,7 +131,7 @@ AST *Parser::ExprFunction(TokenPtr token) {
 	string functionName = token->value;
 	currentToken = lexer.ExtractNextToken(); //関数名をスキップ
 	AST *arg = ExprTernary();
-	AST *ast = new FunctionNode(functionName, arg); //関数ノードを作成
+	AST *ast = new FunctionNode(functionName, arg, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
 	return ast;
 }
 
@@ -152,7 +154,7 @@ AST *Parser::Statement(TokenPtr token) {
 				currentToken = lexer.ExtractNextToken(); //elseをスキップ
 				falseExpr = (currentToken->type == TokenType::LBrace)?BlockStatement(currentToken):Statement(currentToken);
 			}
-			return new IfStatementNode(condition, trueExpr, falseExpr);
+			return new IfStatementNode(condition, trueExpr, falseExpr, currentToken->lineNumber, currentToken->columnNumber); //if文ノードを作成
 		}
 	}
 
@@ -178,7 +180,7 @@ AST *Parser::BlockStatement(TokenPtr token) {
 			currentToken = lexer.ExtractNextToken(); //行末をスキップ
 	}
 	currentToken = lexer.ExtractNextToken(); //右波括弧をスキップ
-	return new BlockStatementNode(statements);
+	return new BlockStatementNode(statements,currentToken->lineNumber,currentToken->columnNumber);
 }
 
 void Parser::show(AST *ast) {
@@ -212,13 +214,14 @@ void Parser::show(AST *ast) {
 		}
 		case Node::Assignment: {
 			AssignmentNode *node = static_cast<AssignmentNode*>(ast);
-			cout << node->GetVariableName() << " = ";
+			cout << "{" << node->GetVariableName() << " = ";
 			show(node->GetExpression());
+			cout << " }";
 			break;
 		}
 		case Node::Variable: {
 			VariableNode *node = static_cast<VariableNode*>(ast);
-			cout << node->GetVariableName() << " ";
+			cout << "`" << node->GetVariableName() << "` ";
 			break;
 		}
 		case Node::IfStatement: {
