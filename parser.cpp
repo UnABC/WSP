@@ -130,8 +130,13 @@ AST *Parser::ExprFunction(TokenPtr token) {
 	//関数を解析する
 	string functionName = token->value;
 	currentToken = lexer.ExtractNextToken(); //関数名をスキップ
-	AST *arg = ExprTernary();
-	AST *ast = new FunctionNode(functionName, arg, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
+	vector<AST*> args;
+	do{
+		currentToken = lexer.ExtractNextToken(); //(or,をスキップ
+		args.push_back(ExprTernary()); //引数を解析する
+	}while (currentToken->type == TokenType::Symbol && currentToken->value == ",");
+	currentToken = lexer.ExtractNextToken(); //)をスキップ
+	AST *ast = new FunctionNode(functionName, args, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
 	return ast;
 }
 
@@ -208,7 +213,10 @@ void Parser::show(AST *ast) {
 		case Node::Function: {
 			FunctionNode *node = static_cast<FunctionNode*>(ast);
 			cout << node->GetFunctionName() << "(";
-			show(node->GetArgument());
+			for (int i = 0; i < node->GetArgumentSize(); i++) {
+				if (i != 0) cout << ", ";
+				show(node->GetArgument().at(i));
+			}
 			cout << ")";
 			break;
 		}

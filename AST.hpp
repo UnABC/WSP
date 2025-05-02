@@ -1,3 +1,6 @@
+/*仕様(メモ)
+type;0:int,1:double,2:string,3:void
+*/
 #ifndef AST_HPP
 #define AST_HPP
 
@@ -156,15 +159,20 @@ public:
 class FunctionNode : public AST{
 private:
 	std::string functionName;	//関数名
-	AST* argument;	//引数
+	//AST* argument;	//引数
+	std::vector<AST*> argument;	//引数
+	int type = 3;	//式の型(0:int,1:double,2:string,3:void)
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	FunctionNode(std::string functionName, AST* argument, unsigned long long lineNumber,unsigned long long columnNumber)
+	FunctionNode(std::string functionName, std::vector<AST*> argument, unsigned long long lineNumber,unsigned long long columnNumber)
 	 : functionName(functionName), argument(argument),lineNumber(lineNumber),columnNumber(columnNumber){};
 	const Node GetNodeType() override {return Node::Function;};
 	const std::string GetFunctionName() {return functionName;};
-	AST* GetArgument() {return argument;};
+	const int GetType() override {return type;};
+	void SetType(int type) override {this->type = type;};
+	std::vector<AST*> GetArgument() {return argument;};
+	const int GetArgumentSize() {return argument.size();};
 };
 
 class IfStatementNode : public AST{

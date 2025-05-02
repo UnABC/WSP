@@ -3,9 +3,9 @@
 #include <iostream>
 using namespace std;
 
-int main(){
+int main(int argc, char *argv[]) {
 	try{
-		Lexer lexer("test/if_test.txt");
+		Lexer lexer("test/type.txt");
 		Parser parser(lexer);
 		Evaluator evaluator;
 		//vector<AST*> statements;

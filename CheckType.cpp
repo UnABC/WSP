@@ -1,15 +1,54 @@
 #include "CheckType.hpp"
 using namespace std;
 
+// 0:int,1:double
+VerifyType::VerifyType() {
+	//システム定数を指定
+	system_var_type["M_PI"] = 1;
+	system_var_type["M_E"] = 1;
+	system_var_type["M_LOG2E"] = 1;
+	system_var_type["M_LOG10E"] = 1;
+	system_var_type["M_LN2"] = 1;
+	system_var_type["M_LN10"] = 1;
+	system_var_type["M_PI_2"] = 1;
+	system_var_type["M_PI_4"] = 1;
+	system_var_type["M_1_PI"] = 1;	
+	system_var_type["M_2_PI"] = 1;
+	system_var_type["M_2_SQRTPI"] = 1;
+	system_var_type["M_SQRT2"] = 1;
+	system_var_type["M_SQRT1_2"] = 1;
+	system_var_type["M_SQRT3"] = 1;
+
+	//システム関数を指定
+	system_func_type["int"] = 0;
+	system_func_type["double"] = 1;
+	system_func_type["abs"] = 1;
+	system_func_type["sqrt"] = 1;
+	system_func_type["sin"] = 1;
+	system_func_type["cos"] = 1;
+	system_func_type["tan"] = 1;
+	system_func_type["asin"] = 1;
+	system_func_type["acos"] = 1;
+	system_func_type["atan"] = 1;
+	system_func_type["exp"] = 1;
+	system_func_type["log"] = 1;
+	system_func_type["log10"] = 1;
+	system_func_type["pow"] = 1;
+	system_func_type["atan2"] = 1;
+}
+
 void VerifyType::CheckType(AST *ast){
 	if (ast == nullptr) return;
 	switch (ast->GetNodeType()) {
 		case Node::Variable: {
 			VariableNode *node = static_cast<VariableNode*>(ast);
 			string variableName = node->GetVariableName();
-			if (!var_type.count(variableName)) {
-				throw CheckTypeException("Undefined variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+			if (system_var_type.count(variableName)) {
+				node->SetType(system_var_type[variableName]); //システム定数の型を保存
+				break;
 			}
+			if (!var_type.count(variableName))
+				throw CheckTypeException("Undefined variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 			//cout << "Variable: " << variableName <<", Type: " << var_type[variableName] << endl;
 			node->SetType(var_type[variableName]); //変数の型を保存
 			break;
@@ -28,13 +67,13 @@ void VerifyType::CheckType(AST *ast){
 			int leftType = node->GetLeft()->GetType();
 			if (leftType == -1){
 				int rightType = node->GetRight()->GetType();
-				if (rightType == -1){
+				if ((rightType == -1) || (rightType == 3)){
 					throw CheckTypeException("Invalid type for binary operator: " + node->GetOperatorType() + ".", node->lineNumber, node->columnNumber);
 				}
 				node->GetLeft()->SetType(node->GetRight()->GetType()); //右辺の型を保存
 				node->SetType(rightType); //右辺の型を保存
 				break;
-			}else if (leftType < 0){
+			}else if ((leftType < 0) || (leftType == 3)){
 				throw CheckTypeException("Invalid type for binary operator: " + node->GetOperatorType() + ".", node->lineNumber, node->columnNumber);
 			}
 			node->SetType(leftType); //左辺の型を保存
@@ -52,7 +91,10 @@ void VerifyType::CheckType(AST *ast){
 		}
 		case Node::Function: {
 			FunctionNode *node = static_cast<FunctionNode*>(ast);
-			CheckType(node->GetArgument());
+			if (system_func_type.count(node->GetFunctionName()))
+				node->SetType(system_func_type[node->GetFunctionName()]);
+			for (int i = 0; i < node->GetArgumentSize(); i++)
+				CheckType(node->GetArgument().at(i));
 			break;
 		}
 		case Node::IfStatement: {

@@ -169,8 +169,8 @@ string AnalysisLine::ReadIdentifier() {
 }
 
 inline bool AnalysisLine::isIdentifier() {
-	//識別子は演算子、記号、空白文字、文字列リテラル、数値リテラル、行コメント、ブロックコメント、ブロックコメント終了のいずれかでない場合
-	return !(isWhiteSpace() || isOperator() || isSymbol()  || isNumberLiteral() || isLineComment() || isBlockComment() || isEndBlockComment() || isEscape() || isEndStringLiteral('\"') || isEndStringLiteral('\''));
+	//識別子は演算子、記号、空白文字、文字列リテラル、行コメント、ブロックコメント、ブロックコメント終了のいずれかでない場合
+	return !(isWhiteSpace() || isOperator() || isSymbol() || isLineComment() || isBlockComment() || isEndBlockComment() || isEscape() || isEndStringLiteral('\"') || isEndStringLiteral('\''));
 }
 
 

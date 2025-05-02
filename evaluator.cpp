@@ -90,13 +90,13 @@ T Evaluator::CalcExpr(AST *ast){
 		case Node::Function: {
 			FunctionNode *node = static_cast<FunctionNode*>(ast);
 			string functionName = node->GetFunctionName();
-			AST *arg = node->GetArgument();
+			vector<AST*> args = node->GetArgument();
 
-			//各種数学関数
+			//各種数学関数(引数は1つ)
 			#define MATH_FUNC(func) if (functionName == #func){\
-				switch (arg->GetType()){\
-					case 0:return func(CalcExpr<long long>(arg));\
-					case 1:return func(CalcExpr<long double>(arg));\
+				switch (args.at(0)->GetType()){\
+					case 0:return func(CalcExpr<long long>(args.at(0)));\
+					case 1:return func(CalcExpr<long double>(args.at(0)));\
 					default:throw RuntimeException("Invaild argumant.",node->lineNumber,node->columnNumber);\
 				}} 
 				MATH_FUNC(abs);
@@ -111,24 +111,23 @@ T Evaluator::CalcExpr(AST *ast){
 				MATH_FUNC(log);
 				MATH_FUNC(log10);
 			#undef MATH_FUNC
-			//その他組み込み関数
-			if (functionName == "print") {
-				switch (arg->GetType()){
-					case 0:{
-						cout << CalcExpr<long long>(arg) << endl;
-						break;
-					}
-					case 1:{
-						cout << CalcExpr<long double>(arg) << endl;
-					}
-					case 2:{
-						//TODO:文字列リテラルの処理
-					}
-					default:{
-						throw EvaluatorException("Unknown function argument type.");
-					}
-				}
-				return 0;
+			//各種数学関数(引数は2つ)
+			#define MATH_FUNC(func) if (functionName == #func){\
+				if (args.size() < 2)throw EvaluatorException("Invalid argument size.");\
+				switch (args.at(0)->GetType()){\
+					case 0:return func(CalcExpr<long long>(args.at(0)),CalcExpr<long long>(args.at(1)));\
+					case 1:return func(CalcExpr<long double>(args.at(0)),CalcExpr<long double>(args.at(1)));\
+					default:throw RuntimeException("Invaild argumant.",node->lineNumber,node->columnNumber);\
+				}} 
+				MATH_FUNC(pow);
+				MATH_FUNC(atan2);
+			#undef MATH_FUNC
+
+			//その他組み込み関数(!=void)
+			if (functionName == "double") {
+				return CalcExpr<long double>(args.at(0));
+			}else if (functionName == "int") {
+				return CalcExpr<long long>(args.at(0));
 			}
 			throw EvaluatorException("Unknown function:"+functionName);
 		}
@@ -149,6 +148,7 @@ T Evaluator::CalcExpr(AST *ast){
 				case 0:return varll[variableName] = CalcExpr<long long>(expression);
 				case 1:return varld[variableName] = CalcExpr<long double>(expression);
 				case 2: //TODO:stringの処理
+				case 3:throw EvaluatorException("Void function should not return value.");
 				default:throw EvaluatorException("Unknown function variable type.");
 			}
 			throw EvaluatorException("Unknown type");
@@ -235,14 +235,29 @@ void Evaluator::IfStatement(AST *ast){
 	return;
 }
 
+//戻り値のない関数の処理
 void Evaluator::VoidFunction(AST *ast){
 	//void関数の処理
 	FunctionNode *node = static_cast<FunctionNode*>(ast);
 	string functionName = node->GetFunctionName();
-	AST *arg = node->GetArgument();
+	vector<AST*> args = node->GetArgument();
 	//組み込み関数
 	if (functionName == "print") {
-		cout << CalcExpr<long double>(arg) << endl;
+		switch (args.at(0)->GetType()){
+			case 0:{
+				cout << CalcExpr<long long>(args.at(0)) << endl;
+				break;
+			}
+			case 1:{
+				cout << CalcExpr<long double>(args.at(0)) << endl;
+				break;
+			}
+			case 2:{
+				//TODO:文字列リテラルの処理
+			}
+			case 3:throw EvaluatorException("Void function should not return value.");
+			default:throw EvaluatorException("Unknown function argument type.");
+		}
 		return;
 	}
 	//TODO:ユーザ定義関数
