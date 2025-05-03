@@ -1,0 +1,11 @@
+a = 123
+b = "Hello world!"
+c = "123"
+
+if (a == c)print("passed![a != c]")
+if (a*10 != b)print("passed![a != b]")
+if ((a == 123)&&(b != "hoge"))print("passed![a&&b]")
+if ((b == "Hello world!")&&(a > 120))print("passed![b&&a]")
+print("IF four [passed!]were displayed, All was cleared!")
+
+print("a"*10)

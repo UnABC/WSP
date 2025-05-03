@@ -6,24 +6,24 @@
 
 class Parser {
 private:
-	Lexer &lexer;	//字句解析器
+	Lexer& lexer;	//字句解析器
 	TokenPtr currentToken;	//現在のトークン
 
-	AST *ExprTernary();
-	AST *ExprBool();
-	AST *ExprAdd();
-	AST *ExprMul();
-	AST *ExprPrimary();
-	AST *ExprNumber(TokenPtr token);
-	AST *ExprString(TokenPtr token);
-	AST *ExprFunction(TokenPtr token);
-	AST *ExprAssignment(TokenPtr token);
-	AST *Statement(TokenPtr token);
-	AST *BlockStatement(TokenPtr token);
+	AST* ExprTernary();
+	AST* ExprBool();
+	AST* ExprAdd();
+	AST* ExprMul();
+	AST* ExprPrimary();
+	AST* ExprNumber(TokenPtr token);
+	AST* ExprString(TokenPtr token);
+	AST* ExprFunction(TokenPtr token);
+	AST* ExprAssignment(TokenPtr token);
+	AST* Statement(TokenPtr token);
+	AST* BlockStatement(TokenPtr token);
 public:
-	Parser(Lexer& lexer) : lexer(lexer){};
-	AST *ParseStatement(TokenPtr token);
-	void show(AST *ast);
+	Parser(Lexer& lexer) : lexer(lexer) {};
+	AST* ParseStatement(TokenPtr token);
+	void show(AST* ast);
 };
 
 

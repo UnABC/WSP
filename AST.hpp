@@ -6,7 +6,7 @@ type;0:int,1:double,2:string,3:void
 
 #include "lexer.hpp"
 
-enum class Node{
+enum class Node {
 	Number,			//数値リテラル
 	String,			//文字列リテラル
 	BinaryOperator,	//二項演算子
@@ -19,42 +19,44 @@ enum class Node{
 	IfStatement		//If文 
 };
 
-class AST{
+class AST {
 public:
 	const virtual Node GetNodeType() = 0;	//ノードの種類を取得
-	const virtual int GetType(){return -2;};	//式の型を取得
-	virtual void SetType(int type){throw std::runtime_error("Critical Error!(info:CheckType)");};
+	const virtual int GetType() { return -2; };	//式の型を取得
+	virtual void SetType(int type) { throw std::runtime_error("Critical Error!(info:CheckType)"); };
 };
 
-class StatementNode : public AST{
+class StatementNode : public AST {
 private:
-	AST *expr;
+	AST* expr;
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	StatementNode(AST *expr,unsigned long long lineNumber,unsigned long long columnNumber)
-	 : expr(expr),lineNumber(lineNumber),columnNumber(columnNumber) {};
-	const Node GetNodeType() override {return Node::Statement;};
-	AST* GetExpression() {return expr;};
+	StatementNode(AST* expr, unsigned long long lineNumber, unsigned long long columnNumber)
+		: expr(expr), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::Statement; };
+	AST* GetExpression() { return expr; };
 };
 
-class BlockStatementNode : public AST{
+class BlockStatementNode : public AST {
 private:
 	std::vector<AST*> statements;	//文のリスト
 	unsigned long long listNumber;	//リスト番号
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	BlockStatementNode(std::vector<AST*> statements,unsigned long long lineNumber,unsigned long long columnNumber)
-	 : statements(statements),listNumber(0),lineNumber(lineNumber),columnNumber(columnNumber) {};
-	const Node GetNodeType() override {return Node::BlockStatement;};
-	AST *ReadStatement() {return (listNumber < statements.size())?statements.at(listNumber++):nullptr;};
-	AST *PeekStatement() {return (listNumber < statements.size())?(statements.at(listNumber)):nullptr;};
-	void PushStatement(AST *ast) {statements.push_back(ast);};
-	void ResetListNumber() {listNumber = 0;};
+	BlockStatementNode(std::vector<AST*> statements, unsigned long long lineNumber, unsigned long long columnNumber)
+		: statements(statements), listNumber(0), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::BlockStatement; };
+	AST* ReadStatement() { return (listNumber < statements.size()) ? statements.at(listNumber++) : nullptr; };
+	AST* PeekStatement() { return (listNumber < statements.size()) ? (statements.at(listNumber)) : nullptr; };
+	void PushStatement(AST* ast) { statements.push_back(ast); };
+	void ResetListNumber() { listNumber = 0; };
 };
 
-class NumberNode : public AST{
+class NumberNode : public AST {
 private:
 	std::string value;	//数値リテラルの値
 	//式の型(0:int,1:double)
@@ -62,28 +64,30 @@ private:
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	NumberNode(std::string value,int type,unsigned long long lineNumber,unsigned long long columnNumber)
-	 : value(value),type(type),lineNumber(lineNumber),columnNumber(columnNumber) {};
-	const Node GetNodeType() override {return Node::Number;};
-	const std::string GetValue() {return value;};
-	const int GetType() override {return type;};
-	void SetType(int type) override {this->type = type;};
+	NumberNode(std::string value, int type, unsigned long long lineNumber, unsigned long long columnNumber)
+		: value(value), type(type), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::Number; };
+	const std::string GetValue() { return value; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
 };
 
-class StringNode : public AST{
+class StringNode : public AST {
 private:
 	std::string value;	//文字列リテラルの値
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	StringNode(std::string value,unsigned long long lineNumber,unsigned long long columnNumber)
-	 : value(value), lineNumber(lineNumber),columnNumber(columnNumber){};
-	const Node GetNodeType() override {return Node::String;};
-	const std::string GetValue() {return value;};
-	const inline int GetType() {return 2;};
+	StringNode(std::string value, unsigned long long lineNumber, unsigned long long columnNumber)
+		: value(value), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::String; };
+	const std::string GetValue() { return value; };
+	const inline int GetType() { return 2; };
 };
 
-class BinaryOperatorNode : public AST{
+class BinaryOperatorNode : public AST {
 private:
 	std::string operatorType;	//演算子の種類
 	AST* left;	//左辺
@@ -92,17 +96,18 @@ private:
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	BinaryOperatorNode(std::string operatorType, AST* left , AST* right, unsigned long long lineNumber,unsigned long long columnNumber)
-	 : operatorType(operatorType), left(left), right(right),lineNumber(lineNumber),columnNumber(columnNumber){};
-	const Node GetNodeType() override {return Node::BinaryOperator;};
-	const std::string GetOperatorType() {return operatorType;};
-	AST* GetLeft() {return left;};
-	AST* GetRight() {return right;};
-	const int GetType() override {return type;};
-	void SetType(int type) override {this->type = type;};
+	BinaryOperatorNode(std::string operatorType, AST* left, AST* right, unsigned long long lineNumber, unsigned long long columnNumber)
+		: operatorType(operatorType), left(left), right(right), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::BinaryOperator; };
+	const std::string GetOperatorType() { return operatorType; };
+	AST* GetLeft() { return left; };
+	AST* GetRight() { return right; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
 };
 
-class TernaryOperatorNode : public AST{
+class TernaryOperatorNode : public AST {
 private:
 	std::string operatorType;	//演算子の種類
 	AST* condition;	//条件式
@@ -112,18 +117,19 @@ private:
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	TernaryOperatorNode(std::string operatorType, AST* condition, AST* trueExpr, AST* falseExpr, unsigned long long lineNumber,unsigned long long columnNumber)
-	 : operatorType(operatorType), condition(condition), trueExpr(trueExpr), falseExpr(falseExpr),lineNumber(lineNumber),columnNumber(columnNumber){};
-	const Node GetNodeType() override {return Node::TernaryOperator;};
-	const std::string GetOperatorType() {return operatorType;};
-	AST* GetCondition() {return condition;};
-	AST* GetTrueExpr() {return trueExpr;};
-	AST* GetFalseExpr() {return falseExpr;};
-	const int GetType() override {return type;};
-	void SetType(int type) override {this->type = type;};
+	TernaryOperatorNode(std::string operatorType, AST* condition, AST* trueExpr, AST* falseExpr, unsigned long long lineNumber, unsigned long long columnNumber)
+		: operatorType(operatorType), condition(condition), trueExpr(trueExpr), falseExpr(falseExpr), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::TernaryOperator; };
+	const std::string GetOperatorType() { return operatorType; };
+	AST* GetCondition() { return condition; };
+	AST* GetTrueExpr() { return trueExpr; };
+	AST* GetFalseExpr() { return falseExpr; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
 };
 
-class AssignmentNode : public AST{
+class AssignmentNode : public AST {
 private:
 	std::string variableName;	//変数名
 	AST* veriable;		//変数
@@ -132,31 +138,33 @@ private:
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	AssignmentNode(std::string variableName,AST *veriable, AST* expression, unsigned long long lineNumber,unsigned long long columnNumber)
-	 : variableName(variableName),veriable(veriable), expression(expression),lineNumber(lineNumber),columnNumber(columnNumber){};
-	const Node GetNodeType() override {return Node::Assignment;};
-	const std::string GetVariableName() {return variableName;};
-	AST* GetExpression() {return expression;};
-	const int GetType() override {return type;};
-	void SetType(int type) override {this->type = type;};
+	AssignmentNode(std::string variableName, AST* veriable, AST* expression, unsigned long long lineNumber, unsigned long long columnNumber)
+		: variableName(variableName), veriable(veriable), expression(expression), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::Assignment; };
+	const std::string GetVariableName() { return variableName; };
+	AST* GetExpression() { return expression; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
 };
 
-class VariableNode : public AST{
+class VariableNode : public AST {
 private:
 	std::string variableName;	//変数名
 	int type = -2;	//式の型(0:int,1:double)
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	VariableNode(std::string variableName,unsigned long long lineNumber,unsigned long long columnNumber)
-	 : variableName(variableName),lineNumber(lineNumber),columnNumber(columnNumber){};
-	const Node GetNodeType() override {return Node::Variable;};
-	const std::string GetVariableName() {return variableName;};
-	const int GetType() override {return type;};
-	void SetType(int type) override {this->type = type;};
+	VariableNode(std::string variableName, unsigned long long lineNumber, unsigned long long columnNumber)
+		: variableName(variableName), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::Variable; };
+	const std::string GetVariableName() { return variableName; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
 };
 
-class FunctionNode : public AST{
+class FunctionNode : public AST {
 private:
 	std::string functionName;	//関数名
 	//AST* argument;	//引数
@@ -165,17 +173,18 @@ private:
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	FunctionNode(std::string functionName, std::vector<AST*> argument, unsigned long long lineNumber,unsigned long long columnNumber)
-	 : functionName(functionName), argument(argument),lineNumber(lineNumber),columnNumber(columnNumber){};
-	const Node GetNodeType() override {return Node::Function;};
-	const std::string GetFunctionName() {return functionName;};
-	const int GetType() override {return type;};
-	void SetType(int type) override {this->type = type;};
-	std::vector<AST*> GetArgument() {return argument;};
-	const int GetArgumentSize() {return argument.size();};
+	FunctionNode(std::string functionName, std::vector<AST*> argument, unsigned long long lineNumber, unsigned long long columnNumber)
+		: functionName(functionName), argument(argument), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::Function; };
+	const std::string GetFunctionName() { return functionName; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
+	std::vector<AST*> GetArgument() { return argument; };
+	const int GetArgumentSize() { return argument.size(); };
 };
 
-class IfStatementNode : public AST{
+class IfStatementNode : public AST {
 private:
 	AST* condition;	//条件式
 	AST* trueStatement;	//真の場合の文
@@ -183,12 +192,13 @@ private:
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	IfStatementNode(AST* condition, AST* trueStatement, AST* falseStatement, unsigned long long lineNumber,unsigned long long columnNumber)
-	 : condition(condition), trueStatement(trueStatement), falseStatement(falseStatement),lineNumber(lineNumber),columnNumber(columnNumber){};
-	const Node GetNodeType() override {return Node::IfStatement;};
-	AST* GetCondition() {return condition;};
-	AST* GetTrueExpr() {return trueStatement;};
-	AST* GetFalseExpr() {return falseStatement;};
+	IfStatementNode(AST* condition, AST* trueStatement, AST* falseStatement, unsigned long long lineNumber, unsigned long long columnNumber)
+		: condition(condition), trueStatement(trueStatement), falseStatement(falseStatement), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::IfStatement; };
+	AST* GetCondition() { return condition; };
+	AST* GetTrueExpr() { return trueStatement; };
+	AST* GetFalseExpr() { return falseStatement; };
 };
 
 #endif
