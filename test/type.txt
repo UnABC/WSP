@@ -31,3 +31,7 @@ print(greet_to+"Tokyo Tech!") 	//Hello Tokyo Tech!
 print(a+greet_to)	//8
 print(2*number)	//246
 print(greet_to+number)	//Hello 123
+//短絡評価のテスト
+zero = 0
+if ((zero) && (2/zero == 1))print("Yes")
+

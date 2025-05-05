@@ -77,6 +77,16 @@ void VerifyType::CheckType(AST* ast) {
 		var_type[variableName] = node->GetType(); //変数の型を保存
 		break;
 	}
+	case Node::UnaryOperator: {
+		UnaryOperatorNode* node = static_cast<UnaryOperatorNode*>(ast);
+		CheckType(node->GetExpression());
+		int exprType = node->GetExpression()->GetType();
+		if ((exprType < 0) || (exprType == 3)) {
+			throw CheckTypeException("Invalid type for unary operator: !.", node->lineNumber, node->columnNumber);
+		}
+		node->SetType(exprType); //式の型を保存
+		break;
+	}
 	case Node::BinaryOperator: {
 		BinaryOperatorNode* node = static_cast<BinaryOperatorNode*>(ast);
 		CheckType(node->GetLeft());

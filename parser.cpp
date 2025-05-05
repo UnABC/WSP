@@ -7,9 +7,8 @@ AST* Parser::ParseStatement(TokenPtr token) {
 	if (currentToken->type == TokenType::EndOfFile) return nullptr; //EOFなら終了
 	return Statement(currentToken);
 }
-
+//三項演算子を解析する
 AST* Parser::ExprTernary() {
-	//三項演算子を解析する
 	AST* left = ExprBool();
 	if (currentToken->type == TokenType::Symbol && currentToken->value == "?") {
 		currentToken = lexer.ExtractNextToken(); //?をスキップ
@@ -24,21 +23,33 @@ AST* Parser::ExprTernary() {
 	return left;
 }
 
+//二項演算子を解析する
 AST* Parser::ExprBool() {
-	AST* left = ExprAdd();
+	AST* left = ExprUnary();
 	map<string, bool> operators = {
 		{">" ,true},{"<" ,true},
 		{"==",true},{"!=",true},{"<=",true},
 		{">=",true},{"&&",true},{"||",true},
-		{"<<",true},{">>",true}
+		{"<<",true},{">>",true},{"&",true},
+		{"^",true},{"|",true}
 	};
 	while ((currentToken->type == TokenType::Operator) && ((bool)operators.count(currentToken->value))) {
 		string operatorType = currentToken->value;
 		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
-		AST* right = ExprAdd();
+		AST* right = ExprUnary();
 		left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber); //二項演算子ノードを作成
 	}
 	return left;
+}
+
+AST* Parser::ExprUnary() {
+	//単項演算子を解析する
+	if (currentToken->type == TokenType::Operator && currentToken->value == "!") {
+		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
+		AST* expression = ExprAdd();
+		return new UnaryOperatorNode(expression, currentToken->lineNumber, currentToken->columnNumber); //単項演算子ノードを作成
+	}
+	return ExprAdd(); //単項演算子がない場合は、次の式を解析する
 }
 
 AST* Parser::ExprAdd() {

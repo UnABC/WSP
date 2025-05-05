@@ -56,7 +56,6 @@ void Evaluator::evaluate(AST* ast) {
 }
 
 
-//Tip:string型は別枠で処理する
 template<typename T>
 T Evaluator::CalcExpr(AST* ast) {
 	//各種演算
@@ -75,27 +74,42 @@ T Evaluator::CalcExpr(AST* ast) {
 			}
 		}
 	}
+	case Node::UnaryOperator: {
+		UnaryOperatorNode* node = static_cast<UnaryOperatorNode*>(ast);
+		switch (node->GetType())
+		{
+		case 0: {
+			OperationType value(CalcExpr<long long>(node->GetExpression()));
+			return ReturnProperType<T>((!value).GetValue<long long>());
+		}
+		case 1: {
+			OperationType value(CalcExpr<long double>(node->GetExpression()));
+			return ReturnProperType<T>((!value).GetValue<long double>());
+		}
+		case 2: {
+			OperationType value(CalcExpr<string>(node->GetExpression()));
+			return ReturnProperType<T>((!value).GetValue<string>());
+		}
+		default:
+			break;
+		}
+		throw EvaluatorException("Unknown type:" + to_string(node->GetType()));
+	}
 	case Node::BinaryOperator: {
 		BinaryOperatorNode* node = static_cast<BinaryOperatorNode*>(ast);
 		string operatorType = node->GetOperatorType();
 		AST* left_node = node->GetLeft();
+		AST* right_node = node->GetRight();
 		switch (left_node->GetType())
 		{
 		case 0: {
-			return ReturnProperType<T>(ProcessBinaryOperator<long long, long long>(CalcExpr<long long>(left_node), CalcExpr<long long>(node->GetRight()), operatorType, node));
+			return ReturnProperType<T>(ProcessBinaryOperator<long long>(left_node, right_node, operatorType, node));
 		}
 		case 1: {
-			return ReturnProperType<T>(ProcessBinaryOperator<long double, long double>(CalcExpr<long double>(left_node), CalcExpr<long double>(node->GetRight()), operatorType, node));
+			return ReturnProperType<T>(ProcessBinaryOperator<long double>(left_node, right_node, operatorType, node));
 		}
 		case 2: {
-			AST* right_node = node->GetRight();
-			if (right_node->GetType() == 0) {
-				return ReturnProperType<T>(ProcessBinaryOperator<string, long long>(CalcExpr<string>(left_node), CalcExpr<long long>(right_node), operatorType, node));
-			} else if (right_node->GetType() == 1) {
-				return ReturnProperType<T>(ProcessBinaryOperator<string, long double>(CalcExpr<string>(left_node), CalcExpr<long double>(right_node), operatorType, node));
-			} else {
-				return ReturnProperType<T>(ProcessBinaryOperator<string, string>(CalcExpr<string>(left_node), CalcExpr<string>(right_node), operatorType, node));
-			}
+			return ReturnProperType<T>(ProcessBinaryOperator<string>(left_node, right_node, operatorType, node));
 		}
 		default:
 			break;
@@ -250,39 +264,43 @@ T Evaluator::CalcExpr(AST* ast) {
 	throw EvaluatorException("Fatal Error:This message should not be displayed.(´・ω・｀)");
 }
 
-template<typename T, typename S>
-T Evaluator::ProcessBinaryOperator(T left, S right, string operatorType, BinaryOperatorNode* node) {
+template<typename T>
+T Evaluator::ProcessBinaryOperator(AST* left_node, AST* right_node, string operatorType, BinaryOperatorNode* node) {
 	//演算子の処理
-	OperationType Left(left), Right(right);
+	OperationType Left(CalcExpr<T>(left_node));
+	//短絡評価
+	if (operatorType == "&&") {
+		if (Left.GetValue<bool>() == false) return Left.GetValue<T>();
+	} else if (operatorType == "||") {
+		if (Left.GetValue<bool>() == true) return Left.GetValue<T>();
+	}
+	//各種演算子の処理
+	OperationType Right(CalcExpr<T>(right_node));
 	if (operatorType == "+")return (Left + Right).GetValue<T>();
 	if (operatorType == "*")return (Left * Right).GetValue<T>();
 	if (operatorType == "==") return (Left == Right).GetValue<T>();
 	if (operatorType == "!=") return (Left != Right).GetValue<T>();
 	if (operatorType == "&&")return (Left && Right).GetValue<T>();
 	if (operatorType == "||") return (Left || Right).GetValue<T>();
-	if constexpr (!is_same_v<T, string>) {
-		if (operatorType == "-")return left - right;
-		if (operatorType == "/") {
-			if (right == 0)
-				throw RuntimeException("Division by zero.", node->lineNumber, node->columnNumber);
-			return left / right;
-		}
-		if (operatorType == "<")  return left < right;
-		if (operatorType == "<=") return left <= right;
-		if (operatorType == ">")  return left > right;
-		if (operatorType == ">=") return left >= right;
-		if constexpr (is_integral_v<T>) {
-			if (operatorType == "&")  return left & right;
-			if (operatorType == "|")  return left | right;
-			if (operatorType == "^")  return left ^ right;
-			if (operatorType == "<<") return left << right;
-			if (operatorType == ">>") return left >> right;
-			if (operatorType == "%") {
-				if (right == 0)
-					throw RuntimeException("Division by zero.", node->lineNumber, node->columnNumber);
-				return left % right;
-			}
-		}
+	if (operatorType == "-")return (Left - Right).GetValue<T>();
+	if (operatorType == "/") {
+		if (Right.GetValue<long double>() == 0.0)
+			throw RuntimeException("Division by zero.", node->lineNumber, node->columnNumber);
+		return (Left / Right).GetValue<T>();
+	}
+	if (operatorType == "<")  return (Left < Right).GetValue<T>();
+	if (operatorType == "<=") return (Left <= Right).GetValue<T>();
+	if (operatorType == ">")  return (Left > Right).GetValue<T>();
+	if (operatorType == ">=") return (Left >= Right).GetValue<T>();
+	if (operatorType == "&")  return (Left & Right).GetValue<T>();
+	if (operatorType == "|")  return (Left | Right).GetValue<T>();
+	if (operatorType == "^")  return (Left ^ Right).GetValue<T>();
+	if (operatorType == "<<") return (Left << Right).GetValue<T>();
+	if (operatorType == ">>") return (Left >> Right).GetValue<T>();
+	if (operatorType == "%") {
+		if (Right.GetValue<long double>() == 0.0)
+			throw RuntimeException("Division by zero.", node->lineNumber, node->columnNumber);
+		return (Left % Right).GetValue<T>();
 	}
 	throw RuntimeException("Unknown Operator.\"" + operatorType + "\"", node->lineNumber, node->columnNumber);
 }

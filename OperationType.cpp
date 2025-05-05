@@ -71,7 +71,7 @@ OperationType OperationType::operator==(const OperationType& value) const {
 	case 0: return OperationType(int_value == value.int_value);
 	case 1: return OperationType(double_value == value.double_value);
 	case 2: return OperationType(string_value == value.string_value);
-	case 4: return OperationType(bool_value == bool_value);
+	case 4: return OperationType(bool_value == value.bool_value);
 	default: throw EvaluatorException("Unknown type.");
 	}
 }
@@ -81,7 +81,7 @@ OperationType OperationType::operator!=(const OperationType& value) const {
 	case 0: return OperationType(int_value != value.int_value);
 	case 1: return OperationType(double_value != value.double_value);
 	case 2: return OperationType(string_value != value.string_value);
-	case 4: return OperationType(bool_value != bool_value);
+	case 4: return OperationType(bool_value != value.bool_value);
 	default: throw EvaluatorException("Unknown type.");
 	}
 }
@@ -90,8 +90,8 @@ OperationType OperationType::operator&&(const OperationType& value) const {
 	switch (type) {
 	case 0: return OperationType(int_value && value.int_value);
 	case 1: return OperationType(double_value && value.double_value);
-	case 2: return OperationType(bool_value && bool_value);
-	case 4: return OperationType(bool_value && bool_value);
+	case 2: return OperationType(bool_value && value.bool_value);
+	case 4: return OperationType(bool_value && value.bool_value);
 	default: throw EvaluatorException("Unknown type.");
 	}
 }
@@ -100,8 +100,151 @@ OperationType OperationType::operator||(const OperationType& value) const {
 	switch (type) {
 	case 0: return OperationType(int_value || value.int_value);
 	case 1: return OperationType(double_value || value.double_value);
-	case 2: return OperationType(bool_value || bool_value);
-	case 4: return OperationType(bool_value || bool_value);
+	case 2: return OperationType(bool_value || value.bool_value);
+	case 4: return OperationType(bool_value || value.bool_value);
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator<(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value < value.int_value);
+	case 1: return OperationType(double_value < value.double_value);
+	case 2: return OperationType(string_value < value.string_value);
+	case 4: return OperationType(bool_value < value.bool_value);
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator>(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value > value.int_value);
+	case 1: return OperationType(double_value > value.double_value);
+	case 2: return OperationType(string_value > value.string_value);
+	case 4: return OperationType(bool_value > value.bool_value);
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator<=(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value <= value.int_value);
+	case 1: return OperationType(double_value <= value.double_value);
+	case 2: return OperationType(string_value <= value.string_value);
+	case 4: return OperationType(bool_value <= value.bool_value);
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator>=(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value >= value.int_value);
+	case 1: return OperationType(double_value >= value.double_value);
+	case 2: return OperationType(string_value >= value.string_value);
+	case 4: return OperationType(bool_value >= value.bool_value);
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator<<(const OperationType& value) const {
+	switch (type) {
+	case 0:
+		return OperationType(int_value << value.int_value);
+	case 1:
+	case 2:
+	case 4:
+		throw EvaluatorException("<< operator is not supported for this type.");
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator>>(const OperationType& value) const {
+	switch (type) {
+	case 0:
+		return OperationType(int_value >> value.int_value);
+	case 1:
+	case 2:
+	case 4:
+		throw EvaluatorException(">> operator is not supported for this type.");
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator%(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value % value.int_value);
+	case 1:
+	case 2:
+	case 4:
+		throw EvaluatorException("% operator is not supported for this type.");
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator/(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value / value.int_value);
+	case 1: return OperationType(double_value / value.double_value);
+	case 2:
+	case 4:
+		throw EvaluatorException("/ operator is not supported for this type.");
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator-(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value - value.int_value);
+	case 1: return OperationType(double_value - value.double_value);
+	case 2:
+	case 4:
+		throw EvaluatorException("- operator is not supported for this type.");
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator&(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value & value.int_value);
+	case 1:
+	case 2:
+		throw EvaluatorException("& operator is not supported for this type.");
+	case 4:
+		return OperationType(bool_value && value.bool_value);
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator|(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value | value.int_value);
+	case 1:
+	case 2:
+		throw EvaluatorException("| operator is not supported for this type.");
+	case 4:
+		return OperationType(bool_value || value.bool_value);
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator^(const OperationType& value) const {
+	switch (type) {
+	case 0: return OperationType(int_value ^ value.int_value);
+	case 1:
+	case 2:
+		throw EvaluatorException("^ operator is not supported for this type.");
+	case 4:
+		return OperationType(bool_value != value.bool_value);
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
+
+OperationType OperationType::operator!() const {
+	switch (type) {
+	case 0: return OperationType(!int_value);
+	case 1: return OperationType(!double_value);
+	case 2: return OperationType(string_value == "" ? "1" : "");
+	case 4: return OperationType(!bool_value);
 	default: throw EvaluatorException("Unknown type.");
 	}
 }

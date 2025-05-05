@@ -23,12 +23,25 @@ public:
 	OperationType& operator=(const long double& value);
 	OperationType& operator=(const bool& value);
 
-	OperationType operator+(const OperationType& value) const;
-	OperationType operator*(const OperationType& value) const;
+	OperationType operator+ (const OperationType& value) const;
+	OperationType operator* (const OperationType& value) const;
 	OperationType operator==(const OperationType& value) const;
 	OperationType operator!=(const OperationType& value) const;
 	OperationType operator&&(const OperationType& value) const;
 	OperationType operator||(const OperationType& value) const;
+	OperationType operator< (const OperationType& value) const;
+	OperationType operator> (const OperationType& value) const;
+	OperationType operator<=(const OperationType& value) const;
+	OperationType operator>=(const OperationType& value) const;
+	OperationType operator<<(const OperationType& value) const;
+	OperationType operator>>(const OperationType& value) const;
+	OperationType operator% (const OperationType& value) const;
+	OperationType operator/ (const OperationType& value) const;
+	OperationType operator- (const OperationType& value) const;
+	OperationType operator& (const OperationType& value) const;
+	OperationType operator| (const OperationType& value) const;
+	OperationType operator^ (const OperationType& value) const;
+	OperationType operator! () const;
 
 	template<typename T>
 	T GetValue() const;

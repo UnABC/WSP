@@ -10,6 +10,7 @@ private:
 	TokenPtr currentToken;	//現在のトークン
 
 	AST* ExprTernary();
+	AST* ExprUnary();
 	AST* ExprBool();
 	AST* ExprAdd();
 	AST* ExprMul();
@@ -20,7 +21,7 @@ private:
 	AST* ExprAssignment(TokenPtr token);
 	AST* Statement(TokenPtr token);
 	AST* BlockStatement(TokenPtr token);
-	AST* StaticVariable(TokenPtr token,int type);
+	AST* StaticVariable(TokenPtr token, int type);
 public:
 	Parser(Lexer& lexer) : lexer(lexer) {};
 	AST* ParseStatement(TokenPtr token);

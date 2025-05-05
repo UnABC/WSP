@@ -9,6 +9,7 @@ type;0:int,1:double,2:string,3:void
 enum class Node {
 	Number,			            //数値リテラル
 	String,			            //文字列リテラル
+	UnaryOperator,	            //単項演算子
 	BinaryOperator,	            //二項演算子
 	TernaryOperator,            //三項演算子
 	Assignment,		            //代入演算子
@@ -87,6 +88,22 @@ public:
 	const Node GetNodeType() override { return Node::String; };
 	const std::string GetValue() { return value; };
 	const inline int GetType() { return 2; };
+};
+
+class UnaryOperatorNode : public AST {
+private:
+	AST* expression;	//式
+	int type = -2;	//式の型(0:int,1:double)
+public:
+	unsigned long long lineNumber;	//行番号
+	unsigned long long columnNumber;	//列番号
+	UnaryOperatorNode(AST* expression, unsigned long long lineNumber, unsigned long long columnNumber)
+		: expression(expression), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::UnaryOperator; };
+	AST* GetExpression() { return expression; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
 };
 
 class BinaryOperatorNode : public AST {

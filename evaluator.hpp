@@ -16,8 +16,8 @@ private:
 	std::map<std::string, long double> math_const;
 	template<typename T>
 	T CalcExpr(AST* ast);
-	template<typename T, typename S>
-	T ProcessBinaryOperator(T left, S right, std::string operatorType, BinaryOperatorNode* node);
+	template<typename T>
+	T ProcessBinaryOperator(AST* left_node, AST* right, std::string operatorType, BinaryOperatorNode* node);
 	template<typename T, typename S>
 	T ReturnProperType(S value);
 	void IfStatement(AST* node);
