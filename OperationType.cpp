@@ -57,7 +57,7 @@ OperationType OperationType::operator*(const OperationType& value) const {
 	case 2: {
 		//Pythonみたいな感じ
 		string result = string_value;
-		if (string_value.size() == 1) return OperationType(string(value.int_value,string_value[0]));
+		if (string_value.size() == 1) return OperationType(string(value.int_value, string_value[0]));
 		for (int i = 1; i < value.int_value; i++)result += string_value;
 		return OperationType(result);
 	}

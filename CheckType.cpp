@@ -22,6 +22,7 @@ VerifyType::VerifyType() {
 	//システム関数を指定
 	system_func_type["int"] = 0;
 	system_func_type["double"] = 1;
+	system_func_type["string"] = 2;
 	system_func_type["abs"] = 1;
 	system_func_type["sqrt"] = 1;
 	system_func_type["sin"] = 1;
@@ -58,6 +59,22 @@ void VerifyType::CheckType(AST* ast) {
 		CheckType(node->GetExpression());
 		node->SetType(node->GetExpression()->GetType()); //式の型を保存
 		var_type[node->GetVariableName()] = node->GetType(); //変数の型を保存
+		break;
+	}
+	case Node::StaticVarWithAssignment: {
+		StaticVariableNode* node = static_cast<StaticVariableNode*>(ast);
+		AssignmentNode* assignment = static_cast<AssignmentNode*>(node->GetAssignment());
+		CheckType(assignment);
+		var_type[assignment->GetVariableName()] = node->GetType(); //変数の型を保存
+		assignment->SetType(node->GetType()); //式の型を保存
+		break;
+	}
+	case Node::StaticVarWithoutAssignment: {
+		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
+		string variableName = node->GetVariableName();
+		if (system_var_type.count(variableName))
+			throw CheckTypeException("System variable \"" + variableName + "\" cannot be used as a static variable.", node->lineNumber, node->columnNumber);
+		var_type[variableName] = node->GetType(); //変数の型を保存
 		break;
 	}
 	case Node::BinaryOperator: {

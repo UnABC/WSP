@@ -24,28 +24,35 @@ Evaluator::Evaluator() {
 void Evaluator::evaluate(AST* ast) {
 	//ASTを表示する
 	if (ast == nullptr) return;
-	if (ast->GetNodeType() == Node::BlockStatement) {
+	switch (ast->GetNodeType()) {
+	case Node::BlockStatement: {
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
 		while (AST* stmt = node->ReadStatement())evaluate(stmt);
 		return;
 	}
-	if (ast->GetNodeType() == Node::IfStatement) {
+	case Node::IfStatement: {
 		IfStatement(ast);
 		return;
 	}
-	//void関数
-	if (ast->GetNodeType() == Node::Function) {
+	case Node::Function: {
+		//void関数
 		VoidFunction(ast);
 		return;
 	}
-	//変数定義、計算等
-	if (ast->GetNodeType() == Node::Assignment) {
+	case Node::StaticVarWithoutAssignment: {
+		ProcessStaticVar(ast);
+		return;
+	}
+	case Node::StaticVarWithAssignment:
+		ast = static_cast<StaticVariableNode*>(ast)->GetAssignment();
+	case Node::Assignment: {
+		//変数定義、計算等
 		ProcessVariables(ast);
 		return;
 	}
-	//式の処理
-	//cout << "Result: " << CalcExpr<long double>(ast) << endl;
-	throw EvaluatorException("RuntimeError: Invaild Statement.");
+	default:
+		throw EvaluatorException("RuntimeError: Invaild Statement.");
+	}
 }
 
 
@@ -82,10 +89,12 @@ T Evaluator::CalcExpr(AST* ast) {
 		}
 		case 2: {
 			AST* right_node = node->GetRight();
-			if (right_node->GetType() == 2) {
-				return ReturnProperType<T>(ProcessBinaryOperator<string, string>(CalcExpr<string>(left_node), CalcExpr<string>(right_node), operatorType, node));
-			} else {
+			if (right_node->GetType() == 0) {
+				return ReturnProperType<T>(ProcessBinaryOperator<string, long long>(CalcExpr<string>(left_node), CalcExpr<long long>(right_node), operatorType, node));
+			} else if (right_node->GetType() == 1) {
 				return ReturnProperType<T>(ProcessBinaryOperator<string, long double>(CalcExpr<string>(left_node), CalcExpr<long double>(right_node), operatorType, node));
+			} else {
+				return ReturnProperType<T>(ProcessBinaryOperator<string, string>(CalcExpr<string>(left_node), CalcExpr<string>(right_node), operatorType, node));
 			}
 		}
 		default:
@@ -162,9 +171,13 @@ T Evaluator::CalcExpr(AST* ast) {
 			return ReturnProperType<T>(CalcExpr<long double>(args.at(0)));
 		} else if (functionName == "int") {
 			return ReturnProperType<T>(CalcExpr<long long>(args.at(0)));
+		} else if (functionName == "string") {
+			return ReturnProperType<T>(CalcExpr<string>(args.at(0)));
 		}
 		throw EvaluatorException("Unknown function:" + functionName);
 	}
+	case Node::StaticVarWithAssignment:
+		ast = static_cast<StaticVariableNode*>(ast)->GetAssignment();
 	case Node::Assignment: {
 		AssignmentNode* node = static_cast<AssignmentNode*>(ast);
 		string variableName = node->GetVariableName();
@@ -183,6 +196,27 @@ T Evaluator::CalcExpr(AST* ast) {
 		case 1:return ReturnProperType<T>(varld[variableName] = CalcExpr<long double>(expression));
 		case 2:return ReturnProperType<T>(vars[variableName] = CalcExpr<string>(expression));
 		case 3:throw  EvaluatorException("Void function should not return value.");
+		default:throw EvaluatorException("Unknown function variable type.");
+		}
+		throw EvaluatorException("Unknown type");
+	}
+	case Node::StaticVarWithoutAssignment: {
+		//静的変数の処理
+		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
+		string variableName = node->GetVariableName();
+		if (varll.count(variableName)) {
+			return ReturnProperType<T>(varll[variableName]);
+		} else if (varld.count(variableName)) {
+			return ReturnProperType<T>(varld[variableName]);
+		} else if (vars.count(variableName)) {
+			return ReturnProperType<T>(vars[variableName]);
+		}
+		switch (node->GetType())
+		{
+		case 0:return ReturnProperType<T>(varll[variableName] = 0);
+		case 1:return ReturnProperType<T>(varld[variableName] = 0.0);
+		case 2:return ReturnProperType<T>(vars[variableName] = "");
+		case 3:throw EvaluatorException("Void function should not return value.");
 		default:throw EvaluatorException("Unknown function variable type.");
 		}
 		throw EvaluatorException("Unknown type");
@@ -324,6 +358,27 @@ void Evaluator::ProcessVariables(AST* ast) {
 		throw EvaluatorException("Unknown variable type.");
 	}
 	return;
+}
+
+void Evaluator::ProcessStaticVar(AST* ast) {
+	//静的変数の処理
+	StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
+	string variableName = node->GetVariableName();
+	//変数の存在を確認
+	if (varll.count(variableName) || varld.count(variableName) || vars.count(variableName))
+		throw EvaluatorException("Static variable \"" + variableName + "\" already exists.");
+	//変数の定義
+	if (node->GetType() == 0) {
+		varll[variableName] = 0;
+		return;
+	} else if (node->GetType() == 1) {
+		varld[variableName] = 0.0;
+		return;
+	} else if (node->GetType() == 2) {
+		vars[variableName] = "";
+		return;
+	}
+	throw EvaluatorException("Unknown variable type." + to_string(node->GetType()));
 }
 
 template<typename T, typename S>

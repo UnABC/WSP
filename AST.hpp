@@ -7,16 +7,18 @@ type;0:int,1:double,2:string,3:void
 #include "lexer.hpp"
 
 enum class Node {
-	Number,			//数値リテラル
-	String,			//文字列リテラル
-	BinaryOperator,	//二項演算子
-	TernaryOperator,//三項演算子
-	Assignment,		//代入演算子
-	Variable,		//変数
-	Statement,		//文
-	BlockStatement,	//ブロック文
-	Function,		//関数
-	IfStatement		//If文 
+	Number,			            //数値リテラル
+	String,			            //文字列リテラル
+	BinaryOperator,	            //二項演算子
+	TernaryOperator,            //三項演算子
+	Assignment,		            //代入演算子
+	Variable,		            //変数
+	StaticVarWithAssignment,	//静的変数(初期化あり)
+	StaticVarWithoutAssignment, //静的変数(初期化なし)
+	Statement,		            //文
+	BlockStatement,	            //ブロック文
+	Function,		            //関数
+	IfStatement		            //If文 
 };
 
 class AST {
@@ -199,6 +201,36 @@ public:
 	AST* GetCondition() { return condition; };
 	AST* GetTrueExpr() { return trueStatement; };
 	AST* GetFalseExpr() { return falseStatement; };
+};
+
+class StaticVariableNode : public AST {
+private:
+	AST* assignment;
+	int type = -2;	//式の型(0:int,1:double)
+public:
+	unsigned long long lineNumber;	//行番号
+	unsigned long long columnNumber;	//列番号
+	StaticVariableNode(AST* assignment, int type, unsigned long long lineNumber, unsigned long long columnNumber)
+		: assignment(assignment), type(type), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::StaticVarWithAssignment; };
+	const int GetType() override { return type; };
+	AST* GetAssignment() { return assignment; };
+};
+
+class StaticVarNodeWithoutAssignment : public AST {
+private:
+	std::string variableName;	//変数名
+	int type = -2;	//式の型
+public:
+	unsigned long long lineNumber;	//行番号
+	unsigned long long columnNumber;	//列番号
+	StaticVarNodeWithoutAssignment(std::string variableName, int type, unsigned long long lineNumber, unsigned long long columnNumber)
+		: variableName(variableName), type(type), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::StaticVarWithoutAssignment; };
+	const std::string GetVariableName() { return variableName; };
+	const int GetType() override { return type; };
 };
 
 #endif

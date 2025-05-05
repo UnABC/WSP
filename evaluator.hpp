@@ -23,6 +23,7 @@ private:
 	void IfStatement(AST* node);
 	void VoidFunction(AST* ast);
 	void ProcessVariables(AST* ast);
+	void ProcessStaticVar(AST* ast);
 protected:
 	long long my_stoll(const std::string str) const;
 	long double my_stold(const std::string str) const;

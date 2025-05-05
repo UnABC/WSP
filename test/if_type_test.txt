@@ -9,3 +9,5 @@ if ((b == "Hello world!")&&(a > 120))print("passed![b&&a]")
 print("IF four [passed!]were displayed, All was cleared!")
 
 print("a"*10)
+print("a"+10)
+print(string(M_PI)+"is M_PI.")

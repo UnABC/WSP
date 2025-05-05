@@ -5,7 +5,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		Lexer lexer("test/if_type_test.txt");
+		Lexer lexer("test/static_var.txt");
 		Parser parser(lexer);
 		Evaluator evaluator;
 		//vector<AST*> statements;

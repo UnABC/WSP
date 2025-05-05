@@ -121,8 +121,8 @@ AST* Parser::ExprAssignment(TokenPtr token) {
 	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
 	currentToken = lexer.ExtractNextToken(); //演算子をスキップ
 	AST* right = ExprTernary(); //式を解析する
-	AST* veriable = new VariableNode(variableName, currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
-	AST* ast = new AssignmentNode(variableName, veriable, right, currentToken->lineNumber, currentToken->columnNumber); //代入ノードを作成
+	AST* variable = new VariableNode(variableName, currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
+	AST* ast = new AssignmentNode(variableName, variable, right, currentToken->lineNumber, currentToken->columnNumber); //代入ノードを作成
 	return ast;
 }
 
@@ -160,6 +160,12 @@ AST* Parser::Statement(TokenPtr token) {
 				falseExpr = (currentToken->type == TokenType::LBrace) ? BlockStatement(currentToken) : Statement(currentToken);
 			}
 			return new IfStatementNode(condition, trueExpr, falseExpr, currentToken->lineNumber, currentToken->columnNumber); //if文ノードを作成
+		} else if (currentToken->value == "int") {
+			return StaticVariable(token, 0); //int型の静的変数を解析する
+		} else if (currentToken->value == "double") {
+			return StaticVariable(token, 1); //double型の静的変数を解析する
+		} else if (currentToken->value == "string") {
+			return StaticVariable(token, 2); //string型の静的変数を解析する
 		}
 	}
 
@@ -186,6 +192,20 @@ AST* Parser::BlockStatement(TokenPtr token) {
 	}
 	currentToken = lexer.ExtractNextToken(); //右波括弧をスキップ
 	return new BlockStatementNode(statements, currentToken->lineNumber, currentToken->columnNumber);
+}
+
+AST* Parser::StaticVariable(TokenPtr token, int type) {
+	//静的変数を解析する
+	currentToken = lexer.ExtractNextToken(); //型をスキップ
+	TokenPtr nextToken = lexer.PeekTokens(0); //次のトークンを取得
+	if ((nextToken->type == TokenType::Operator) && (nextToken->value == "=")) {
+		AST* assignment = ExprAssignment(currentToken); //型の変数を宣言&代入
+		return new StaticVariableNode(assignment, type, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
+	}
+	string variableName = currentToken->value; //変数名を取得
+	AST* ast = new StaticVarNodeWithoutAssignment(variableName, type, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
+	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
+	return ast;
 }
 
 void Parser::show(AST* ast) {
@@ -225,6 +245,16 @@ void Parser::show(AST* ast) {
 		cout << "{" << node->GetVariableName() << " = ";
 		show(node->GetExpression());
 		cout << " }";
+		break;
+	}
+	case Node::StaticVarWithAssignment: {
+		StaticVariableNode* node = static_cast<StaticVariableNode*>(ast);
+		cout << "{" << node->GetAssignment() << " }";
+		break;
+	}
+	case Node::StaticVarWithoutAssignment: {
+		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
+		cout << "`" << node->GetVariableName() << " `";
 		break;
 	}
 	case Node::Variable: {
