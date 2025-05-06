@@ -264,6 +264,24 @@ T OperationType::GetValue() const {
 	}
 }
 
+long long OperationType::my_stoll(const string str) const {
+	try {
+		return stoll(str);
+	}
+	catch (...) {
+		return 0; // 変換できない場合は0を返す
+	}
+}
+
+long double OperationType::my_stold(const string str) const {
+	try {
+		return stold(str);
+	}
+	catch (...) {
+		return 0.0; // 変換できない場合は0.0を返す
+	}
+}
+
 template long long OperationType::GetValue<long long>() const;
 template long double OperationType::GetValue<long double>() const;
 template std::string OperationType::GetValue<std::string>() const;

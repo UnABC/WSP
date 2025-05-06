@@ -1,0 +1,45 @@
+//通常void関数のテスト
+void test1(){
+	print("This is void test.")
+	return;
+}
+
+//引数、returnなしのテスト
+void test2(string foo){
+	print("This is void and print test.This function accepted follow message:"+foo)
+}
+//int関数のテスト
+int add(int a,int b){
+	return a+b
+}
+//double関数のテスト
+double sub(double a,double b){
+	return a-b
+}
+//複数retrun のテスト
+string SciKyo(string str){
+	if (str == "Tokyo Tech"){
+		return "Science Tokyo"
+	}
+	return str
+}
+//再帰関数のテスト
+//a_{n+1} = a_n+1,a_1 =0の漸化式を考える
+int recursion(int n){
+	if (n == 1)return 0
+	return recursion(n-1)+1
+}
+
+test1()
+test2("Success!")
+print(add(3,7))
+print(sub(M_PI,M_E))
+print(SciKyo("Tokyo Tech"))
+print(SciKyo("UTokyo"))
+print(recursion(10))
+print(my_abs(-123))
+
+//関数の定義が後出の場合のテスト
+int my_abs(int a){
+	return (a<0)?-a:a
+}

@@ -1,5 +1,5 @@
 /*仕様(メモ)
-type;0:int,1:double,2:string,3:void
+type;0:int,1:double,2:string,3:void,-1:不定,-2:未定義
 */
 #ifndef AST_HPP
 #define AST_HPP
@@ -19,6 +19,7 @@ enum class Node {
 	Statement,		            //文
 	BlockStatement,	            //ブロック文
 	Function,		            //関数
+	DefFunction,	            //関数定義
 	IfStatement		            //If文 
 };
 
@@ -183,22 +184,42 @@ public:
 	void SetType(int type) override { this->type = type; };
 };
 
-class FunctionNode : public AST {
+class SystemFunctionNode : public AST {
 private:
 	std::string functionName;	//関数名
-	//AST* argument;	//引数
 	std::vector<AST*> argument;	//引数
 	int type = 3;	//式の型(0:int,1:double,2:string,3:void)
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	FunctionNode(std::string functionName, std::vector<AST*> argument, unsigned long long lineNumber, unsigned long long columnNumber)
+	SystemFunctionNode(std::string functionName, std::vector<AST*> argument, unsigned long long lineNumber, unsigned long long columnNumber)
 		: functionName(functionName), argument(argument), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::Function; };
 	const std::string GetFunctionName() { return functionName; };
 	const int GetType() override { return type; };
 	void SetType(int type) override { this->type = type; };
+	std::vector<AST*> GetArgument() { return argument; };
+	const int GetArgumentSize() { return argument.size(); };
+};
+
+class UserFunctionNode : public AST {
+private:
+	std::string functionName;	//関数名
+	std::vector<AST*> argument;	//引数
+	AST* blockStatement;	//関数の中身
+	int type = -2;	//式の型(0:int,1:double,2:string,3:void)
+public:
+	unsigned long long lineNumber;	//行番号
+	unsigned long long columnNumber;	//列番号
+	UserFunctionNode(std::string functionName, std::vector<AST*> argument,AST* blockStatement,int type, unsigned long long lineNumber, unsigned long long columnNumber)
+		: functionName(functionName), argument(argument),blockStatement(blockStatement),type(type), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::DefFunction; };
+	const std::string GetFunctionName() { return functionName; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
+	AST* GetBlockStatement() { return blockStatement; };
 	std::vector<AST*> GetArgument() { return argument; };
 	const int GetArgumentSize() { return argument.size(); };
 };

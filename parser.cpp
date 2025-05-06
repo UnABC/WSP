@@ -147,7 +147,7 @@ AST* Parser::ExprFunction(TokenPtr token) {
 		args.push_back(ExprTernary()); //引数を解析する
 	} while (currentToken->type == TokenType::Symbol && currentToken->value == ",");
 	currentToken = lexer.ExtractNextToken(); //)をスキップ
-	AST* ast = new FunctionNode(functionName, args, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
+	AST* ast = new SystemFunctionNode(functionName, args, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
 	return ast;
 }
 
@@ -172,11 +172,13 @@ AST* Parser::Statement(TokenPtr token) {
 			}
 			return new IfStatementNode(condition, trueExpr, falseExpr, currentToken->lineNumber, currentToken->columnNumber); //if文ノードを作成
 		} else if (currentToken->value == "int") {
-			return StaticVariable(token, 0); //int型の静的変数を解析する
+			return Declaration(token, 0); //int型の静的変数を解析する
 		} else if (currentToken->value == "double") {
-			return StaticVariable(token, 1); //double型の静的変数を解析する
+			return Declaration(token, 1); //double型の静的変数を解析する
 		} else if (currentToken->value == "string") {
-			return StaticVariable(token, 2); //string型の静的変数を解析する
+			return Declaration(token, 2); //string型の静的変数を解析する
+		} else if (currentToken->value == "void"){
+			return Declaration(token, 3); //void型の関数を解析する
 		}
 	}
 
@@ -205,14 +207,35 @@ AST* Parser::BlockStatement(TokenPtr token) {
 	return new BlockStatementNode(statements, currentToken->lineNumber, currentToken->columnNumber);
 }
 
-AST* Parser::StaticVariable(TokenPtr token, int type) {
-	//静的変数を解析する
+AST* Parser::Declaration(TokenPtr token, int type) {
+	//静的変数or関数を解析する
 	currentToken = lexer.ExtractNextToken(); //型をスキップ
 	TokenPtr nextToken = lexer.PeekTokens(0); //次のトークンを取得
-	if ((nextToken->type == TokenType::Operator) && (nextToken->value == "=")) {
+	if ((type != 3) && (nextToken->type == TokenType::Operator) && (nextToken->value == "=")) {
+		//静的変数の初期化
 		AST* assignment = ExprAssignment(currentToken); //型の変数を宣言&代入
 		return new StaticVariableNode(assignment, type, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
+	}else if (nextToken->type == TokenType::LParentheses) {
+		//関数の初期化
+		string functionName = token->value; //関数名を取得
+		currentToken = lexer.ExtractNextToken(); //関数名をスキップ
+		currentToken = lexer.ExtractNextToken(); //(をスキップ
+		vector<AST*> args;
+		do {
+			currentToken = lexer.ExtractNextToken(); //(or,をスキップ
+			//TODO:引数の解析
+			args.push_back(ExprTernary()); //引数を解析する
+		} while (currentToken->type == TokenType::Symbol && currentToken->value == ",");
+		currentToken = lexer.ExtractNextToken(); //)をスキップ
+		if (currentToken->type != TokenType::LBrace) 
+			throw ParserException("Not found function contents.", currentToken->lineNumber, currentToken->columnNumber);
+		AST* block = BlockStatement(currentToken); //関数の内容を解析する
+		AST* ast = new UserFunctionNode(functionName, args, block, type, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
+		return ast;
 	}
+	if (type == 3)
+		throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected function declaration.", currentToken->lineNumber, currentToken->columnNumber);
+	//静的変数(初期値なし)
 	string variableName = currentToken->value; //変数名を取得
 	AST* ast = new StaticVarNodeWithoutAssignment(variableName, type, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
 	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
@@ -242,7 +265,7 @@ void Parser::show(AST* ast) {
 		break;
 	}
 	case Node::Function: {
-		FunctionNode* node = static_cast<FunctionNode*>(ast);
+		SystemFunctionNode* node = static_cast<SystemFunctionNode*>(ast);
 		cout << node->GetFunctionName() << "(";
 		for (int i = 0; i < node->GetArgumentSize(); i++) {
 			if (i != 0) cout << ", ";

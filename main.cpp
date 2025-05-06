@@ -5,18 +5,26 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		Lexer lexer("test/type.txt");
+		Lexer lexer("test/type.wsp");
+		//Lexer実行
 		Parser parser(lexer);
 		Evaluator evaluator;
-		//vector<AST*> statements;
+		vector<AST*> statements;
 		VerifyType checkType;
+		//Parser実行
 		while (AST* ast = parser.ParseStatement(lexer.ExtractNextToken())) {
 			//parser.show(ast);
 			//printf("\n");
 			checkType.CheckType(ast); //型チェック
-			evaluator.evaluate(ast);
-			//statements.push_back(ast); //ASTを保存
+			//evaluator.evaluate(ast);
+			statements.push_back(ast); //ASTを保存
 		}
+		//Evaluator実行
+		for (AST* ast : statements)
+			evaluator.RegisterFunctions(ast); //関数を登録
+		for (AST* ast : statements)
+			evaluator.evaluate(ast); //評価実行
+		//以下Lexer testの残骸//////////////////////////////////////////////////////////////////
 		// for (AST *ast : statements) {
 		// 	//ASTを表示する
 		// 	//  parser.show(ast);

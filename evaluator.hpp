@@ -2,18 +2,20 @@
 #define EVALUATOR_HPP
 
 #include "parser.hpp"
-
-class OperationType;
+#include "OperationType.hpp"
 
 class Evaluator {
 private:
 	TokenPtr currentToken;	//現在のトークン
 	//各種変数格納map
-	std::map<std::string, long double> varld;
-	std::map<std::string, long long> varll;
-	std::map<std::string, std::string> vars;
+	//TODO:変数をすべてOperationTypeに統一する!!
+	std::map<std::string, OperationType> var;
+	//ユーザー定義関数
+	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
+	//関数内のローカル変数
+	std::map<AST *,OperationType> local_var;
 	//数学定数
-	std::map<std::string, long double> math_const;
+	std::map<std::string, OperationType> math_const;
 	template<typename T>
 	T CalcExpr(AST* ast);
 	template<typename T>
@@ -24,12 +26,10 @@ private:
 	void VoidFunction(AST* ast);
 	void ProcessVariables(AST* ast);
 	void ProcessStaticVar(AST* ast);
-protected:
-	long long my_stoll(const std::string str) const;
-	long double my_stold(const std::string str) const;
 public:
 	Evaluator();
 	void evaluate(AST* ast);
+	void RegisterFunctions(AST* ast);
 };
 #endif // EVALUATOR_HPP
 

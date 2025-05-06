@@ -117,11 +117,18 @@ void VerifyType::CheckType(AST* ast) {
 		break;
 	}
 	case Node::Function: {
-		FunctionNode* node = static_cast<FunctionNode*>(ast);
+		SystemFunctionNode* node = static_cast<SystemFunctionNode*>(ast);
 		if (system_func_type.count(node->GetFunctionName()))
 			node->SetType(system_func_type[node->GetFunctionName()]);
 		for (int i = 0; i < node->GetArgumentSize(); i++)
 			CheckType(node->GetArgument().at(i));
+		break;
+	}
+	case Node::DefFunction: {
+		UserFunctionNode* node = static_cast<UserFunctionNode*>(ast);
+		for (int i = 0; i < node->GetArgumentSize(); i++)
+			CheckType(node->GetArgument().at(i));
+		CheckType(node->GetBlockStatement());
 		break;
 	}
 	case Node::IfStatement: {

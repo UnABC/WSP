@@ -4,20 +4,20 @@ using namespace std;
 
 Evaluator::Evaluator() {
 	//数学定数を指定
-	math_const["M_PI"] = 3.14159265358979323846;
-	math_const["M_E"] = 2.71828182845904523536;
-	math_const["M_LOG2E"] = 1.44269504088896340736;
-	math_const["M_LOG10E"] = 0.43429448190325182765;
-	math_const["M_LN2"] = 0.69314718055994530942;
-	math_const["M_LN10"] = 2.30258509299404568402;
-	math_const["M_PI_2"] = 1.57079632679489661923;
-	math_const["M_PI_4"] = 0.78539816339744830962;
-	math_const["M_1_PI"] = 0.31830988618379067154;
-	math_const["M_2_PI"] = 0.63661977236758134308;
-	math_const["M_2_SQRTPI"] = 1.12837916709551257390;
-	math_const["M_SQRT2"] = 1.41421356237309504880;
-	math_const["M_SQRT1_2"] = 0.70710678118654752440;
-	math_const["M_SQRT3"] = 1.73205080756887729352;
+	math_const["M_PI"] = (long double)3.14159265358979323846;
+	math_const["M_E"] = (long double)2.71828182845904523536;
+	math_const["M_LOG2E"] = (long double)1.44269504088896340736;
+	math_const["M_LOG10E"] = (long double)0.43429448190325182765;
+	math_const["M_LN2"] = (long double)0.69314718055994530942;
+	math_const["M_LN10"] = (long double)2.30258509299404568402;
+	math_const["M_PI_2"] = (long double)1.57079632679489661923;
+	math_const["M_PI_4"] = (long double)0.78539816339744830962;
+	math_const["M_1_PI"] = (long double)0.31830988618379067154;
+	math_const["M_2_PI"] = (long double)0.63661977236758134308;
+	math_const["M_2_SQRTPI"] = (long double)1.12837916709551257390;
+	math_const["M_SQRT2"] = (long double)1.41421356237309504880;
+	math_const["M_SQRT1_2"] = (long double)0.70710678118654752440;
+	math_const["M_SQRT3"] = (long double)1.73205080756887729352;
 	return;
 }
 
@@ -39,6 +39,9 @@ void Evaluator::evaluate(AST* ast) {
 		VoidFunction(ast);
 		return;
 	}
+	case Node::DefFunction: {
+		return;
+	}
 	case Node::StaticVarWithoutAssignment: {
 		ProcessStaticVar(ast);
 		return;
@@ -55,6 +58,20 @@ void Evaluator::evaluate(AST* ast) {
 	}
 }
 
+void Evaluator::RegisterFunctions(AST* ast) {
+	//関数登録
+	if (ast == nullptr) return;
+	if (ast->GetNodeType() == Node::DefFunction) {
+		UserFunctionNode* node = static_cast<UserFunctionNode*>(ast);
+		string functionName = node->GetFunctionName();
+		if (user_func.count(functionName))
+			throw EvaluatorException("Redefinition of function: " + functionName + ".");
+		user_func[functionName] = make_pair(node->GetArgument(), node->GetBlockStatement());
+		return;
+	}
+	return;
+}
+
 
 template<typename T>
 T Evaluator::CalcExpr(AST* ast) {
@@ -64,15 +81,8 @@ T Evaluator::CalcExpr(AST* ast) {
 	case Node::String: {
 		NumberNode* node = static_cast<NumberNode*>(ast);
 		string number = node->GetValue();
-		if constexpr (is_same_v<T, string>) {
-			return number;
-		} else {
-			if (number.find('.') != string::npos) {
-				return my_stold(number);
-			} else {
-				return my_stoll(number);
-			}
-		}
+		OperationType value(number);
+		return value.GetValue<T>();
 	}
 	case Node::UnaryOperator: {
 		UnaryOperatorNode* node = static_cast<UnaryOperatorNode*>(ast);
@@ -145,7 +155,7 @@ T Evaluator::CalcExpr(AST* ast) {
 		throw EvaluatorException("Unknown type");
 	}
 	case Node::Function: {
-		FunctionNode* node = static_cast<FunctionNode*>(ast);
+		SystemFunctionNode* node = static_cast<SystemFunctionNode*>(ast);
 		string functionName = node->GetFunctionName();
 		vector<AST*> args = node->GetArgument();
 		if constexpr (!is_same_v<T, string>) {
@@ -188,6 +198,11 @@ T Evaluator::CalcExpr(AST* ast) {
 		} else if (functionName == "string") {
 			return ReturnProperType<T>(CalcExpr<string>(args.at(0)));
 		}
+		//ユーザー定義関数
+		//TODO:FIXME:XXX:要修正!!
+		if (user_func.count(functionName)) {
+
+		}
 		throw EvaluatorException("Unknown function:" + functionName);
 	}
 	case Node::StaticVarWithAssignment:
@@ -197,18 +212,21 @@ T Evaluator::CalcExpr(AST* ast) {
 		string variableName = node->GetVariableName();
 		AST* expression = node->GetExpression();
 		//変数の存在を確認
-		if (varll.count(variableName)) {
-			return ReturnProperType<T>(varll[variableName] = CalcExpr<long long>(expression));
-		} else if (varld.count(variableName)) {
-			return ReturnProperType<T>(varld[variableName] = CalcExpr<long double>(expression));
-		} else if (vars.count(variableName)) {
-			return ReturnProperType<T>(vars[variableName] = CalcExpr<string>(expression));
+		if (var.count(variableName)) {
+			switch (var[variableName].GetType())
+			{
+			case 0:return ReturnProperType<T>((var[variableName] = CalcExpr<long long>(expression)).GetValue<long long>());
+			case 1:return ReturnProperType<T>((var[variableName] = CalcExpr<long double>(expression)).GetValue<long double>());
+			case 2:return ReturnProperType<T>((var[variableName] = CalcExpr<string>(expression)).GetValue<string>());
+			default:throw EvaluatorException("Unknown function variable type.");
+			}
 		}
+		//変数の定義！！
 		switch (node->GetType())
 		{
-		case 0:return ReturnProperType<T>(varll[variableName] = CalcExpr<long long>(expression));
-		case 1:return ReturnProperType<T>(varld[variableName] = CalcExpr<long double>(expression));
-		case 2:return ReturnProperType<T>(vars[variableName] = CalcExpr<string>(expression));
+		case 0:return ReturnProperType<T>((var[variableName] = CalcExpr<long long>(expression)).GetValue<long long>());
+		case 1:return ReturnProperType<T>((var[variableName] = CalcExpr<long double>(expression)).GetValue<long double>());
+		case 2:return ReturnProperType<T>((var[variableName] = CalcExpr<string>(expression)).GetValue<string>());
 		case 3:throw  EvaluatorException("Void function should not return value.");
 		default:throw EvaluatorException("Unknown function variable type.");
 		}
@@ -218,18 +236,13 @@ T Evaluator::CalcExpr(AST* ast) {
 		//静的変数の処理
 		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
 		string variableName = node->GetVariableName();
-		if (varll.count(variableName)) {
-			return ReturnProperType<T>(varll[variableName]);
-		} else if (varld.count(variableName)) {
-			return ReturnProperType<T>(varld[variableName]);
-		} else if (vars.count(variableName)) {
-			return ReturnProperType<T>(vars[variableName]);
-		}
+		if (var.count(variableName))
+			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
 		switch (node->GetType())
 		{
-		case 0:return ReturnProperType<T>(varll[variableName] = 0);
-		case 1:return ReturnProperType<T>(varld[variableName] = 0.0);
-		case 2:return ReturnProperType<T>(vars[variableName] = "");
+		case 0:return ReturnProperType<T>((var[variableName] = (long long)0).GetValue<long long>());
+		case 1:return ReturnProperType<T>((var[variableName] = (long double)0.0).GetValue<long double>());
+		case 2:return ReturnProperType<T>((var[variableName] = "").GetValue<string>());
 		case 3:throw EvaluatorException("Void function should not return value.");
 		default:throw EvaluatorException("Unknown function variable type.");
 		}
@@ -240,19 +253,11 @@ T Evaluator::CalcExpr(AST* ast) {
 		string variableName = node->GetVariableName();
 		//各種数学定数
 		if (math_const.count(variableName)) {
-			if constexpr (is_same_v<T, string>) {
-				return to_string(math_const[variableName]);
-			} else {
-				return math_const[variableName];
-			}
+			return math_const[variableName].GetValue<T>();
 		}
 		//変数の存在を確認
-		if (varll.count(variableName)) {
-			return ReturnProperType<T>(varll[variableName]);
-		} else if (varld.count(variableName)) {
-			return ReturnProperType<T>(varld[variableName]);
-		} else if (vars.count(variableName)) {
-			return ReturnProperType<T>(vars[variableName]);
+		if (var.count(variableName)) {
+			return var[variableName].GetValue<T>();
 		} else {
 			throw RuntimeException("Undefined variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 		}
@@ -320,7 +325,7 @@ void Evaluator::IfStatement(AST* ast) {
 //戻り値のない関数の処理
 void Evaluator::VoidFunction(AST* ast) {
 	//void関数の処理
-	FunctionNode* node = static_cast<FunctionNode*>(ast);
+	SystemFunctionNode* node = static_cast<SystemFunctionNode*>(ast);
 	string functionName = node->GetFunctionName();
 	vector<AST*> args = node->GetArgument();
 	//組み込み関数
@@ -352,28 +357,25 @@ void Evaluator::ProcessVariables(AST* ast) {
 	string variableName = node->GetVariableName();
 	AST* expression = node->GetExpression();
 	//変数の存在を確認
-	if (varll.count(variableName)) {
-		varll[variableName] = CalcExpr<long long>(expression);
-		return;
-	} else if (varld.count(variableName)) {
-		varld[variableName] = CalcExpr<long double>(expression);
-		return;
-	} else if (vars.count(variableName)) {
-		vars[variableName] = CalcExpr<string>(expression);
+	if (var.count(variableName)) {
+		switch (var[variableName].GetType())
+		{
+		case 0:var[variableName] = CalcExpr<long long>(expression); break;
+		case 1:var[variableName] = CalcExpr<long double>(expression); break;
+		case 2:var[variableName] = CalcExpr<string>(expression); break;
+		case 3:throw EvaluatorException("Void function should not return value.");
+		default:throw EvaluatorException("Unknown function variable type.");
+		}
 		return;
 	}
 	//変数の定義
-	if (node->GetType() == 0) {
-		varll[variableName] = CalcExpr<long long>(expression);
-		return;
-	} else if (node->GetType() == 1) {
-		varld[variableName] = CalcExpr<long double>(expression);
-		return;
-	} else if (node->GetType() == 2) {
-		vars[variableName] = CalcExpr<string>(expression);
-		return;
-	} else {
-		throw EvaluatorException("Unknown variable type.");
+	switch (node->GetType())
+	{
+	case 0:var[variableName] = CalcExpr<long long>(expression); break;
+	case 1:var[variableName] = CalcExpr<long double>(expression); break;
+	case 2:var[variableName] = CalcExpr<string>(expression); break;
+	case 3:throw EvaluatorException("Void function should not return value.");
+	default:throw EvaluatorException("Unknown function variable type.");
 	}
 	return;
 }
@@ -383,68 +385,22 @@ void Evaluator::ProcessStaticVar(AST* ast) {
 	StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
 	string variableName = node->GetVariableName();
 	//変数の存在を確認
-	if (varll.count(variableName) || varld.count(variableName) || vars.count(variableName))
+	if (var.count(variableName))
 		throw EvaluatorException("Static variable \"" + variableName + "\" already exists.");
 	//変数の定義
-	if (node->GetType() == 0) {
-		varll[variableName] = 0;
-		return;
-	} else if (node->GetType() == 1) {
-		varld[variableName] = 0.0;
-		return;
-	} else if (node->GetType() == 2) {
-		vars[variableName] = "";
-		return;
+	switch (node->GetType())
+	{
+	case 0:var[variableName] = (long long)0; break;
+	case 1:var[variableName] = (long double)0.0; break;
+	case 2:var[variableName] = ""; break;
+	case 3:throw EvaluatorException("Void function should not return value.");
+	default:throw EvaluatorException("Unknown function variable type.");
 	}
 	throw EvaluatorException("Unknown variable type." + to_string(node->GetType()));
 }
 
 template<typename T, typename S>
 T Evaluator::ReturnProperType(S value) {
-	//適切な型を返す
-	if constexpr (is_same_v<T, long double>) {
-		if constexpr (is_same_v<S, string>) {
-			return my_stold(value);
-		} else {
-			return (long double)value;
-		}
-	} else if constexpr (is_same_v<T, long long>) {
-		if constexpr (is_same_v<S, string>) {
-			return my_stoll(value);
-		} else {
-			return (long long)value;
-		}
-	} else if constexpr (is_same_v<T, string>) {
-		if constexpr (is_same_v<S, string>) {
-			return value;
-		} else if constexpr (is_same_v<S, bool>) {
-			return value ? "1" : "";
-		} else {
-			return to_string(value);
-		}
-	} else if constexpr (is_same_v<T, bool>) {
-		if constexpr (is_same_v<S, string>) {
-			return (value == "") ? false : true;
-		} else {
-			return (bool)value;
-		}
-	}
-}
-
-long long Evaluator::my_stoll(const string str) const {
-	try {
-		return stoll(str);
-	}
-	catch (...) {
-		return 0; // 変換できない場合は0を返す
-	}
-}
-
-long double Evaluator::my_stold(const string str) const {
-	try {
-		return stold(str);
-	}
-	catch (...) {
-		return 0.0; // 変換できない場合は0.0を返す
-	}
+	OperationType result(value);
+	return result.GetValue<T>();
 }
