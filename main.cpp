@@ -5,7 +5,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		Lexer lexer("test/type.wsp");
+		Lexer lexer("test/scope_test.wsp");
 		//Lexer実行
 		Parser parser(lexer);
 		Evaluator evaluator;

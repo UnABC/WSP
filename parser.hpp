@@ -21,7 +21,8 @@ private:
 	AST* ExprAssignment(TokenPtr token);
 	AST* Statement(TokenPtr token);
 	AST* BlockStatement(TokenPtr token);
-	AST* Declaration(TokenPtr token, int type);
+	AST* Declaration(int type);
+	AST* Argument(TokenPtr token);
 public:
 	Parser(Lexer& lexer) : lexer(lexer) {};
 	AST* ParseStatement(TokenPtr token);
