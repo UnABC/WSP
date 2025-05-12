@@ -22,7 +22,7 @@ private:
 	AST* Statement(TokenPtr token);
 	AST* BlockStatement(TokenPtr token);
 	AST* Declaration(int type);
-	AST* Argument(TokenPtr token);
+	AST* Argument(int type);
 public:
 	Parser(Lexer& lexer) : lexer(lexer) {};
 	AST* ParseStatement(TokenPtr token);

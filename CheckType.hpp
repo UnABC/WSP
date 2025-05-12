@@ -9,8 +9,10 @@ private:
 
 	std::map<std::string, int> system_var_type;	//システム定数
 	std::map<std::string, int> system_func_type;	//関数
+	std::map<std::string, int> user_func_type;	//ユーザー定義関数
 public:
 	VerifyType();
+	void CheckFuncType(AST* ast);
 	void CheckType(AST* ast);
 };
 

@@ -1,7 +1,7 @@
 //通常void関数のテスト
 void test1(){
 	print("This is void test.")
-	return;
+	return
 }
 
 //引数、returnなしのテスト
@@ -20,6 +20,8 @@ double sub(double a,double b){
 string SciKyo(string str){
 	if (str == "Tokyo Tech"){
 		return "Science Tokyo"
+	}else if (str == "Science Tokyo"){
+		return "Scikyo!"
 	}
 	return str
 }

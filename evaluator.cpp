@@ -213,9 +213,72 @@ T Evaluator::CalcExpr(AST* ast) {
 			return ReturnProperType<T>(CalcExpr<string>(args.at(0)));
 		}
 		//ユーザー定義関数
-		//TODO:FIXME:XXX:要修正!!
 		if (user_func.count(functionName)) {
-
+			if (user_func[functionName].first.size() < args.size())
+				throw RuntimeException("Argument size is too large.", node->lineNumber, node->columnNumber);
+			EnterScope();
+			for (int i = 0; i < node->GetArgumentSize(); i++) {
+				AST* arg = (i >= args.size()) ? nullptr : args.at(i);
+				ArgumentNode* arg_def = static_cast<ArgumentNode*>(user_func[functionName].first.at(i));
+				//引数の変数名を取得
+				string variableName = static_cast<VariableNode*>(arg_def->GetVariable())->GetVariableName();
+				if (arg != nullptr) {
+					//引数の変数を定義
+					switch (arg_def->GetType()) {
+					case 0:
+						var.back()[variableName] = CalcExpr<long long>(arg);
+						break;
+					case 1:
+						var.back()[variableName] = CalcExpr<long double>(arg);
+						break;
+					case 2:
+						var.back()[variableName] = CalcExpr<string>(arg);
+						break;
+					case 3:
+						//参照渡し
+						if (arg->GetNodeType() != Node::Variable)
+							throw RuntimeException("Invalid argument type.Expected variable.", node->lineNumber, node->columnNumber);
+						switch (arg->GetType())
+						{
+						case 0:
+							var.back()[variableName] = CalcExpr<long long>(arg);
+							break;
+						case 1:
+							var.back()[variableName] = CalcExpr<long double>(arg);
+							break;
+						case 2:
+							var.back()[variableName] = CalcExpr<string>(arg);
+							break;
+						default:
+							throw RuntimeException("Invalid argument type.Expected variable.", node->lineNumber, node->columnNumber);
+						}
+						break;
+					default:
+						throw EvaluatorException("Unknown type:" + to_string(arg_def->GetType()));
+					}
+				} else {
+					//引数を省略した場合
+					if (!arg_def->IsAssigned())
+						throw RuntimeException("Argument is not assigned.", node->lineNumber, node->columnNumber);
+					AST* default_value = arg_def->GetDefaultValue();
+					switch (arg_def->GetType()) {
+					case 0:
+						var.back()[variableName] = CalcExpr<long long>(default_value);
+						break;
+					case 1:
+						var.back()[variableName] = CalcExpr<long double>(default_value);
+						break;
+					case 2:
+						var.back()[variableName] = CalcExpr<string>(default_value);
+						break;
+					default:
+						throw RuntimeException("Invalid argument type.", node->lineNumber, node->columnNumber);
+					}
+				}
+			}
+			//関数の中身を実行
+			return ReturnProperType<T>(ProcessFunction(user_func[functionName].second).first.GetValue<T>());
+			ExitScope();
 		}
 		throw EvaluatorException("Unknown function:" + functionName);
 	}
@@ -227,26 +290,11 @@ T Evaluator::CalcExpr(AST* ast) {
 		AST* expression = node->GetExpression();
 		//変数の存在を確認
 		for (auto& scoped_var : var) {
-			if (scoped_var.count(variableName)) {
-				switch (scoped_var[variableName].GetType())
-				{
-				case 0:return ReturnProperType<T>((scoped_var[variableName] = CalcExpr<long long>(expression)).GetValue<long long>());
-				case 1:return ReturnProperType<T>((scoped_var[variableName] = CalcExpr<long double>(expression)).GetValue<long double>());
-				case 2:return ReturnProperType<T>((scoped_var[variableName] = CalcExpr<string>(expression)).GetValue<string>());
-				default:throw EvaluatorException("Unknown function variable type.");
-				}
-			}
+			if (scoped_var.count(variableName))
+				return ReturnProperType<T>((scoped_var[variableName] = CalcExpr<T>(expression)).template GetValue<T>());
 		}
 		//変数の定義！！
-		switch (node->GetType())
-		{
-		case 0:return ReturnProperType<T>((var.back()[variableName] = CalcExpr<long long>(expression)).GetValue<long long>());
-		case 1:return ReturnProperType<T>((var.back()[variableName] = CalcExpr<long double>(expression)).GetValue<long double>());
-		case 2:return ReturnProperType<T>((var.back()[variableName] = CalcExpr<string>(expression)).GetValue<string>());
-		case 3:throw  EvaluatorException("Void function should not return value.");
-		default:throw EvaluatorException("Unknown function variable type.");
-		}
-		throw EvaluatorException("Unknown type");
+		return ReturnProperType<T>((var.back()[variableName] = CalcExpr<T>(expression)).template GetValue<T>());
 	}
 	case Node::StaticVarWithoutAssignment: {
 		//静的変数の処理
@@ -254,16 +302,16 @@ T Evaluator::CalcExpr(AST* ast) {
 		string variableName = node->GetVariableName();
 		for (auto& scoped_var : var) {
 			if (scoped_var.count(variableName)) {
-				throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
+				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 			}
 		}
 		switch (node->GetType())
 		{
 		case 0:return ReturnProperType<T>((var.back()[variableName] = (long long)0).GetValue<long long>());
 		case 1:return ReturnProperType<T>((var.back()[variableName] = (long double)0.0).GetValue<long double>());
-		case 2:return ReturnProperType<T>((var.back()[variableName] = "").GetValue<string>());
-		case 3:throw EvaluatorException("Void function should not return value.");
-		default:throw EvaluatorException("Unknown function variable type.");
+		case 2:return ReturnProperType<T>((var.back()[variableName] = string()).GetValue<string>());
+		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
+		default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
 		}
 		throw EvaluatorException("Unknown type");
 	}
@@ -282,9 +330,10 @@ T Evaluator::CalcExpr(AST* ast) {
 		}
 		throw RuntimeException("Undefined variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 	}
-	default: {
-		throw EvaluatorException("Unknown node type.");
+	case Node::ReturnStatement: {
+		throw EvaluatorException("Return statement should not be evaluated.");
 	}
+	default:throw EvaluatorException("Unknown node type.");
 	}
 	throw EvaluatorException("Fatal Error:This message should not be displayed.(´・ω・｀)");
 }
@@ -363,12 +412,15 @@ void Evaluator::VoidFunction(AST* ast) {
 			cout << CalcExpr<string>(args.at(0)) << endl;
 			break;
 		}
-		case 3:throw EvaluatorException("Void function should not return value.");
-		default:throw EvaluatorException("Unknown function argument type.");
+		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
+		default:throw RuntimeException("Unknown argument type.", node->lineNumber, node->columnNumber);
 		}
 		return;
 	}
-	//TODO:ユーザ定義関数
+	//TODO:ユーザー定義関数
+	if (user_func.count(functionName)) {
+
+	}
 	return;
 }
 
@@ -379,13 +431,13 @@ void Evaluator::ProcessVariables(AST* ast) {
 	//変数の存在を確認
 	for (auto& scoped_var : var) {
 		if (scoped_var.count(variableName)) {
-			switch (scoped_var[variableName].GetType())
+			switch (node->GetType())
 			{
 			case 0:scoped_var[variableName] = CalcExpr<long long>(expression); break;
 			case 1:scoped_var[variableName] = CalcExpr<long double>(expression); break;
 			case 2:scoped_var[variableName] = CalcExpr<string>(expression); break;
-			case 3:throw EvaluatorException("Void function should not return value.");
-			default:throw EvaluatorException("Unknown function variable type.");
+			case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
+			default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
 			}
 			return;
 		}
@@ -396,8 +448,8 @@ void Evaluator::ProcessVariables(AST* ast) {
 	case 0:var.back()[variableName] = CalcExpr<long long>(expression); break;
 	case 1:var.back()[variableName] = CalcExpr<long double>(expression); break;
 	case 2:var.back()[variableName] = CalcExpr<string>(expression); break;
-	case 3:throw EvaluatorException("Void function should not return value.");
-	default:throw EvaluatorException("Unknown function variable type.");
+	case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
+	default:throw RuntimeException("Unknown function variable type.", node->lineNumber, node->columnNumber);
 	}
 	return;
 }
@@ -416,15 +468,43 @@ void Evaluator::ProcessStaticVar(AST* ast) {
 	{
 	case 0:var.back()[variableName] = (long long)0; break;
 	case 1:var.back()[variableName] = (long double)0.0; break;
-	case 2:var.back()[variableName] = ""; break;
-	case 3:throw EvaluatorException("Void function should not return value.");
-	default:throw EvaluatorException("Unknown function variable type.");
+	case 2:var.back()[variableName] = string(); break;
+	case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
+	default:throw RuntimeException("Unknown function variable type.", node->lineNumber, node->columnNumber);
 	}
-	throw EvaluatorException("Unknown variable type." + to_string(node->GetType()));
 }
 
 template<typename T, typename S>
 T Evaluator::ReturnProperType(S value) {
 	OperationType result(value);
 	return result.GetValue<T>();
+}
+
+pair<OperationType,bool> Evaluator::ProcessFunction(AST* ast) {
+	//関数の中身(BlockStatement)を実行
+	switch (ast->GetNodeType()) {
+	case Node::BlockStatement: {
+		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
+		pair<OperationType,bool> result;
+		EnterScope();
+		while ((result = ProcessFunction(node->ReadStatement())).second);
+		ExitScope();
+		return result;
+	}
+	case Node::ReturnStatement: {
+		ReturnStatementNode* node = static_cast<ReturnStatementNode*>(ast);
+		if (node->GetExpression() == nullptr)
+			return make_pair(OperationType(), false);
+		switch (node->GetExpression()->GetType())
+		{
+		case 0:return make_pair(CalcExpr<long long>(node->GetExpression()), false);
+		case 1:return make_pair(CalcExpr<long double>(node->GetExpression()), false);
+		case 2:return make_pair(CalcExpr<string>(node->GetExpression()), false);
+		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
+		default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
+		}
+	}
+	default:evaluate(ast);
+	}
+	return make_pair(OperationType(), true);
 }

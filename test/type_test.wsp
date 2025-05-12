@@ -1,0 +1,5 @@
+tmp = M_PI
+print(tmp)
+tmp = "M_PI"
+print(tmp*2)
+

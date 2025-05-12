@@ -1,3 +1,4 @@
+//XXX:型チェックが壊れている！！
 #include "CheckType.hpp"
 using namespace std;
 
@@ -36,6 +37,19 @@ VerifyType::VerifyType() {
 	system_func_type["log10"] = 1;
 	system_func_type["pow"] = 1;
 	system_func_type["atan2"] = 1;
+	system_func_type["print"] = 3;
+}
+
+//ユーザー定義関数の型を保存
+void VerifyType::CheckFuncType(AST* ast) {
+	if (ast == nullptr) return;
+	if (ast->GetNodeType() != Node::DefFunction) return;
+	UserFunctionNode* node = static_cast<UserFunctionNode*>(ast);
+	string functionName = node->GetFunctionName();
+	if (system_func_type.count(functionName))
+		throw CheckTypeException("Redefinition of function: " + functionName + ".", node->lineNumber, node->columnNumber);
+	user_func_type[functionName] = node->GetType(); //関数の型を保存
+	return;
 }
 
 void VerifyType::CheckType(AST* ast) {
@@ -50,7 +64,6 @@ void VerifyType::CheckType(AST* ast) {
 		}
 		if (!var_type.count(variableName))
 			throw CheckTypeException("Undefined variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-		//cout << "Variable: " << variableName <<", Type: " << var_type[variableName] << endl;
 		node->SetType(var_type[variableName]); //変数の型を保存
 		break;
 	}
@@ -120,14 +133,19 @@ void VerifyType::CheckType(AST* ast) {
 		SystemFunctionNode* node = static_cast<SystemFunctionNode*>(ast);
 		if (system_func_type.count(node->GetFunctionName()))
 			node->SetType(system_func_type[node->GetFunctionName()]);
+		else if (user_func_type.count(node->GetFunctionName()))
+			node->SetType(user_func_type[node->GetFunctionName()]);
+		else
+			throw CheckTypeException("Undefined function: " + node->GetFunctionName() + ".", node->lineNumber, node->columnNumber);
 		for (int i = 0; i < node->GetArgumentSize(); i++)
 			CheckType(node->GetArgument().at(i));
 		break;
 	}
 	case Node::DefFunction: {
 		UserFunctionNode* node = static_cast<UserFunctionNode*>(ast);
-		for (int i = 0; i < node->GetArgumentSize(); i++)
-			CheckType(node->GetArgument().at(i));
+		for (int i = 0; i < node->GetArgumentSize(); i++){
+			node->GetArgument().at(i)->SetType(node->GetType());
+		}
 		CheckType(node->GetBlockStatement());
 		break;
 	}

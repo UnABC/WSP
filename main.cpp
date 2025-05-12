@@ -5,7 +5,9 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		Lexer lexer("test/scope_test.wsp");
+		string file_name = "test/func.wsp";
+		if (argc == 2)file_name = argv[1];
+		Lexer lexer(file_name);
 		//Lexer実行
 		Parser parser(lexer);
 		Evaluator evaluator;
@@ -15,13 +17,15 @@ int main(int argc, char* argv[]) {
 		while (AST* ast = parser.ParseStatement(lexer.ExtractNextToken())) {
 			//parser.show(ast);
 			//printf("\n");
-			checkType.CheckType(ast); //型チェック
+			checkType.CheckFuncType(ast); //ユーザー関数の型チェック
 			//evaluator.evaluate(ast);
 			statements.push_back(ast); //ASTを保存
 		}
 		//Evaluator実行
-		for (AST* ast : statements)
+		for (AST* ast : statements) {
+			checkType.CheckType(ast); //型チェック
 			evaluator.RegisterFunctions(ast); //関数を登録
+		}
 		for (AST* ast : statements)
 			evaluator.evaluate(ast); //評価実行
 		//以下Lexer testの残骸//////////////////////////////////////////////////////////////////
@@ -44,19 +48,19 @@ int main(int argc, char* argv[]) {
 		// printf("]\n");
 	}
 	catch (const LexerException& e) {
-		cerr << "Lexer error: " << e.what() << e.where() << endl;
+		cerr << "Lexer error: " << e.what() << "\n" << e.where() << endl;
 	}
 	catch (const ParserException& e) {
-		cerr << "Parser error: " << e.what() << e.where() << endl;
+		cerr << "Parser error: " << e.what() << "\n" << e.where() << endl;
 	}
 	catch (const EvaluatorException& e) {
 		cerr << "Evaluator error:" << e.what() << endl;
 	}
 	catch (const CheckTypeException& e) {
-		cerr << "CheckType error: " << e.what() << e.where() << endl;
+		cerr << "CheckType error: " << e.what() << "\n" << e.where() << endl;
 	}
 	catch (const RuntimeException& e) {
-		cerr << "Runtime error: " << e.what() << e.where() << endl;
+		cerr << "Runtime error: " << e.what() << "\n" << e.where() << endl;
 	}
 	catch (const std::logic_error& e) {
 		cerr << "Logic error: " << e.what() << endl;

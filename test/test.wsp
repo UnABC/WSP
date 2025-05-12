@@ -1,4 +1,6 @@
 hogehoge = 1928+25
+a = 0
+tmp = 0
 if hogehoge > 1000{
 	tmp = hogehoge-1000
 	print(tmp)

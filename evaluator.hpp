@@ -23,6 +23,7 @@ private:
 	void VoidFunction(AST* ast);
 	void ProcessVariables(AST* ast);
 	void ProcessStaticVar(AST* ast);
+	std::pair<OperationType,bool> ProcessFunction(AST* ast);
 	//スコープ変数の管理
 	inline void EnterScope() { var.emplace_back(); };
 	inline void ExitScope() { var.pop_back(); };
