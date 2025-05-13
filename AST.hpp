@@ -5,7 +5,6 @@ type;0:int,1:double,2:string,3:void,-1:不定,-2:未定義
 #define AST_HPP
 
 #include "lexer.hpp"
-#include "OperationType.hpp"
 
 enum class Node {
 	Number,			            //数値リテラル
@@ -98,16 +97,18 @@ class UnaryOperatorNode : public AST {
 private:
 	AST* expression;	//式
 	int type = -2;	//式の型(0:int,1:double)
+	int operatorType = 0;	//演算子の種類(0:!,1:-)
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	UnaryOperatorNode(AST* expression, unsigned long long lineNumber, unsigned long long columnNumber)
-		: expression(expression), lineNumber(lineNumber), columnNumber(columnNumber) {
+	UnaryOperatorNode(AST* expression,int operatorType, unsigned long long lineNumber, unsigned long long columnNumber)
+		: expression(expression),operatorType(operatorType), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::UnaryOperator; };
 	AST* GetExpression() { return expression; };
 	const int GetType() override { return type; };
 	void SetType(int type) override { this->type = type; };
+	const int GetOperatorType() { return operatorType; };
 };
 
 class BinaryOperatorNode : public AST {

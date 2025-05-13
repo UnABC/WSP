@@ -1,4 +1,5 @@
 //XXX:型チェックが壊れている！！
+//追記：evaluatorの大規模改修により死亡 
 #include "CheckType.hpp"
 using namespace std;
 

@@ -1,9 +1,26 @@
-int a = 10
+double a = 10
 print(a)
 int b = 3.14
 print(b)
 string c
 c = "Hello!"
 print(c)
-b = "world!"
+b = "2.98"
+//2が表示される(はず)
 print(b)
+c = 14
+//14141414141414141414が表示されたらOK!
+print(c*10) 
+a = "3.14"
+//6.28
+print(a*2)
+//ここまでstatic
+d = 123
+print(d*2)
+d = M_PI
+print(-2.0*d)
+d = "string is allowed!"
+print(d)
+
+
+

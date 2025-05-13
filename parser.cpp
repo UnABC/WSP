@@ -25,7 +25,7 @@ AST* Parser::ExprTernary() {
 
 //二項演算子を解析する
 AST* Parser::ExprBool() {
-	AST* left = ExprUnary();
+	AST* left = ExprAdd();
 	map<string, bool> operators = {
 		{">" ,true},{"<" ,true},
 		{"==",true},{"!=",true},{"<=",true},
@@ -36,20 +36,10 @@ AST* Parser::ExprBool() {
 	while ((currentToken->type == TokenType::Operator) && ((bool)operators.count(currentToken->value))) {
 		string operatorType = currentToken->value;
 		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
-		AST* right = ExprUnary();
+		AST* right = ExprAdd();
 		left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber); //二項演算子ノードを作成
 	}
 	return left;
-}
-
-AST* Parser::ExprUnary() {
-	//単項演算子を解析する
-	if (currentToken->type == TokenType::Operator && currentToken->value == "!") {
-		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
-		AST* expression = ExprAdd();
-		return new UnaryOperatorNode(expression, currentToken->lineNumber, currentToken->columnNumber); //単項演算子ノードを作成
-	}
-	return ExprAdd(); //単項演算子がない場合は、次の式を解析する
 }
 
 AST* Parser::ExprAdd() {
@@ -66,14 +56,25 @@ AST* Parser::ExprAdd() {
 
 AST* Parser::ExprMul() {
 	//乗算式を解析する
-	AST* left = ExprPrimary();
+	AST* left = ExprUnary();
 	while ((currentToken->type == TokenType::Operator) && (currentToken->value == "*" || currentToken->value == "/")) {
 		string operatorType = currentToken->value;
 		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
-		AST* right = ExprPrimary();
+		AST* right = ExprUnary();
 		left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber); //二項演算子ノードを作成
 	}
 	return left;
+}
+
+AST* Parser::ExprUnary() {
+	//単項演算子を解析する
+	if ((currentToken->type == TokenType::Operator) && (currentToken->value == "!" || currentToken->value == "-")) {
+		string operatorType = currentToken->value;
+		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
+		AST* expression = ExprPrimary();
+		return new UnaryOperatorNode(expression, (operatorType == "-"), currentToken->lineNumber, currentToken->columnNumber); //単項演算子ノードを作成
+	}
+	return ExprPrimary();
 }
 
 AST* Parser::ExprPrimary() {
@@ -109,14 +110,10 @@ AST* Parser::ExprPrimary() {
 	} else if (currentToken->type == TokenType::LParentheses) {
 		currentToken = lexer.ExtractNextToken(); //左括弧をスキップ
 		AST* left = ExprTernary();
-		if (currentToken->type != TokenType::RParentheses) {
+		if (currentToken->type != TokenType::RParentheses) 
 			throw ParserException("Not found right parenthesis.", currentToken->lineNumber, currentToken->columnNumber);
-		}
 		currentToken = lexer.ExtractNextToken(); //右括弧をスキップ
 		return left;
-	} else if ((currentToken->type == TokenType::Operator) && (currentToken->value == "-")) {
-		//負の数の処理(型は不定)
-		return new NumberNode("0", -1, currentToken->lineNumber, currentToken->columnNumber);
 	}
 	throw ParserException("Invalid token.\"" + currentToken->value + "\"", currentToken->lineNumber, currentToken->columnNumber);
 }
@@ -254,7 +251,7 @@ AST* Parser::Declaration(int type) {
 				} else {
 					throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected int, double, string or var.", currentToken->lineNumber, currentToken->columnNumber);
 				}
-			}else if (currentToken->type == TokenType::Symbol && currentToken->value == ",")
+			} else if (currentToken->type == TokenType::Symbol && currentToken->value == ",")
 				currentToken = lexer.ExtractNextToken(); //,をスキップ
 			else throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected int, double, string or var.", currentToken->lineNumber, currentToken->columnNumber);
 		}
