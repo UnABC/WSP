@@ -2,6 +2,27 @@
 #include "Var.hpp"
 using namespace std;
 
+//TODO:Debug用
+std::map<Node, std::string> nodeTypeStr = {
+	{Node::Number, "Number"},
+	{Node::String, "String"},
+	{Node::UnaryOperator, "UnaryOperator"},
+	{Node::BinaryOperator, "BinaryOperator"},
+	{Node::TernaryOperator, "TernaryOperator"},
+	{Node::Assignment, "Assignment"},
+	{Node::Variable, "Variable"},
+	{Node::StaticVarWithAssignment, "StaticVarWithAssignment"},
+	{Node::StaticVarWithoutAssignment, "StaticVarWithoutAssignment"},
+	{Node::Statement, "Statement"},
+	{Node::BlockStatement, "BlockStatement"},
+	{Node::Function, "Function"},
+	{Node::DefFunction, "DefFunction"},
+	{Node::ArgumentNode, "ArgumentNode"},
+	{Node::IfStatement, "IfStatement"},
+	{Node::ReturnStatement, "ReturnStatement"}
+};
+
+
 Evaluator::Evaluator() {
 	//数学定数を指定
 	math_const["M_PI"] = (long double)3.14159265358979323846;
@@ -29,38 +50,44 @@ Evaluator::~Evaluator() {
 	return;
 }
 
-void Evaluator::evaluate(AST* ast) {
+pair<Var, bool> Evaluator::evaluate(AST* ast) {
 	//ASTを表示する
-	if (ast == nullptr) return;
+	if (ast == nullptr) return make_pair(Var(), true);
 	bool is_static = false;
 	int type;
 	switch (ast->GetNodeType()) {
 	case Node::BlockStatement: {
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
 		EnterScope();
-		while (AST* stmt = node->ReadStatement())evaluate(stmt);
+		for (unsigned long long i = 0;AST * stmt = node->ReadStatement(i); i++) {
+			pair<Var, bool> retval = evaluate(stmt);
+			if (!retval.second) {
+				ExitScope();
+				return retval;
+			}
+		}
 		ExitScope();
-		return;
+		return make_pair(Var(), true);
 	}
 	case Node::IfStatement: {
 		EnterScope();
-		IfStatement(ast);
+		pair<Var, bool> retval = IfStatement(ast);
 		ExitScope();
-		return;
+		return retval;
 	}
 	case Node::Function: {
 		//void関数
 		EnterScope();
 		VoidFunction(ast);
 		ExitScope();
-		return;
+		return make_pair(Var(), true);
 	}
 	case Node::DefFunction: {
-		return;
+		return make_pair(Var(), true);
 	}
 	case Node::StaticVarWithoutAssignment: {
 		ProcessStaticVar(ast);
-		return;
+		return make_pair(Var(), true);
 	}
 	case Node::StaticVarWithAssignment:
 		type = static_cast<StaticVariableNode*>(ast)->GetType();
@@ -68,11 +95,17 @@ void Evaluator::evaluate(AST* ast) {
 		is_static = true;
 	case Node::Assignment: {
 		//変数定義、計算等
-		ProcessVariables(ast, is_static,type);
-		return;
+		ProcessVariables(ast, is_static, type);
+		return make_pair(Var(), true);
+	}
+	case Node::ReturnStatement: {
+		ReturnStatementNode* node = static_cast<ReturnStatementNode*>(ast);
+		if (node->GetExpression() == nullptr)
+			return make_pair(Var(), false);
+		return make_pair(CalcExpr(node->GetExpression()), false);
 	}
 	default:
-		throw EvaluatorException("RuntimeError: Invaild Statement.");
+		throw EvaluatorException("RuntimeError: Invaild Statement." + nodeTypeStr[ast->GetNodeType()]);
 	}
 }
 
@@ -143,12 +176,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 		string functionName = node->GetFunctionName();
 		vector<AST*> args = node->GetArgument();
 		//各種数学関数(引数は1つ)
-#define MATH_FUNC(func) if (functionName == #func){\
-				switch (args.at(0)->GetType()){\
-					case 0:return func(CalcExpr(args.at(0)).GetValue<long double>());\
-					case 1:return func(CalcExpr(args.at(0)).GetValue<long double>());\
-					default:throw RuntimeException("Invaild argumant.",node->lineNumber,node->columnNumber);\
-				}} 
+#define MATH_FUNC(func) if (functionName == #func)\
+							return func(CalcExpr(args.at(0)).GetValue<long double>()); 
 		MATH_FUNC(abs);
 		MATH_FUNC(sqrt);
 		MATH_FUNC(sin);
@@ -162,13 +191,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 		MATH_FUNC(log10);
 #undef MATH_FUNC
 		//各種数学関数(引数は2つ)
-#define MATH_FUNC(func) if (functionName == #func){\
-				if (args.size() < 2)throw EvaluatorException("Invalid argument size.");\
-				switch (args.at(0)->GetType()){\
-					case 0:return func(CalcExpr(args.at(0)).GetValue<long double>(),CalcExpr(args.at(1)).GetValue<long double>());\
-					case 1:return func(CalcExpr(args.at(0)).GetValue<long double>(),CalcExpr(args.at(1)).GetValue<long double>());\
-					default:throw RuntimeException("Invaild argumant.",node->lineNumber,node->columnNumber);\
-				}} 
+#define MATH_FUNC(func) if (functionName == #func)\
+							return func(CalcExpr(args.at(0)).GetValue<long double>(),CalcExpr(args.at(1)).GetValue<long double>());
 		MATH_FUNC(pow);
 		MATH_FUNC(atan2);
 #undef MATH_FUNC
@@ -245,8 +269,9 @@ Var Evaluator::CalcExpr(AST* ast) {
 				}
 			}
 			//関数の中身を実行
-			return ProcessFunction(user_func[functionName].second).first;
+			Var retval = ProcessFunction(user_func[functionName].second).first;
 			ExitScope();
+			return retval;
 		}
 		throw EvaluatorException("Unknown function:" + functionName);
 	}
@@ -259,11 +284,11 @@ Var Evaluator::CalcExpr(AST* ast) {
 		string variableName = node->GetVariableName();
 		AST* expression = node->GetExpression();
 		//変数の存在を確認
-		for (auto& scoped_static_var : static_var) {
+		for (auto& scoped_static_var : static_var | views::reverse) {
 			if (scoped_static_var.count(variableName))
 				return scoped_static_var[variableName] = CalcExpr(expression);
 		}
-		for (auto& scoped_var : var) {
+		for (auto& scoped_var : var | views::reverse) {
 			if (scoped_var.count(variableName))
 				return scoped_var[variableName] = CalcExpr(expression);
 		}
@@ -280,11 +305,11 @@ Var Evaluator::CalcExpr(AST* ast) {
 		//静的変数の処理
 		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
 		string variableName = node->GetVariableName();
-		for (auto& scoped_static_var : static_var) {
+		for (auto& scoped_static_var : static_var | views::reverse) {
 			if (scoped_static_var.count(variableName))
 				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 		}
-		for (auto& scoped_var : var) {
+		for (auto& scoped_var : var | views::reverse) {
 			if (scoped_var.count(variableName))
 				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 		}
@@ -300,18 +325,22 @@ Var Evaluator::CalcExpr(AST* ast) {
 	}
 	case Node::Variable: {
 		VariableNode* node = static_cast<VariableNode*>(ast);
+		VariableNode* dynamic_casted_node = dynamic_cast<VariableNode*>(ast);
+		if (dynamic_casted_node == nullptr) {
+			throw EvaluatorException("Segmentation fault: Invalid node type.");
+		}
 		string variableName = node->GetVariableName();
 		//各種数学定数
 		if (math_const.count(variableName)) {
 			return math_const[variableName];
 		}
 		//変数の存在を確認
-		for (auto& scoped_static_var : static_var) {
+		for (auto& scoped_static_var : static_var | views::reverse) {
 			if (scoped_static_var.count(variableName)) {
 				return scoped_static_var[variableName];
 			}
 		}
-		for (auto& scoped_var : var) {
+		for (auto& scoped_var : var | views::reverse) {
 			if (scoped_var.count(variableName)) {
 				return scoped_var[variableName];
 			}
@@ -366,16 +395,16 @@ Var Evaluator::ProcessBinaryOperator(AST* left_node, AST* right_node, string ope
 	throw RuntimeException("Unknown Operator.\"" + operatorType + "\"", node->lineNumber, node->columnNumber);
 }
 
-void Evaluator::IfStatement(AST* ast) {
+std::pair<Var, bool> Evaluator::IfStatement(AST* ast) {
 	//if文の処理
 	IfStatementNode* node = static_cast<IfStatementNode*>(ast);
 	AST* falseExpr = node->GetFalseExpr();
 	if (CalcExpr(node->GetCondition()).GetValue<bool>()) {
-		evaluate(node->GetTrueExpr());
+		return evaluate(node->GetTrueExpr());
 	} else if (falseExpr != nullptr) {
-		evaluate(falseExpr);
+		return evaluate(falseExpr);
 	}
-	return;
+	return make_pair(Var(), true);
 }
 
 //戻り値のない関数の処理
@@ -412,7 +441,7 @@ void Evaluator::VoidFunction(AST* ast) {
 	return;
 }
 
-void Evaluator::ProcessVariables(AST* ast, bool is_static,int type) {
+void Evaluator::ProcessVariables(AST* ast, bool is_static, int type) {
 	AssignmentNode* node = static_cast<AssignmentNode*>(ast);
 	string variableName = node->GetVariableName();
 	AST* expression = node->GetExpression();
@@ -423,7 +452,7 @@ void Evaluator::ProcessVariables(AST* ast, bool is_static,int type) {
 			return;
 		}
 	}
-	for (auto& scoped_var : var) {
+	for (auto& scoped_var : var | views::reverse) {
 		if (scoped_var.count(variableName)) {
 			scoped_var[variableName] = CalcExpr(expression);
 			return;
@@ -448,7 +477,7 @@ void Evaluator::ProcessStaticVar(AST* ast) {
 		if (scoped_static_var.count(variableName))
 			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
 	}
-	for (auto& scoped_var : var) {
+	for (auto& scoped_var : var | views::reverse) {
 		if (scoped_var.count(variableName))
 			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
 	}
@@ -470,7 +499,7 @@ pair<Var, bool> Evaluator::ProcessFunction(AST* ast) {
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
 		pair<Var, bool> result;
 		EnterScope();
-		while ((result = ProcessFunction(node->ReadStatement())).second);
+		for (unsigned long long i = 0;(result = ProcessFunction(node->ReadStatement(i))).second;i++);
 		ExitScope();
 		return result;
 	}
@@ -480,7 +509,6 @@ pair<Var, bool> Evaluator::ProcessFunction(AST* ast) {
 			return make_pair(Var(), false);
 		return make_pair(CalcExpr(node->GetExpression()), false);
 	}
-	default:evaluate(ast);
+	default:return evaluate(ast);
 	}
-	return make_pair(Var(), true);
 }

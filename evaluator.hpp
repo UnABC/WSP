@@ -16,7 +16,7 @@ private:
 	std::map<std::string, Var> math_const;
 	Var CalcExpr(AST* ast);
 	Var ProcessBinaryOperator(AST* left_node, AST* right, std::string operatorType, BinaryOperatorNode* node);
-	void IfStatement(AST* node);
+	std::pair<Var, bool> IfStatement(AST* node);
 	void VoidFunction(AST* ast);
 	void ProcessVariables(AST* ast,bool is_static,int type);
 	void ProcessStaticVar(AST* ast);
@@ -27,7 +27,7 @@ private:
 public:
 	Evaluator();
 	~Evaluator();
-	void evaluate(AST* ast);
+	std::pair<Var, bool> evaluate(AST* ast);
 	void RegisterFunctions(AST* ast);
 };
 #endif // EVALUATOR_HPP

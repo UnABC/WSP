@@ -1,31 +1,25 @@
 #include "evaluator.hpp"
-#include "CheckType.hpp"
 #include <iostream>
 using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/type.wsp";
+		string file_name = "test/func.wsp";
 		if (argc == 2)file_name = argv[1];
 		Lexer lexer(file_name);
 		//Lexer実行
 		Parser parser(lexer);
 		Evaluator evaluator;
 		vector<AST*> statements;
-		VerifyType checkType;
 		//Parser実行
 		while (AST* ast = parser.ParseStatement(lexer.ExtractNextToken())) {
 			//parser.show(ast);
 			//printf("\n");
-			checkType.CheckFuncType(ast); //ユーザー関数の型チェック
 			//evaluator.evaluate(ast);
 			statements.push_back(ast); //ASTを保存
-		}
-		//Evaluator実行
-		for (AST* ast : statements) {
-			checkType.CheckType(ast); //型チェック
 			evaluator.RegisterFunctions(ast); //関数を登録
 		}
+		//Evaluator実行
 		for (AST* ast : statements)
 			evaluator.evaluate(ast); //評価実行
 		//以下Lexer testの残骸//////////////////////////////////////////////////////////////////

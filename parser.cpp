@@ -190,7 +190,7 @@ AST* Parser::Statement(TokenPtr token) {
 		} else if (currentToken->value == "return") {
 			currentToken = lexer.ExtractNextToken(); //returnをスキップ
 			AST* expression = (currentToken->type == TokenType::EndOfLine) ? nullptr : ExprTernary(); //戻り値を解析する
-			if (currentToken->type != TokenType::EndOfLine)
+			if ((currentToken->type != TokenType::EndOfLine) && (currentToken->type != TokenType::EndOfFile) && (currentToken->type != TokenType::RBrace))
 				throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected EOL.", currentToken->lineNumber, currentToken->columnNumber);
 			return new ReturnStatementNode(expression, currentToken->lineNumber, currentToken->columnNumber); //return文ノードを作成
 		}
@@ -200,7 +200,7 @@ AST* Parser::Statement(TokenPtr token) {
 	}
 	//式の処理
 	AST* ast = ExprTernary(); //式を解析する
-	if ((currentToken->type != TokenType::EndOfFile) && (currentToken->type != TokenType::EndOfLine))
+	if ((currentToken->type != TokenType::EndOfFile) && (currentToken->type != TokenType::EndOfLine) && (currentToken->type != TokenType::RBrace))
 		throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected EOF or EOL.", currentToken->lineNumber, currentToken->columnNumber);
 	return ast;
 }
@@ -373,7 +373,7 @@ void Parser::show(AST* ast) {
 	case Node::BlockStatement: {
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
 		cout << "{ ";
-		while (AST* statement = node->ReadStatement()) {
+		for (unsigned long long i = 0;AST* statement = node->ReadStatement(i);i++) {
 			show(statement);
 		}
 		cout << " }";

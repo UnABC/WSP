@@ -48,18 +48,15 @@ public:
 class BlockStatementNode : public AST {
 private:
 	std::vector<AST*> statements;	//文のリスト
-	unsigned long long listNumber;	//リスト番号
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
 	BlockStatementNode(std::vector<AST*> statements, unsigned long long lineNumber, unsigned long long columnNumber)
-		: statements(statements), listNumber(0), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: statements(statements), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::BlockStatement; };
-	AST* ReadStatement() { return (listNumber < statements.size()) ? statements.at(listNumber++) : nullptr; };
-	AST* PeekStatement() { return (listNumber < statements.size()) ? (statements.at(listNumber)) : nullptr; };
+	AST* ReadStatement(unsigned long long listNumber) { return (listNumber < statements.size()) ? statements.at(listNumber) : nullptr; };
 	void PushStatement(AST* ast) { statements.push_back(ast); };
-	void ResetListNumber() { listNumber = 0; };
 };
 
 class NumberNode : public AST {

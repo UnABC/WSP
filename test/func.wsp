@@ -4,9 +4,14 @@ void test1(){
 	return
 }
 
-//引数、returnなしのテスト
+//引数あり、returnなしのテスト
 void test2(string foo){
 	print("This is void and print test.This function accepted follow message:"+foo)
+}
+//引数省略、再帰void関数のテスト
+void test3(int n,string str = "Titech"){
+	print(str)
+	if (n != 0)test3(n-1,str)
 }
 //int関数のテスト
 int add(int a,int b){
@@ -25,6 +30,11 @@ string SciKyo(string str){
 	}
 	return str
 }
+//関数内関数呼び出しテスト
+int add2(int a,int b){
+	int c = add(a,b)
+	return c*2
+}
 //再帰関数のテスト
 //a_{n+1} = a_n+1,a_1 =0の漸化式を考える
 int recursion(int n){
@@ -32,14 +42,19 @@ int recursion(int n){
 	return recursion(n-1)+1
 }
 
-test1()
-test2("Success!")
-print(add(3,7))
-print(sub(M_PI,M_E))
-print(SciKyo("Tokyo Tech"))
-print(SciKyo("UTokyo"))
-print(recursion(10))
-print(my_abs(-123))
+test1()		//This is a void test
+test2("Success!")	//This is void and print test.This function accepted follow message:Success!
+test3(6)	//Titech*5
+test3(6,"Science Tokyo")	//Science Tokyo*5
+print(add(3,7))		//10
+print(sub(M_PI,M_E))	//0.423311
+print(SciKyo("Tokyo Tech"))	//Science Tokyo
+print(SciKyo(SciKyo("Tokyo Tech")))	//Scikyo!
+print(SciKyo("UTokyo"))	//UTokyo
+print(my_abs(-123))	//123
+print(add2(3,7))	//20
+print(recursion(20))	//19
+
 
 //関数の定義が後出の場合のテスト
 int my_abs(int a){
