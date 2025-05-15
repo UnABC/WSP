@@ -110,7 +110,7 @@ AST* Parser::ExprPrimary() {
 	} else if (currentToken->type == TokenType::LParentheses) {
 		currentToken = lexer.ExtractNextToken(); //左括弧をスキップ
 		AST* left = ExprTernary();
-		if (currentToken->type != TokenType::RParentheses) 
+		if (currentToken->type != TokenType::RParentheses)
 			throw ParserException("Not found right parenthesis.", currentToken->lineNumber, currentToken->columnNumber);
 		currentToken = lexer.ExtractNextToken(); //右括弧をスキップ
 		return left;
@@ -189,9 +189,15 @@ AST* Parser::Statement(TokenPtr token) {
 			return Declaration(3); //void型の関数を解析する
 		} else if (currentToken->value == "return") {
 			currentToken = lexer.ExtractNextToken(); //returnをスキップ
-			AST* expression = (currentToken->type == TokenType::EndOfLine) ? nullptr : ExprTernary(); //戻り値を解析する
+			AST* expression = ((currentToken->type == TokenType::EndOfLine) || (currentToken->type == TokenType::RBrace)) ? nullptr : ExprTernary(); //戻り値を解析する
 			if ((currentToken->type != TokenType::EndOfLine) && (currentToken->type != TokenType::EndOfFile) && (currentToken->type != TokenType::RBrace))
 				throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected EOL.", currentToken->lineNumber, currentToken->columnNumber);
+			if (returnValue.size() == 0)
+				throw ParserException("Return Statement should be in function.", currentToken->lineNumber, currentToken->columnNumber);
+			if (returnValue.back() && (expression == nullptr))
+				throw ParserException("Return value is required.", currentToken->lineNumber, currentToken->columnNumber);
+			if (!returnValue.back() && (expression != nullptr))
+				throw ParserException("Void function should not return value.", currentToken->lineNumber, currentToken->columnNumber);
 			return new ReturnStatementNode(expression, currentToken->lineNumber, currentToken->columnNumber); //return文ノードを作成
 		}
 	} else if (currentToken->type == TokenType::LBrace) {
@@ -236,6 +242,7 @@ AST* Parser::Declaration(int type) {
 		string functionName = currentToken->value; //関数名を取得
 		currentToken = lexer.ExtractNextToken(); //関数名をスキップ
 		currentToken = lexer.ExtractNextToken(); //(をスキップ
+		returnValue.push_back(type != 3); //戻り値の有無を記録
 		vector<AST*> args;
 		while (currentToken->type != TokenType::RParentheses) {
 			if (currentToken->type == TokenType::Identifier) {
@@ -259,8 +266,8 @@ AST* Parser::Declaration(int type) {
 		if (currentToken->type != TokenType::LBrace)
 			throw ParserException("Not found function contents.", currentToken->lineNumber, currentToken->columnNumber);
 		AST* block = BlockStatement(currentToken); //関数の内容を解析する
-		AST* ast = new UserFunctionNode(functionName, args, block, type, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
-		return ast;
+		returnValue.pop_back(); //戻り値の有無を削除
+		return new UserFunctionNode(functionName, args, block, type, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
 	}
 	if (type == 3)
 		throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected function declaration.", currentToken->lineNumber, currentToken->columnNumber);
@@ -286,14 +293,14 @@ AST* Parser::Argument(int type) {
 		ast = new StaticVarNodeWithoutAssignment(variableName, type, currentToken->lineNumber, currentToken->columnNumber);
 	}
 	currentToken = lexer.ExtractNextToken(); //変数名をスキップ
-	if ((nextToken->type == TokenType::Operator) && (nextToken->value == "=")) {
+	if ((currentToken->type == TokenType::Operator) && (currentToken->value == "=")) {
 		//デフォルト引数有
 		currentToken = lexer.ExtractNextToken(); //=をスキップ
 		AST* assignment = ExprTernary(); //式を解析する
-		return new ArgumentNode(ast, type, isReference, assignment, currentToken->lineNumber, currentToken->columnNumber); //引数ノードを作成
+		return new ArgumentNode(ast, type, true, isReference, assignment, currentToken->lineNumber, currentToken->columnNumber); //引数ノードを作成
 	} else {
 		//デフォルト引数無
-		return new ArgumentNode(ast, type, isReference, nullptr, currentToken->lineNumber, currentToken->columnNumber); //引数ノードを作成
+		return new ArgumentNode(ast, type, false, isReference, nullptr, currentToken->lineNumber, currentToken->columnNumber); //引数ノードを作成
 	}
 }
 
@@ -322,7 +329,7 @@ void Parser::show(AST* ast) {
 	case Node::Function: {
 		SystemFunctionNode* node = static_cast<SystemFunctionNode*>(ast);
 		cout << node->GetFunctionName() << "(";
-		for (int i = 0; i < node->GetArgumentSize(); i++) {
+		for (int i = 0; i < node->GetArgument().size(); i++) {
 			if (i != 0) cout << ", ";
 			show(node->GetArgument().at(i));
 		}
@@ -373,7 +380,7 @@ void Parser::show(AST* ast) {
 	case Node::BlockStatement: {
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
 		cout << "{ ";
-		for (unsigned long long i = 0;AST* statement = node->ReadStatement(i);i++) {
+		for (unsigned long long i = 0;AST * statement = node->ReadStatement(i);i++) {
 			show(statement);
 		}
 		cout << " }";

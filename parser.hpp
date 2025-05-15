@@ -8,6 +8,7 @@ class Parser {
 private:
 	Lexer& lexer;	//字句解析器
 	TokenPtr currentToken;	//現在のトークン
+	std::vector<bool> returnValue;	//戻り値があるかどうか
 
 	AST* ExprTernary();
 	AST* ExprUnary();

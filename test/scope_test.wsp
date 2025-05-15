@@ -1,11 +1,11 @@
 int var = 100
 {
 	tmp = "Hello!"
-	print(tmp)
-	print(var)
+	print("tmp is "+tmp)
+	print("var is "+var)
 }
 if (int a = var-10){
-	print(a)
+	print("a is "+a)
 }
 
 print(var)

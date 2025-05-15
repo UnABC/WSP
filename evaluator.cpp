@@ -205,74 +205,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 			return StaticVar(CalcExpr(args.at(0)).GetValue<string>());
 		}
 		//ユーザー定義関数
-		if (user_func.count(functionName)) {
-			if (user_func[functionName].first.size() < args.size())
-				throw RuntimeException("Argument size is too large.", node->lineNumber, node->columnNumber);
-			EnterScope();
-			for (int i = 0; i < node->GetArgumentSize(); i++) {
-				AST* arg = (i >= args.size()) ? nullptr : args.at(i);
-				ArgumentNode* arg_def = static_cast<ArgumentNode*>(user_func[functionName].first.at(i));
-				//引数の変数名を取得
-				string variableName = static_cast<VariableNode*>(arg_def->GetVariable())->GetVariableName();
-				if (arg != nullptr) {
-					//引数の変数を定義
-					switch (arg_def->GetType()) {
-					case 0:
-						static_var.back()[variableName] = StaticVar(CalcExpr(arg).GetValue<long long>());
-						break;
-					case 1:
-						static_var.back()[variableName] = StaticVar(CalcExpr(arg).GetValue<long double>());
-						break;
-					case 2:
-						static_var.back()[variableName] = StaticVar(CalcExpr(arg).GetValue<string>());
-						break;
-					case 3:
-						//参照渡し
-						if (arg->GetNodeType() != Node::Variable)
-							throw RuntimeException("Invalid argument type.Expected variable.", node->lineNumber, node->columnNumber);
-						switch (arg->GetType())
-						{
-						case 0:
-							var.back()[variableName] = CalcExpr(arg).GetValue<long long>();
-							break;
-						case 1:
-							var.back()[variableName] = CalcExpr(arg).GetValue<long double>();
-							break;
-						case 2:
-							var.back()[variableName] = CalcExpr(arg).GetValue<string>();
-							break;
-						default:
-							throw RuntimeException("Invalid argument type.Expected variable.", node->lineNumber, node->columnNumber);
-						}
-						break;
-					default:
-						throw EvaluatorException("Unknown type:" + to_string(arg_def->GetType()));
-					}
-				} else {
-					//引数を省略した場合
-					if (!arg_def->IsAssigned())
-						throw RuntimeException("Argument is not assigned.", node->lineNumber, node->columnNumber);
-					AST* default_value = arg_def->GetDefaultValue();
-					switch (arg_def->GetType()) {
-					case 0:
-						static_var.back()[variableName] = StaticVar(CalcExpr(default_value).GetValue<long long>());
-						break;
-					case 1:
-						static_var.back()[variableName] = StaticVar(CalcExpr(default_value).GetValue<long double>());
-						break;
-					case 2:
-						static_var.back()[variableName] = StaticVar(CalcExpr(default_value).GetValue<string>());
-						break;
-					default:
-						throw RuntimeException("Invalid argument type.", node->lineNumber, node->columnNumber);
-					}
-				}
-			}
-			//関数の中身を実行
-			Var retval = ProcessFunction(user_func[functionName].second).first;
-			ExitScope();
-			return retval;
-		}
+		if (user_func.count(functionName)) return EvaluateFunction(static_cast<UserFunctionNode*>(ast));
 		throw EvaluatorException("Unknown function:" + functionName);
 	}
 	case Node::StaticVarWithAssignment:
@@ -284,6 +217,14 @@ Var Evaluator::CalcExpr(AST* ast) {
 		string variableName = node->GetVariableName();
 		AST* expression = node->GetExpression();
 		//変数の存在を確認
+		for (auto& ref_static : ref_static_var | views::reverse) {
+			if (ref_static.count(variableName))
+				return *ref_static[variableName] = CalcExpr(expression);
+		}
+		for (auto& ref : ref_var | views::reverse) {
+			if (ref.count(variableName))
+				return *ref[variableName] = CalcExpr(expression);
+		}
 		for (auto& scoped_static_var : static_var | views::reverse) {
 			if (scoped_static_var.count(variableName))
 				return scoped_static_var[variableName] = CalcExpr(expression);
@@ -305,6 +246,14 @@ Var Evaluator::CalcExpr(AST* ast) {
 		//静的変数の処理
 		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
 		string variableName = node->GetVariableName();
+		for (auto& ref_static : ref_static_var | views::reverse) {
+			if (ref_static.count(variableName))
+				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		}
+		for (auto& ref : ref_var | views::reverse) {
+			if (ref.count(variableName))
+				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		}
 		for (auto& scoped_static_var : static_var | views::reverse) {
 			if (scoped_static_var.count(variableName))
 				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
@@ -335,6 +284,14 @@ Var Evaluator::CalcExpr(AST* ast) {
 			return math_const[variableName];
 		}
 		//変数の存在を確認
+		for (auto& ref_static : ref_static_var | views::reverse) {
+			if (ref_static.count(variableName))
+				return *ref_static[variableName];
+		}
+		for (auto& ref : ref_var | views::reverse) {
+			if (ref.count(variableName))
+				return *ref[variableName];
+		}
 		for (auto& scoped_static_var : static_var | views::reverse) {
 			if (scoped_static_var.count(variableName)) {
 				return scoped_static_var[variableName];
@@ -436,9 +393,89 @@ void Evaluator::VoidFunction(AST* ast) {
 	}
 	//TODO:ユーザー定義関数
 	if (user_func.count(functionName)) {
-
+		//関数の中身を実行
+		EvaluateFunction(static_cast<UserFunctionNode*>(ast));
+		return;
+	} else {
+		throw EvaluatorException("Unknown function:" + functionName);
 	}
 	return;
+}
+
+Var Evaluator::EvaluateFunction(UserFunctionNode* node) {
+	string functionName = node->GetFunctionName();
+	vector<AST*> args = node->GetArgument();
+	if (user_func[functionName].first.size() < args.size())
+		throw RuntimeException("Argument size is too large.", node->lineNumber, node->columnNumber);
+	EnterScope();
+	for (int i = 0; i < user_func[functionName].first.size(); i++) {
+		AST* arg = (i >= args.size()) ? nullptr : args.at(i);
+		ArgumentNode* arg_def = static_cast<ArgumentNode*>(user_func[functionName].first.at(i));
+		//引数の変数名を取得
+		string variableName = static_cast<VariableNode*>(arg_def->GetVariable())->GetVariableName();
+		if (arg != nullptr) {
+			//引数の変数を定義
+			switch (arg_def->GetType()) {
+			case 0:
+				static_var.back()[variableName] = StaticVar(CalcExpr(arg).GetValue<long long>());
+				break;
+			case 1:
+				static_var.back()[variableName] = StaticVar(CalcExpr(arg).GetValue<long double>());
+				break;
+			case 2:
+				static_var.back()[variableName] = StaticVar(CalcExpr(arg).GetValue<string>());
+				break;
+			case 3: {
+				//参照渡し
+				if (arg->GetNodeType() != Node::Variable)
+					throw RuntimeException("Invalid argument type.Expected variable.", node->lineNumber, node->columnNumber);
+				bool break_flag = false;
+				string rootVariableName = static_cast<VariableNode*>(arg)->GetVariableName();
+				for (auto& scoped_static_var : static_var | views::reverse) {
+					if (scoped_static_var.count(rootVariableName)) {
+						ref_static_var.back()[variableName] = &scoped_static_var[rootVariableName];
+						break_flag = true;
+						break;
+					}
+				}
+				for (auto& scoped_var : var | views::reverse) {
+					if (scoped_var.count(rootVariableName)) {
+						ref_var.back()[variableName] = &scoped_var[rootVariableName];
+						break_flag = true;
+						break;
+					}
+				}
+				if (!break_flag)
+					throw RuntimeException("Variable \"" + rootVariableName + "\" is not defined.", node->lineNumber, node->columnNumber);
+				break;
+			}
+			default:
+				throw EvaluatorException("Unknown type:" + to_string(arg_def->GetType()));
+			}
+		} else {
+			//引数を省略した場合
+			if (!arg_def->IsAssigned())
+				throw RuntimeException("Argument is not assigned.", node->lineNumber, node->columnNumber);
+			AST* default_value = arg_def->GetDefaultValue();
+			switch (arg_def->GetType()) {
+			case 0:
+				static_var.back()[variableName] = StaticVar(CalcExpr(default_value).GetValue<long long>());
+				break;
+			case 1:
+				static_var.back()[variableName] = StaticVar(CalcExpr(default_value).GetValue<long double>());
+				break;
+			case 2:
+				static_var.back()[variableName] = StaticVar(CalcExpr(default_value).GetValue<string>());
+				break;
+			default:
+				throw RuntimeException("Invalid argument type.", node->lineNumber, node->columnNumber);
+			}
+		}
+	}
+	//関数の中身を実行
+	Var retval = ProcessFunction(user_func[functionName].second).first;
+	ExitScope();
+	return retval;
 }
 
 void Evaluator::ProcessVariables(AST* ast, bool is_static, int type) {
@@ -446,7 +483,20 @@ void Evaluator::ProcessVariables(AST* ast, bool is_static, int type) {
 	string variableName = node->GetVariableName();
 	AST* expression = node->GetExpression();
 	//変数の存在を確認
-	for (auto& scoped_static_var : static_var) {
+	for (auto& ref_static : ref_static_var | views::reverse) {
+		if (ref_static.count(variableName)) {
+			*ref_static[variableName] = CalcExpr(expression);
+			return;
+		}
+	}
+	for (auto& ref : ref_var | views::reverse) {
+		if (ref.count(variableName)) {
+			*ref[variableName] = CalcExpr(expression);
+			return;
+		}
+
+	}
+	for (auto& scoped_static_var : static_var | views::reverse) {
 		if (scoped_static_var.count(variableName)) {
 			scoped_static_var[variableName] = CalcExpr(expression);
 			return;
@@ -473,7 +523,15 @@ void Evaluator::ProcessStaticVar(AST* ast) {
 	StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
 	string variableName = node->GetVariableName();
 	//変数の存在を確認
-	for (auto& scoped_static_var : static_var) {
+	for (auto& ref_static : ref_static_var | views::reverse) {
+		if (ref_static.count(variableName))
+			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
+	}
+	for (auto& ref : ref_var | views::reverse) {
+		if (ref.count(variableName))
+			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
+	}
+	for (auto& scoped_static_var : static_var | views::reverse) {
 		if (scoped_static_var.count(variableName))
 			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
 	}
@@ -499,7 +557,7 @@ pair<Var, bool> Evaluator::ProcessFunction(AST* ast) {
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
 		pair<Var, bool> result;
 		EnterScope();
-		for (unsigned long long i = 0;(result = ProcessFunction(node->ReadStatement(i))).second;i++);
+		for (unsigned long long i = 0;((node->ReadStatement(i) != nullptr) && (result = ProcessFunction(node->ReadStatement(i))).second);i++);
 		ExitScope();
 		return result;
 	}

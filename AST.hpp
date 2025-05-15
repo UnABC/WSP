@@ -98,8 +98,8 @@ private:
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	UnaryOperatorNode(AST* expression,int operatorType, unsigned long long lineNumber, unsigned long long columnNumber)
-		: expression(expression),operatorType(operatorType), lineNumber(lineNumber), columnNumber(columnNumber) {
+	UnaryOperatorNode(AST* expression, int operatorType, unsigned long long lineNumber, unsigned long long columnNumber)
+		: expression(expression), operatorType(operatorType), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::UnaryOperator; };
 	AST* GetExpression() { return expression; };
@@ -201,7 +201,6 @@ public:
 	const int GetType() override { return type; };
 	void SetType(int type) override { this->type = type; };
 	std::vector<AST*> GetArgument() { return argument; };
-	const int GetArgumentSize() { return argument.size(); };
 };
 
 class UserFunctionNode : public AST {
@@ -222,7 +221,6 @@ public:
 	void SetType(int type) override { this->type = type; };
 	AST* GetBlockStatement() { return blockStatement; };
 	std::vector<AST*> GetArgument() { return argument; };
-	const int GetArgumentSize() { return argument.size(); };
 };
 
 class ArgumentNode : public AST {
@@ -230,12 +228,13 @@ private:
 	AST* variable;	//変数
 	int type = -2;	//式の型(0:int,1:double,2:string,3:var)
 	bool isAssigned = false;	//デフォルト値があるかどうか
+	bool isReference = false;	//参照渡しかどうか
 	AST* defaultValue;	//デフォルト値
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	ArgumentNode(AST* variable, int type, bool isAssigned, AST* defaultValue, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variable(variable), type(type), isAssigned(isAssigned), defaultValue(defaultValue), lineNumber(lineNumber), columnNumber(columnNumber) {
+	ArgumentNode(AST* variable, int type, bool isAssigned, bool isReference, AST* defaultValue, unsigned long long lineNumber, unsigned long long columnNumber)
+		: variable(variable), type(type), isAssigned(isAssigned), isReference(isReference), defaultValue(defaultValue), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::ArgumentNode; };
 	const int GetType() override { return type; };
