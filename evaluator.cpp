@@ -386,7 +386,9 @@ void Evaluator::VoidFunction(AST* ast) {
 	string functionName = node->GetFunctionName();
 	vector<AST*> args = node->GetArgument();
 	//組み込み関数
-	if (functionName == "print") {
+	if (functionName == "console") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		Var result = CalcExpr(args.at(0));
 		switch (result.GetType()) {
 		case 0: {
@@ -404,6 +406,18 @@ void Evaluator::VoidFunction(AST* ast) {
 		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
 		default:throw RuntimeException("Unknown argument type.", node->lineNumber, node->columnNumber);
 		}
+		return;
+	}else if (functionName == "print"){
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		//グラフィック関数
+		graphic.printText(CalcExpr(args.at(0)).GetValue<string>());
+		return;
+	}else if (functionName == "pos"){
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		//グラフィック関数
+		graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>());
 		return;
 	}
 	//TODO:ユーザー定義関数
@@ -470,7 +484,7 @@ Var Evaluator::EvaluateFunction(UserFunctionNode* node) {
 		} else {
 			//引数を省略した場合
 			if (!arg_def->IsAssigned())
-				throw RuntimeException("Argument is not assigned.", node->lineNumber, node->columnNumber);
+				throw RuntimeException("Argument is not assigned at "+functionName, node->lineNumber, node->columnNumber);
 			AST* default_value = arg_def->GetDefaultValue();
 			switch (arg_def->GetType()) {
 			case 0:

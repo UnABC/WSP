@@ -4,7 +4,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/calc_test.wsp";
+		string file_name = "test/print.wsp";
 		if (argc == 2)file_name = argv[1];
 		Lexer lexer(file_name);
 		//Lexer実行
@@ -22,6 +22,8 @@ int main(int argc, char* argv[]) {
 		//Evaluator実行
 		for (AST* ast : statements)
 			evaluator.evaluate(ast); //評価実行
+		
+		evaluator.GetGraphic().Stop(); //ウィンドウは表示したまま
 		//以下Lexer testの残骸//////////////////////////////////////////////////////////////////
 		// for (AST *ast : statements) {
 		// 	//ASTを表示する
@@ -55,6 +57,9 @@ int main(int argc, char* argv[]) {
 	}
 	catch (const RuntimeException& e) {
 		cerr << "Runtime error: " << e.what() << "\n" << e.where() << endl;
+	}
+	catch (const WindowException& e) {
+		cerr << "Window error: " << e.what() << endl;
 	}
 	catch (const std::logic_error& e) {
 		cerr << "Logic error: " << e.what() << endl;

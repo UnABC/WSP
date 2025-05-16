@@ -12,6 +12,11 @@ void test3(int n,string str = "Titech"){
 	print(str)
 	if (n != 0)test3(n-1,str)
 	return}
+//通常、引数有のテスト
+void test4(string str,int n){
+	print(str)
+	if (n >= 0)test4(str,n-1)
+}
 //int関数のテスト
 int add(int a,int b){
 	return a+b
@@ -60,6 +65,7 @@ test1()		//This is a void test
 test2("Success!")	//This is void and print test.This function accepted follow message:Success!
 test3(1)	//Titech*2
 test3(4,"Science Tokyo")	//Science Tokyo*5
+test4("Kyoto University",5)	//Kyoto University*5
 print(add(3,7))		//10
 print(sub(M_PI,M_E))	//0.423311
 print(SciKyo("Tokyo Tech"))	//Science Tokyo
@@ -73,7 +79,7 @@ hoge = 1
 ref(hoge)
 print(hoge)	//2
 
-print(omittion_test(hoge))	//6,2,9.42...
+print(omittion_test(hoge,,M_PI))	//6,2,9.42...
 
 //関数の定義が後出の場合のテスト
 int my_abs(int a){

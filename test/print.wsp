@@ -1,0 +1,10 @@
+void test(string str,int n){
+	print(str)
+	if (n >= 0)test(str,n-1)
+}
+
+
+pos(1,1)
+console("test")
+print("Hello world!")
+test("Titech",10)

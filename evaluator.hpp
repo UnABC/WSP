@@ -3,6 +3,7 @@
 
 #include "parser.hpp"
 #include "Var.hpp"
+#include "graphic.hpp"
 
 class Evaluator {
 private:
@@ -26,6 +27,8 @@ private:
 	Var ProcessVariables(AST* ast, bool is_static, int type);
 	void ProcessStaticVar(AST* ast);
 	std::pair<Var, bool> ProcessFunction(AST* ast);
+	//Graphic関数
+	Graphic graphic;
 	//スコープ変数の管理
 	inline void EnterScope() { var.emplace_back();static_var.emplace_back();ref_var.emplace_back();ref_static_var.emplace_back(); };
 	inline void ExitScope() { var.pop_back();static_var.pop_back();ref_var.pop_back();ref_static_var.pop_back(); };
@@ -34,6 +37,7 @@ public:
 	~Evaluator();
 	std::pair<Var, bool> evaluate(AST* ast);
 	void RegisterFunctions(AST* ast);
+	Graphic GetGraphic() { return graphic; };
 };
 #endif // EVALUATOR_HPP
 

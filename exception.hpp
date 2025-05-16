@@ -94,4 +94,15 @@ public:
 	}
 };
 
+class WindowException : public std::exception {
+	std::string msg;
+public:
+	explicit WindowException(const std::string& message)
+		: msg(message) {
+	};
+	virtual const char* what() const noexcept override {
+		return msg.c_str();
+	}
+};
+
 #endif // EXCEPTION_HPP
