@@ -44,7 +44,11 @@ int recursion(int n){
 void ref(var tmp){
 	tmp = tmp+1
 }
-
+double omittion_test(var a,int b = 3,double c){
+	a = b+c
+	print(a)
+	return c*b
+}
 //エラー関数
 /*
 int bug(){
@@ -69,7 +73,7 @@ hoge = 1
 ref(hoge)
 print(hoge)	//2
 
-//bug()
+print(omittion_test(hoge))	//6,2,9.42...
 
 //関数の定義が後出の場合のテスト
 int my_abs(int a){

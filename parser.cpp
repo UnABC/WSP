@@ -30,7 +30,11 @@ AST* Parser::ExprBool() {
 		{">" ,true},{"<" ,true},
 		{"==",true},{"!=",true},{"<=",true},
 		{">=",true},{"&&",true},{"||",true},
-		{"<<",true},{">>",true},{"&",true},
+		{"<<",true},{">>",true},{"+=",true},
+		{"-=",true},{"*=",true},{"/=",true},
+		{"%=",true},{"&=",true},{"|=",true},
+		{"<<=",true},{">>=",true},
+		{"^=",true},{"&",true},
 		{"^",true},{"|",true}
 	};
 	while ((currentToken->type == TokenType::Operator) && ((bool)operators.count(currentToken->value))) {
@@ -152,6 +156,10 @@ AST* Parser::ExprFunction(TokenPtr token) {
 	do {
 		currentToken = lexer.ExtractNextToken(); //(or,をスキップ
 		if (currentToken->type == TokenType::RParentheses) break; //引数がない場合は終了
+		if (currentToken->type == TokenType::Symbol && currentToken->value == ",") {
+			args.push_back(nullptr); //引数なし
+			continue;
+		}
 		args.push_back(ExprTernary()); //引数を解析する
 	} while (currentToken->type == TokenType::Symbol && currentToken->value == ",");
 	currentToken = lexer.ExtractNextToken(); //)をスキップ

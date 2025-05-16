@@ -98,6 +98,11 @@ pair<Var, bool> Evaluator::evaluate(AST* ast) {
 		ProcessVariables(ast, is_static, type);
 		return make_pair(Var(), true);
 	}
+	case Node::BinaryOperator: {
+		BinaryOperatorNode* node = static_cast<BinaryOperatorNode*>(ast);
+		ProcessBinaryOperator(node->GetLeft(), node->GetRight(), node->GetOperatorType(), node);
+		return make_pair(Var(), true);
+	}
 	case Node::ReturnStatement: {
 		ReturnStatementNode* node = static_cast<ReturnStatementNode*>(ast);
 		if (node->GetExpression() == nullptr)
@@ -157,10 +162,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 	}
 	case Node::BinaryOperator: {
 		BinaryOperatorNode* node = static_cast<BinaryOperatorNode*>(ast);
-		string operatorType = node->GetOperatorType();
-		AST* left_node = node->GetLeft();
-		AST* right_node = node->GetRight();
-		return ProcessBinaryOperator(left_node, right_node, operatorType, node);
+		return ProcessBinaryOperator(node->GetLeft(), node->GetRight(), node->GetOperatorType(), node);
 	}
 	case Node::TernaryOperator: {
 		//三項演算子
@@ -212,36 +214,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 		type = static_cast<StaticVariableNode*>(ast)->GetType();
 		ast = static_cast<StaticVariableNode*>(ast)->GetAssignment();
 		is_static = true;
-	case Node::Assignment: {
-		AssignmentNode* node = static_cast<AssignmentNode*>(ast);
-		string variableName = node->GetVariableName();
-		AST* expression = node->GetExpression();
-		//変数の存在を確認
-		for (auto& ref_static : ref_static_var | views::reverse) {
-			if (ref_static.count(variableName))
-				return *ref_static[variableName] = CalcExpr(expression);
-		}
-		for (auto& ref : ref_var | views::reverse) {
-			if (ref.count(variableName))
-				return *ref[variableName] = CalcExpr(expression);
-		}
-		for (auto& scoped_static_var : static_var | views::reverse) {
-			if (scoped_static_var.count(variableName))
-				return scoped_static_var[variableName] = CalcExpr(expression);
-		}
-		for (auto& scoped_var : var | views::reverse) {
-			if (scoped_var.count(variableName))
-				return scoped_var[variableName] = CalcExpr(expression);
-		}
-		//変数の定義！！
-		if (is_static) {
-			StaticVar retval = CalcExpr(expression);
-			retval.SetType(type);
-			return static_var.back()[variableName] = retval;
-		} else {
-			return var.back()[variableName] = CalcExpr(expression);
-		}
-	}
+	case Node::Assignment:return ProcessVariables(ast, is_static, type);
 	case Node::StaticVarWithoutAssignment: {
 		//静的変数の処理
 		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
@@ -331,7 +304,7 @@ Var Evaluator::ProcessBinaryOperator(AST* left_node, AST* right_node, string ope
 	if (operatorType == "||") return (Left || Right);
 	if (operatorType == "-")return (Left - Right);
 	if (operatorType == "/") {
-		if (Right.GetValue<long double>() == 0.0)
+		if (Right.IsZero(Left.GetType()))
 			throw RuntimeException("Division by zero.", node->lineNumber, node->columnNumber);
 		return (Left / Right);
 	}
@@ -344,12 +317,54 @@ Var Evaluator::ProcessBinaryOperator(AST* left_node, AST* right_node, string ope
 	if (operatorType == "^")  return (Left ^ Right);
 	if (operatorType == "<<") return (Left << Right);
 	if (operatorType == ">>") return (Left >> Right);
+	if ((operatorType == "+=") || (operatorType == "-=") || (operatorType == "*=") || (operatorType == "/=") || (operatorType == "%=") || (operatorType == "&=") || (operatorType == "|=") || (operatorType == "^=") || (operatorType == "<<=") || (operatorType == ">>=")) {
+		//+=, -=, *=, /=, %=, &=, |=, ^= , <<=, >>=
+		if ((operatorType == "/=") || (operatorType == "%=")) {
+			if (Right.IsZero(Left.GetType()))
+				throw RuntimeException("Division by zero.", node->lineNumber, node->columnNumber);
+		}
+		return BinaryAssignmentOperator(left_node, Left, Right, operatorType, node);
+	}
 	if (operatorType == "%") {
-		if (Right.GetValue<long double>() == 0.0)
+		if (Right.IsZero(Left.GetType()))
 			throw RuntimeException("Division by zero.", node->lineNumber, node->columnNumber);
 		return (Left % Right);
 	}
 	throw RuntimeException("Unknown Operator.\"" + operatorType + "\"", node->lineNumber, node->columnNumber);
+}
+
+//+=, -=, *=, /=, %=, &=, |=, ^=
+Var Evaluator::BinaryAssignmentOperator(AST* left_node, Var Left, Var Right, string operatorType, BinaryOperatorNode* node) {
+	if (left_node->GetNodeType() != Node::Variable)
+		throw RuntimeException("Invalid left operand type.", node->lineNumber, node->columnNumber);
+	string variableName = static_cast<VariableNode*>(left_node)->GetVariableName();
+	//変数の存在を確認
+#define AssignOperator(op) 	{for (auto& ref_static : ref_static_var | views::reverse) {\
+		if (ref_static.count(variableName))return *ref_static[variableName] = StaticVar(Left op Right);\
+	}\
+	for (auto& ref : ref_var | views::reverse) {\
+		if (ref.count(variableName))return *ref[variableName] = Var(Left op Right);\
+	}\
+	for (auto& scoped_static_var : static_var | views::reverse) {\
+		if (scoped_static_var.count(variableName))return scoped_static_var[variableName] = StaticVar(Left op Right);\
+	}\
+	for (auto& scoped_var : var | views::reverse) {\
+		if (scoped_var.count(variableName))return scoped_var[variableName] = Var(Left op Right);\
+	}\
+	throw RuntimeException("Undefined variable: " + variableName + ".", node->lineNumber, node->columnNumber);}
+
+	if (operatorType == "+=") AssignOperator(+);
+	if (operatorType == "-=") AssignOperator(-);
+	if (operatorType == "*=") AssignOperator(*);
+	if (operatorType == "/=") AssignOperator(/);
+	if (operatorType == "%=") AssignOperator(%);
+	if (operatorType == "&=") AssignOperator(&);
+	if (operatorType == "|=") AssignOperator(|);
+	if (operatorType == "^=") AssignOperator(^);
+	if (operatorType == "<<=") AssignOperator(<<);
+	if (operatorType == ">>=") AssignOperator(>>);
+	throw RuntimeException("Unknown Operator.\"" + operatorType + "\"", node->lineNumber, node->columnNumber);
+#undef AssignOperator
 }
 
 std::pair<Var, bool> Evaluator::IfStatement(AST* ast) {
@@ -478,44 +493,35 @@ Var Evaluator::EvaluateFunction(UserFunctionNode* node) {
 	return retval;
 }
 
-void Evaluator::ProcessVariables(AST* ast, bool is_static, int type) {
+Var Evaluator::ProcessVariables(AST* ast, bool is_static, int type) {
 	AssignmentNode* node = static_cast<AssignmentNode*>(ast);
 	string variableName = node->GetVariableName();
 	AST* expression = node->GetExpression();
 	//変数の存在を確認
 	for (auto& ref_static : ref_static_var | views::reverse) {
-		if (ref_static.count(variableName)) {
-			*ref_static[variableName] = CalcExpr(expression);
-			return;
-		}
+		if (ref_static.count(variableName))
+			return *ref_static[variableName] = CalcExpr(expression);
 	}
 	for (auto& ref : ref_var | views::reverse) {
-		if (ref.count(variableName)) {
-			*ref[variableName] = CalcExpr(expression);
-			return;
-		}
-
+		if (ref.count(variableName))
+			return *ref[variableName] = CalcExpr(expression);
 	}
 	for (auto& scoped_static_var : static_var | views::reverse) {
-		if (scoped_static_var.count(variableName)) {
-			scoped_static_var[variableName] = CalcExpr(expression);
-			return;
-		}
+		if (scoped_static_var.count(variableName))
+			return scoped_static_var[variableName] = CalcExpr(expression);
 	}
 	for (auto& scoped_var : var | views::reverse) {
-		if (scoped_var.count(variableName)) {
-			scoped_var[variableName] = CalcExpr(expression);
-			return;
-		}
+		if (scoped_var.count(variableName))
+			return scoped_var[variableName] = CalcExpr(expression);
 	}
-	//変数の定義
+	//変数の定義！！
 	if (is_static) {
-		static_var.back()[variableName] = StaticVar(CalcExpr(expression));
-		static_var.back()[variableName].SetType(type);
+		StaticVar retval = CalcExpr(expression);
+		retval.SetType(type);
+		return static_var.back()[variableName] = retval;
 	} else {
-		var.back()[variableName] = CalcExpr(expression);
+		return var.back()[variableName] = CalcExpr(expression);
 	}
-	return;
 }
 
 void Evaluator::ProcessStaticVar(AST* ast) {

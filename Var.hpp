@@ -50,6 +50,7 @@ public:
 	template<typename T>
 	T GetValue() const;
 	int GetType() const { return type; };
+	bool IsZero(int TYPE) const;
 };
 
 class StaticVar : public Var {

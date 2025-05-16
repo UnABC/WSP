@@ -145,10 +145,17 @@ string AnalysisLine::ReadNumberLiteral() {
 
 string AnalysisLine::ReadOperator() {
 	if (column + 2 > line.length())return std::string(1, line[column++]);
+	if ((column + 3 <= line.length()) && ((line.substr(column, 3) == "<<=") || (line.substr(column, 3) == ">>="))) {
+		column += 3; //演算子をスキップ
+		return line.substr(column - 3, 3);
+	}
 	map<std::string, bool> operators = {
 		{"==",true},{"!=",true},{"<=",true},
 		{">=",true},{"&&",true},{"||",true},
-		{"<<",true},{">>",true}
+		{"<<",true},{">>",true},{"+=",true},
+		{"-=",true},{"*=",true},{"/=",true},
+		{"%=",true},{"&=",true},{"|=",true},
+		{"^=",true}
 	};
 	string double_operator = line.substr(column, 2);
 	if (operators.count(double_operator)) {

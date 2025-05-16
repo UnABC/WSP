@@ -16,12 +16,14 @@ private:
 	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
 	//数学定数
 	std::map<std::string, Var> math_const;
+	//各種計算等
 	Var CalcExpr(AST* ast);
 	Var ProcessBinaryOperator(AST* left_node, AST* right, std::string operatorType, BinaryOperatorNode* node);
+	Var BinaryAssignmentOperator(AST* left_node, Var Left, Var Right, std::string operatorType, BinaryOperatorNode* node);
 	Var EvaluateFunction(UserFunctionNode* node);
 	std::pair<Var, bool> IfStatement(AST* node);
 	void VoidFunction(AST* ast);
-	void ProcessVariables(AST* ast, bool is_static, int type);
+	Var ProcessVariables(AST* ast, bool is_static, int type);
 	void ProcessStaticVar(AST* ast);
 	std::pair<Var, bool> ProcessFunction(AST* ast);
 	//スコープ変数の管理

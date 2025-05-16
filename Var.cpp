@@ -342,3 +342,13 @@ StaticVar& StaticVar::operator=(const Var& value) {
 	return *this;
 }
 
+bool Var::IsZero(int TYPE) const {
+	//ゼロかどうかを判定
+	switch (TYPE) {
+	case 0: return int_value == 0;
+	case 1: return double_value == 0.0;
+	case 2: return string_value == "";
+	case 4: return bool_value == false;
+	default: throw EvaluatorException("Unknown type.");
+	}
+}
