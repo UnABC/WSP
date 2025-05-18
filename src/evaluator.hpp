@@ -13,6 +13,8 @@ private:
 	std::vector<std::map<std::string, StaticVar>> static_var;
 	std::vector<std::map<std::string, Var*>> ref_var;
 	std::vector<std::map<std::string, StaticVar*>> ref_static_var;
+	//システム変数
+	long long start_time;	//プログラム開始時間
 	//ユーザー定義関数
 	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
 	//数学定数
@@ -27,6 +29,7 @@ private:
 	Var ProcessVariables(AST* ast, bool is_static, int type);
 	void ProcessStaticVar(AST* ast);
 	std::pair<Var, bool> ProcessFunction(AST* ast);
+	inline long long GetTime();
 	//Graphic関数
 	Graphic graphic;
 	//スコープ変数の管理

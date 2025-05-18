@@ -2,18 +2,18 @@ COMPILER = g++
 OPTIMIZE = -O3
 CXXFLAGS = -std=c++23
 TARGET   = ./bin/wsp
-LDLIBS = -lmingw32 -lSDL3 -lopengl32 -lSDL3_ttf
+LDLIBS = -lmingw32 -lSDL3 -lopengl32 -lSDL3_ttf -lfreetype
 SRCS = main.cpp lexer.cpp parser.cpp evaluator.cpp Var.cpp graphic.cpp
 OBJDIR = ./obj
-SOURCES  = $(wildcard *.cpp)
-OBJECTS  = $(addprefix $(OBJDIR)/, $(SOURCES:.cpp=.o))
+SOURCES  = $(wildcard src/*.cpp)
+OBJECTS  = $(addprefix $(OBJDIR)/, $(notdir $(SOURCES:.cpp=.o)))
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(COMPILER) $(CXXFLAGS) -o $@ $^ $(LDLIBS)
 
-$(OBJDIR)/%.o: %.cpp 
+$(OBJDIR)/%.o: src/%.cpp 
 	$(COMPILER) $(CXXFLAGS) -o $@ -c $<
 
 clean:

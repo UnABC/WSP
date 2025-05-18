@@ -41,6 +41,9 @@ Evaluator::Evaluator() {
 	math_const["M_SQRT3"] = (long double)1.73205080756887729352;
 	//グローバル変数作成
 	EnterScope();
+	//システム変数の初期化
+	start_time = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	srand((unsigned int)time(nullptr));
 	return;
 }
 
@@ -177,34 +180,49 @@ Var Evaluator::CalcExpr(AST* ast) {
 		SystemFunctionNode* node = static_cast<SystemFunctionNode*>(ast);
 		string functionName = node->GetFunctionName();
 		vector<AST*> args = node->GetArgument();
-		//各種数学関数(引数は1つ)
+		//各種組み込み関数
+		if (args.size() == 0) {
+			//引数なし
+			if (functionName == "unixtime") {
+				return Var((long long)time(nullptr));
+			} else if (functionName == "gettime") {
+				return Var(GetTime());
+			}
+		} else if (args.size() == 1) {
+			//引数1つ
+			//各種数学関数(引数は1つ)
 #define MATH_FUNC(func) if (functionName == #func)\
 							return func(CalcExpr(args.at(0)).GetValue<long double>()); 
-		MATH_FUNC(abs);
-		MATH_FUNC(sqrt);
-		MATH_FUNC(sin);
-		MATH_FUNC(cos);
-		MATH_FUNC(tan);
-		MATH_FUNC(asin);
-		MATH_FUNC(acos);
-		MATH_FUNC(atan);
-		MATH_FUNC(exp);
-		MATH_FUNC(log);
-		MATH_FUNC(log10);
+			MATH_FUNC(abs);
+			MATH_FUNC(sqrt);
+			MATH_FUNC(sin);
+			MATH_FUNC(cos);
+			MATH_FUNC(tan);
+			MATH_FUNC(asin);
+			MATH_FUNC(acos);
+			MATH_FUNC(atan);
+			MATH_FUNC(exp);
+			MATH_FUNC(log);
+			MATH_FUNC(log10);
 #undef MATH_FUNC
-		//各種数学関数(引数は2つ)
+			//その他組み込み関数(!=void,引数は1つ)
+			if (functionName == "double") {
+				return StaticVar(CalcExpr(args.at(0)).GetValue<long double>());
+			} else if (functionName == "int") {
+				return StaticVar(CalcExpr(args.at(0)).GetValue<long long>());
+			} else if (functionName == "string") {
+				return StaticVar(CalcExpr(args.at(0)).GetValue<string>());
+			} else if (functionName == "rnd") {
+				return Var((long long)(rand() % (CalcExpr(args.at(0)).GetValue<long long>() + 1)));
+			}
+		} else if (args.size() == 2) {
+			//引数2つ
+			//各種数学関数(引数は2つ)
 #define MATH_FUNC(func) if (functionName == #func)\
 							return func(CalcExpr(args.at(0)).GetValue<long double>(),CalcExpr(args.at(1)).GetValue<long double>());
-		MATH_FUNC(pow);
-		MATH_FUNC(atan2);
+			MATH_FUNC(pow);
+			MATH_FUNC(atan2);
 #undef MATH_FUNC
-		//その他組み込み関数(!=void)
-		if (functionName == "double") {
-			return StaticVar(CalcExpr(args.at(0)).GetValue<long double>());
-		} else if (functionName == "int") {
-			return StaticVar(CalcExpr(args.at(0)).GetValue<long long>());
-		} else if (functionName == "string") {
-			return StaticVar(CalcExpr(args.at(0)).GetValue<string>());
 		}
 		//ユーザー定義関数
 		if (user_func.count(functionName)) return EvaluateFunction(static_cast<UserFunctionNode*>(ast));
@@ -356,13 +374,13 @@ Var Evaluator::BinaryAssignmentOperator(AST* left_node, Var Left, Var Right, str
 	if (operatorType == "+=") AssignOperator(+);
 	if (operatorType == "-=") AssignOperator(-);
 	if (operatorType == "*=") AssignOperator(*);
-	if (operatorType == "/=") AssignOperator(/);
+	if (operatorType == "/=") AssignOperator(/ );
 	if (operatorType == "%=") AssignOperator(%);
 	if (operatorType == "&=") AssignOperator(&);
-	if (operatorType == "|=") AssignOperator(|);
+	if (operatorType == "|=") AssignOperator(| );
 	if (operatorType == "^=") AssignOperator(^);
-	if (operatorType == "<<=") AssignOperator(<<);
-	if (operatorType == ">>=") AssignOperator(>>);
+	if (operatorType == "<<=") AssignOperator(<< );
+	if (operatorType == ">>=") AssignOperator(>> );
 	throw RuntimeException("Unknown Operator.\"" + operatorType + "\"", node->lineNumber, node->columnNumber);
 #undef AssignOperator
 }
@@ -407,17 +425,31 @@ void Evaluator::VoidFunction(AST* ast) {
 		default:throw RuntimeException("Unknown argument type.", node->lineNumber, node->columnNumber);
 		}
 		return;
-	}else if (functionName == "print"){
+	} else if (functionName == "randomize") {
+		if (args.size() > 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		srand((unsigned int)((args.size() == 0)?time(NULL):CalcExpr(args.at(0)).GetValue<long long>()));
+		return;
+	} else if (functionName == "print") {
 		if (args.size() != 1)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		//グラフィック関数
 		graphic.printText(CalcExpr(args.at(0)).GetValue<string>());
 		return;
-	}else if (functionName == "pos"){
+	} else if (functionName == "pos") {
 		if (args.size() != 2)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		//グラフィック関数
 		graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>());
+		return;
+	}else if (functionName == "cls") {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.Clear();
+		return;
+	}else if (functionName == "color"){
+		if (args.size() != 3)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
 		return;
 	}
 	//TODO:ユーザー定義関数
@@ -484,7 +516,7 @@ Var Evaluator::EvaluateFunction(UserFunctionNode* node) {
 		} else {
 			//引数を省略した場合
 			if (!arg_def->IsAssigned())
-				throw RuntimeException("Argument is not assigned at "+functionName, node->lineNumber, node->columnNumber);
+				throw RuntimeException("Argument is not assigned at " + functionName, node->lineNumber, node->columnNumber);
 			AST* default_value = arg_def->GetDefaultValue();
 			switch (arg_def->GetType()) {
 			case 0:
@@ -568,6 +600,11 @@ void Evaluator::ProcessStaticVar(AST* ast) {
 	case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
 	default:throw RuntimeException("Unknown function variable type.", node->lineNumber, node->columnNumber);
 	}
+}
+
+inline long long Evaluator::GetTime() {
+	//現在時刻を取得
+	return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count() - start_time;
 }
 
 pair<Var, bool> Evaluator::ProcessFunction(AST* ast) {

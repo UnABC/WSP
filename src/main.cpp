@@ -4,7 +4,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/print.wsp";
+		string file_name = "test/benchmark.wsp";
 		if (argc == 2)file_name = argv[1];
 		Lexer lexer(file_name);
 		//Lexer実行
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 		cerr << "Runtime error: " << e.what() << "\n" << e.where() << endl;
 	}
 	catch (const WindowException& e) {
-		cerr << "Window error: " << e.what() << endl;
+		cerr << "Graphic error: " << e.what() << endl;
 	}
 	catch (const std::logic_error& e) {
 		cerr << "Logic error: " << e.what() << endl;

@@ -1,0 +1,8 @@
+/.vscode/
+*.exe
+*.code-workspace
+*.bat
+*.todo
+*.psd
+*.json
+*.o
