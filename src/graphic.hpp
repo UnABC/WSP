@@ -25,7 +25,7 @@ private:
 	int width, height;
 	bool is_fullscreen;
 	//各種システム変数
-	SDL_Color color = { 255, 255, 255, 255 };	//白色
+	SDL_Color color = { 0, 0, 0, 255 };	//白色
 	Position pos = { 0, 0 };	//表示位置
 	unsigned long long font_size = 24;	//フォントサイズ
 	bool redraw = true;	//描画フラグ
@@ -37,10 +37,10 @@ private:
 	std::map<std::string, SDL_Texture*> text_cache;
 	//SDL variables
 	SDL_Window* window;
-	SDL_Renderer *renderer;
-	// TTF_Font* font;
-	// FT_Face face;
-	// FT_Library library;
+	//SDL_Renderer *renderer;
+	//TTF_Font* font;
+	FT_Face face;
+	FT_Library library;
 	Font font;
 	SDL_GLContext glContext;
 

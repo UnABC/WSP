@@ -3,6 +3,7 @@
 
 #include <ft2build.h>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_ttf.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
 #include <glm/glm.hpp>

@@ -68,12 +68,11 @@ void Font::SetFont(const char* font_path, int size) {
 }
 
 void Font::DrawTexts(string text, float x, float y, float scale, SDL_Color color, int width) {
-	if (!face || !shaderProgram || !vbo || !vao) {
+	if (!face || !shaderProgram || !vbo || !vao)
 		throw FontException("Font not initialized.");
-	}
 	glUseProgram(shaderProgram);
 	//色の設定
-	glUniform3f(glGetUniformLocation(shaderProgram, "textColor"), color.r, color.g, color.b);
+	glUniform3f(glGetUniformLocation(shaderProgram, "textColor"), color.r / 255.0f, color.g / 255.0f, color.b / 255.0f);
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(glGetUniformLocation(shaderProgram, "text"), 0);
@@ -109,20 +108,21 @@ void Font::DrawTexts(string text, float x, float y, float scale, SDL_Color color
 			float glyph_width = slot->bitmap.width;
 			float glyph_height = slot->bitmap.rows;
 
-			float vertices[6][4] = {
+			float char_vertices[6][4] = {
 				{ render_x, render_y + glyph_height, 0.0f, 1.0f }, { render_x, render_y, 0.0f, 0.0f }, { render_x + glyph_width, render_y, 1.0f, 0.0f },
 				{ render_x, render_y + glyph_height, 0.0f, 1.0f }, { render_x + glyph_width, render_y, 1.0f, 0.0f }, { render_x + glyph_width, render_y + glyph_height, 1.0f, 1.0f }
 			};
-			characters[text16[i]] = { glyph_texture_id,*vertices };
+			Character character_data;
+			character_data.TextureID = glyph_texture_id;
+			memcpy(character_data.vertices, char_vertices, sizeof(char_vertices));
+			characters[text16[i]] = character_data;
 		}
-		GLint glyph_texture_id = characters[text16[i]].TextureID;
 		float vertices[6][4];
-		memccpy(vertices, characters[text16[i]].vertices, sizeof(float) * 6 * 4, sizeof(float) * 6 * 4);
-		glBindTexture(GL_TEXTURE_2D, glyph_texture_id);
+		memcpy(vertices, characters[text16[i]].vertices, sizeof(vertices));
+		glBindTexture(GL_TEXTURE_2D, characters[text16[i]].TextureID);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		//glDeleteTextures(1, &glyph_texture_id);
 		current_x += (slot->advance.x >> 6);
 	}
 	glBindVertexArray(0);

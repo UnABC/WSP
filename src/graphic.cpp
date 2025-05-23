@@ -13,8 +13,8 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	window = SDL_CreateWindow("WSP", 640, 480, (is_fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_HIDDEN) | SDL_WINDOW_OPENGL);
 	if (!window)FailedToInitialize("Failed to create SDL Window.");
 	//レンダラー作成
-	renderer = SDL_CreateRenderer(window, NULL);
-	if (!renderer)FailedToInitialize("Failed to create SDL Renderer.");
+	// renderer = SDL_CreateRenderer(window, NULL);
+	// if (!renderer)FailedToInitialize("Failed to create SDL Renderer.");
 	//OpenGLの初期化
 	glContext = SDL_GL_CreateContext(window);
 	if (!glContext)FailedToInitialize("Failed to create OpenGL context.");
@@ -35,7 +35,8 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 		FailedToInitialize("Failed to make OpenGL context current.");
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	SDL_GL_SwapWindow(window);
+	if (!SDL_GL_SwapWindow(window))
+		FailedToInitialize(SDL_GetError());
 	//フォント初期化+読み込み
 	font.Init(width, height);
 	font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
@@ -46,7 +47,6 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	//if (!font)FailedToInitialize("Failed to load font.");
 	//ウィンドウ表示
 	SDL_ShowWindow(window);
-	
 }
 
 void Graphic::FailedToInitialize(const string& message) {
@@ -70,15 +70,18 @@ SDL_Texture* Graphic::CashText(const string& text) {
 }*/
 
 void Graphic::printText(const string& text) {
-	font.DrawTexts(text, pos.x, pos.y+font_size/2, 1.0f, color, width);
-	SDL_GL_SwapWindow(window);
+	if (!SDL_GL_SwapWindow(window))
+		FailedToInitialize(SDL_GetError());
+	font.DrawTexts(text, pos.x, pos.y + font_size, 1.0f, color, width);
+	if (!SDL_GL_SwapWindow(window))
+		FailedToInitialize(SDL_GetError());
 	// SDL_Texture* textTexture = CashText(text);
 	// float texW, texH;
 	// SDL_GetTextureSize(textTexture, &texW, &texH);
 	// SDL_FRect FromRect = { 0.0, 0.0, texW, texH };
 	// SDL_FRect ToRect = { pos.x, pos.y, texW, texH };
 	//下にずらす
-	pos.y += font_size/2;
+	pos.y += font_size;
 	// if (redraw) {
 	// 	if (SDL_RenderTexture(renderer, textTexture, &FromRect, &ToRect)) {
 	// 		throw WindowException(SDL_GetError());
@@ -95,21 +98,21 @@ void Graphic::Clear() {
 	for (const auto& texture : textures)
 		SDL_DestroyTexture(get<0>(texture));
 	textures.clear();
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	/*SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderClear(renderer);
-	SDL_RenderPresent(renderer);
+	SDL_RenderPresent(renderer);*/
 	pos = { 0, 0 };	//表示位置を初期化
 	color = { 255, 255, 255, 255 };	//色を初期化
 }
 
 void Graphic::Draw() {
 	//テクスチャの描画
-	for (const auto& texture : textures) {
+	/*for (const auto& texture : textures) {
 		SDL_RenderTexture(renderer, get<0>(texture), &get<1>(texture), &get<2>(texture));
 		SDL_DestroyTexture(get<0>(texture));
 	}
 	textures.clear();
-	SDL_RenderPresent(renderer);
+	SDL_RenderPresent(renderer);*/
 }
 
 void Graphic::Stop() {
@@ -119,10 +122,10 @@ void Graphic::Stop() {
 		while (SDL_PollEvent(&event)) if (event.type == SDL_EVENT_QUIT) running = false;
 
 		//背景の初期化
-		 //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		 //glClear(GL_COLOR_BUFFER_BIT);
+		// glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		//glClear(GL_COLOR_BUFFER_BIT);
 
-		// printText("Hello World");
+		//printText("Hello World");
 
 		//テクスチャの描画
 		//SDL_GL_SwapWindow(window);
@@ -132,11 +135,11 @@ void Graphic::Stop() {
 
 void Graphic::End() const {
 	//ウィンドウを閉じる
-	// FT_Done_Face(face);
-	// FT_Done_FreeType(library);
+	FT_Done_Face(face);
+	FT_Done_FreeType(library);
 	SDL_GL_DestroyContext(glContext);
 	SDL_DestroyWindow(window);
-	SDL_DestroyRenderer(renderer);
+	//SDL_DestroyRenderer(renderer);
 	SDL_Quit();
 	TTF_Quit();
 }
