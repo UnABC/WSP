@@ -61,6 +61,12 @@ int main(int argc, char* argv[]) {
 	catch (const WindowException& e) {
 		cerr << "Graphic error: " << e.what() << endl;
 	}
+	catch (const FontException& e) {
+		cerr << "Font error: " << e.what() << endl;
+	}
+	catch (const ShaderException& e) {
+		cerr << "Graphic error: " << e.what() << endl;
+	}
 	catch (const std::logic_error& e) {
 		cerr << "Logic error: " << e.what() << endl;
 	}

@@ -1,0 +1,159 @@
+// --- グローバル変数の宣言 ---
+// 静的型付けのグローバル変数
+int global_counter = 0
+// 動的型付けのグローバル変数 (初期値は文字列)
+global_app_name = "DemoApp v1.0"
+
+// --- 関数の定義 ---
+
+// 1. 階乗を計算する再帰関数 (ユーザー提供の例に基づく)
+// 静的型付けの引数と戻り値を持つ
+int factorial(int n) {
+    console("factorial(" + string(n) + ") が呼び出されました。")
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+// 2. メッセージを指定回数繰り返して装飾する関数
+// 文字列操作、ローカル変数、動的型付け変数の使用例
+string generate_decorated_message(string message, string decorator_char, int repeat_count) {
+    // ローカル変数（動的型付け）
+    decoration = decorator_char * repeat_count // 文字列の乗算
+
+    // ローカル変数（静的型付け）
+    int message_length = 0 // 仮: 文字列長を取得する関数があれば string.length(message) のように使える
+    // message_length = length_of_string(message) // そのような関数を想定
+
+    console("generate_decorated_message: メッセージ='" + message + "', 装飾文字='" + decorator_char + "', 回数=" + string(repeat_count))
+
+    return decoration + " " + message + " " + decoration
+}
+
+// 3. スコープのデモ用関数
+void scope_test_function(int param) {
+    // この関数のローカル変数 (静的型付け)
+    int function_local_var = param * 10
+    // グローバル変数をこのスコープ内で変更しようと試みる
+    // (シャドーイングされなければグローバルが変更される)
+    global_counter = global_counter + 5 // グローバル変数の変更
+
+    pos(20, 300) // 画面出力位置指定
+    print("scope_test_function内: function_local_var = " + string(function_local_var))
+    print("scope_test_function内: global_counter = " + string(global_counter))
+    console("コンソール - scope_test_function内: function_local_var = " + string(function_local_var) + ", global_counter = " + string(global_counter))
+}
+
+
+// --- メイン処理デモ ---
+
+// 画面初期化 (もしあれば)
+// clear_screen()
+color(255, 255, 255) // デフォルトの色を白に設定 (R, G, B)
+pos(0, 0)             // 出力位置を左上に設定 (X, Y)
+
+// 1. ヘッダーと基本情報表示
+print("--- オリジナル言語 デモ開始 ---")
+pos(0, 20)
+print("グローバル変数: global_app_name = " + global_app_name)
+console("コンソール: デモプログラムが開始されました。")
+console("コンソール: 初期グローバルカウンター: " + string(global_counter))
+
+// 2. 再帰関数 (factorial) のテスト
+pos(0, 50)
+print("--- 再帰関数のテスト (階乗) ---")
+int number_input = 4 // 静的型付け変数
+// result_fact は動的型付け (代入時に型が決定される)
+result_fact = factorial(number_input)
+pos(0, 70)
+print(string(number_input) + "! = " + string(result_fact))
+
+if (result_fact > 20) {
+    color(255, 0, 0) // 結果が20より大きければ赤色
+    pos(0, 90)
+    print(string(number_input) + "! は20より大きいので、この行は赤色です。")
+    color(255, 255, 255) // 色を白に戻す
+} else {
+    color(0, 255, 0) // そうでなければ緑色
+    pos(0, 90)
+    print(string(number_input) + "! は20以下なので、この行は緑色です。")
+    color(255, 255, 255) // 色を白に戻す
+}
+console("コンソール: 階乗計算結果: " + string(number_input) + "! = " + string(result_fact))
+
+// 3. 文字列操作とカスタム関数のテスト
+pos(0, 120)
+print("--- 文字列操作と言語機能テスト ---")
+
+// Python風文字列乗算の直接利用
+string stars = "*" * 10 // "*"が10個連なった文字列
+pos(0, 140)
+print("文字列乗算: " + stars)
+
+// generate_decorated_message 関数の利用
+decorated_output = generate_decorated_message("ようこそ！", "#", 5)
+pos(0, 160)
+color(0, 0, 255) // 青色で表示
+print("装飾メッセージ: " + decorated_output)
+color(255, 255, 255) // 色を白に戻す
+console("コンソール: 装飾メッセージ: " + decorated_output)
+
+// 4. スコープのテスト
+pos(0, 190)
+print("--- 変数スコープのテスト ---")
+// メインスコープのローカル変数 (静的型付け)
+int main_local_var = 100
+pos(0, 210)
+print("メインスコープ: main_local_var = " + string(main_local_var))
+print("メインスコープ: 呼び出し前 global_counter = " + string(global_counter))
+
+// ifブロック内のスコープ (変数がブロックローカルになるかテスト)
+if (main_local_var > 50) {
+    pos(0, 230) // ifブロック内の表示開始位置
+    // この 'block_local_var' がifブロック内でのみ有効か確認
+    block_local_dynamic_var = "IFブロック内限定変数" // 動的型付け
+    int block_local_static_var = 77                   // 静的型付け
+
+    print("IFブロック内: block_local_dynamic_var = " + block_local_dynamic_var)
+    print("IFブロック内: block_local_static_var = " + string(block_local_static_var))
+    // グローバル変数をシャドーイングするローカル変数を定義 (もし言語仕様が許せば)
+    // string global_app_name = "Shadowed App Name"
+    // print("IFブロック内 (シャドーイング試行): global_app_name = " + global_app_name)
+    console("コンソール - IFブロック内: block_local_static_var = " + string(block_local_static_var))
+}
+// ここで block_local_dynamic_var や block_local_static_var にアクセスしようとするとエラーになるはず（スコープ外）
+// pos(0,250) print("IFブロック外: block_local_static_var = " + string(block_local_static_var)) // エラー期待
+
+pos(0, 270)
+print("メインスコープ: scope_test_function呼び出し前の global_counter = " + string(global_counter))
+scope_test_function(5) // スコープテスト関数を呼び出し
+pos(0, 330) // scope_test_function の print の後
+print("メインスコープ: scope_test_function呼び出し後の global_counter = " + string(global_counter)) // 関数内で変更された値
+console("コンソール: メインスコープ - scope_test_function呼び出し後 global_counter = " + string(global_counter))
+
+// 5. 動的型付けの柔軟性デモ
+pos(0, 360)
+print("--- 動的型付けの柔軟性テスト ---")
+dynamic_typed_var = 123 // 初期値は整数
+pos(0, 380)
+print("動的変数 (初期: 整数): " + string(dynamic_typed_var))
+
+dynamic_typed_var = "文字列に変更しました" // 文字列を代入
+pos(0, 400)
+print("動的変数 (変更後: 文字列): " + dynamic_typed_var)
+
+dynamic_typed_var = factorial(3) + 0.5 // 数値演算の結果 (もし浮動小数点をサポートする場合)
+                                      // もし浮動小数点がなければ、 factorial(3) * 2 のような整数演算
+// dynamic_typed_var = factorial(3) * 2 // 整数演算の場合
+pos(0, 420)
+// print("動的変数 (再度数値/浮動小数点): " + string(dynamic_typed_var)) // string() が浮動小数点も扱えると仮定
+print("動的変数 (再度数値): " + string(dynamic_typed_var))
+console("コンソール: 動的型付けテスト完了。最終値: " + string(dynamic_typed_var))
+
+
+// 6. 画面出力とコンソール出力の最終確認
+pos(0, 450)
+color(255, 165, 0) // オレンジ色
+print("--- デモ終了 ---")
+console("コンソール: 全てのデモ項目が完了しました。")

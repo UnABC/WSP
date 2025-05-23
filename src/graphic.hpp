@@ -4,9 +4,13 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_ttf.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "exception.hpp"
-#include <ft2build.h>
-#include FT_FREETYPE_H
+#include "font.hpp"
 #include <vector>
 #include <map>
 
@@ -34,13 +38,14 @@ private:
 	//SDL variables
 	SDL_Window* window;
 	SDL_Renderer *renderer;
-	TTF_Font* font;
-	FT_Face face;
-	FT_Library library;
+	// TTF_Font* font;
+	// FT_Face face;
+	// FT_Library library;
+	Font font;
 	SDL_GLContext glContext;
 
 	void FailedToInitialize(const std::string& message);
-	SDL_Texture* CashText(const std::string& text);
+	//SDL_Texture* CashText(const std::string& text);
 public:
 	Graphic(int width = 640, int height = 480,bool is_fullscreen = false);
 

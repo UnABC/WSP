@@ -255,8 +255,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 		}
 		switch (node->GetType())
 		{
-		case 0:return ((static_var.back()[variableName] = StaticVar((long long)0)));
-		case 1:return ((static_var.back()[variableName] = StaticVar((long double)0.0)));
+		case 0:return ((static_var.back()[variableName] = StaticVar(0LL)));
+		case 1:return ((static_var.back()[variableName] = StaticVar(0.0L)));
 		case 2:return ((static_var.back()[variableName] = StaticVar(string())));
 		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
 		default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
@@ -594,8 +594,8 @@ void Evaluator::ProcessStaticVar(AST* ast) {
 	//変数の定義
 	switch (node->GetType())
 	{
-	case 0:static_var.back()[variableName] = StaticVar((long long)0); break;
-	case 1:static_var.back()[variableName] = StaticVar((long double)0.0); break;
+	case 0:static_var.back()[variableName] = StaticVar(0LL); break;
+	case 1:static_var.back()[variableName] = StaticVar(0.0L); break;
 	case 2:static_var.back()[variableName] = StaticVar(string()); break;
 	case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
 	default:throw RuntimeException("Unknown function variable type.", node->lineNumber, node->columnNumber);

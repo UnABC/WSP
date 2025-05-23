@@ -1,15 +1,17 @@
-/*void print_test(int n){
-	cls()
+void print_test(int n){
+	//cls()
 	pos(0,20*n)
 	color(0,255,0)
-	print("test")
+	print("a")
 	if (n < 200)print_test(n+1)
 	return
 }
 
 start_time = gettime()
-print_test(0)
+//print_test(0)
+print("Hello world!")
 end_time = gettime()
 pos(100,0)
-color(255,255,255)
-print("実行時間:"+string(end_time-start_time)+"ms")*/
+color(0,0,0)
+print("実行時間:"+string(end_time-start_time)+"ms")
+console("実行時間:"+string(end_time-start_time)+"ms")
