@@ -72,7 +72,7 @@ SDL_Texture* Graphic::CashText(const string& text) {
 void Graphic::printText(const string& text) {
 	if (!SDL_GL_SwapWindow(window))
 		FailedToInitialize(SDL_GetError());
-	font.DrawTexts(text, pos.x, pos.y + font_size, 1.0f, color, width);
+	font.DrawTexts(text, pos.x, pos.y, 1.0f, color, width);
 	if (!SDL_GL_SwapWindow(window))
 		FailedToInitialize(SDL_GetError());
 	// SDL_Texture* textTexture = CashText(text);
@@ -135,12 +135,12 @@ void Graphic::Stop() {
 
 void Graphic::End() const {
 	//ウィンドウを閉じる
-	FT_Done_Face(face);
-	FT_Done_FreeType(library);
+	//if (face)FT_Done_Face(face);
+	//if (library)FT_Done_FreeType(library);
 	SDL_GL_DestroyContext(glContext);
 	SDL_DestroyWindow(window);
 	//SDL_DestroyRenderer(renderer);
 	SDL_Quit();
-	TTF_Quit();
+	//TTF_Quit();
 }
 

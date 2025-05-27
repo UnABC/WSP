@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 		for (AST* ast : statements)
 			evaluator.evaluate(ast); //評価実行
 		
-		evaluator.GetGraphic().Stop(); //ウィンドウは表示したまま
+		evaluator.Stop(); //ウィンドウは表示したまま
 		//以下Lexer testの残骸//////////////////////////////////////////////////////////////////
 		// for (AST *ast : statements) {
 		// 	//ASTを表示する

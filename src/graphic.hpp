@@ -39,8 +39,8 @@ private:
 	SDL_Window* window;
 	//SDL_Renderer *renderer;
 	//TTF_Font* font;
-	FT_Face face;
-	FT_Library library;
+	//FT_Face face;
+	//FT_Library library;
 	Font font;
 	SDL_GLContext glContext;
 

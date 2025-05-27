@@ -15,8 +15,11 @@
 #include FT_FREETYPE_H
 
 struct Character {
-	GLuint TextureID;	//グリフのテクスチャID
-	float *vertices[6][4];	//グリフの頂点情報
+	//GLuint TextureID;	//グリフのテクスチャID
+	int LayerIndex;
+	glm::ivec2 Size;	//グリフのサイズ
+	glm::ivec2 Bearing;	//グリフのベアリング
+	float Advance;		//グリフのアドバンス
 };
 
 class Font {
@@ -26,36 +29,51 @@ private:
 	FT_GlyphSlot slot;
 	glm::mat4 projection;
 	GLuint vao, vbo;
+
+	// font関連
+	GLuint textureArrayID;
+	int nextLayerIndex; // レイヤーインデックスの管理
+	unsigned long long maxGlyphWidth, maxGlyphHeight; // 最大グリフの大きさ
+	int maxTextureSize = 1024;
+
 	const char* vertexShaderSource = R"glsl(
-		#version 450 core
-		layout (location = 0) in vec4 vertex; // vec2 pos, vec2 tex
-		out vec2 TexCoords;
-		uniform mat4 projection;
-		void main() {
-			gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
-			TexCoords = vertex.zw;
-		}
-		)glsl";
+        #version 330 core
+        layout (location = 0) in vec2 position;
+        layout (location = 1) in vec2 texCoord;
+        layout (location = 2) in float layerIndex;
+        out VS_OUT {
+            vec2 TexCoords;
+            float LayerIndex;
+        } vs_out;
+        uniform mat4 projection;
+        void main() {
+            gl_Position = projection * vec4(position.x, position.y, 0.0, 1.0);
+            vs_out.TexCoords = texCoord;
+            vs_out.LayerIndex = layerIndex;
+        }
+    )glsl";
 
 	const char* fragmentShaderSource = R"glsl(
-		#version 450 core
-		in vec2 TexCoords;
-		out vec4 color;
-		uniform sampler2D text;
-		uniform vec3 textColor;
-		void main()
-		{    
-			vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
-			color = vec4(textColor, 1.0) * sampled;
-		}
-		)glsl";
+        #version 330 core
+        out vec4 FragColor;
+        in VS_OUT {
+            vec2 TexCoords;
+            float LayerIndex;
+        } fs_in;
+        uniform sampler2DArray textTextureArray;
+        uniform vec3 textColor;
+        void main() {
+            float alpha = texture(textTextureArray, vec3(fs_in.TexCoords, fs_in.LayerIndex)).r;
+            FragColor = vec4(textColor, alpha);
+        }
+    )glsl";
 	GLuint shaderProgram;
 
 	//フォントのキャッシュ
 	std::map<char16_t, Character> characters;
-
-	void CreateCharacters(const char* text);
+	int font_size;
 public:
+	Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0), nextLayerIndex(0), maxGlyphWidth(0), maxGlyphHeight(0), textureArrayID(0) {};
 	~Font();
 	void Init(int width, int height);
 	void SetFont(const char* font_path, int size);
