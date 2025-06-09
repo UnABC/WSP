@@ -54,7 +54,6 @@ Evaluator::~Evaluator() {
 }
 
 pair<Var, bool> Evaluator::evaluate(AST* ast) {
-	//ASTを表示する
 	if (ast == nullptr) return make_pair(Var(), true);
 	bool is_static = false;
 	int type;

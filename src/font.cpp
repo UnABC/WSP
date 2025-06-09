@@ -95,7 +95,7 @@ void Font::SetFont(const char* font_path, int size) {
 	shaderProgram = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
 }
 
-void Font::DrawTexts(string text, float x, float y, float scale, SDL_Color color, int width) {
+void Font::SetTexts(string text, float x, float y, float scale, SDL_Color color, int width) {
 	if (!face || !shaderProgram || !vbo || !vao)
 		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
@@ -114,7 +114,10 @@ void Font::DrawTexts(string text, float x, float y, float scale, SDL_Color color
 
 	u16string text16str = boost::locale::conv::utf_to_utf<char16_t>(text);
 	const char16_t* text16 = text16str.c_str();
-	
+
+	int all_vertices_size = text16str.size() * 6 * 5;
+	float all_vertices[all_vertices_size]; // posX, posY, texU, texV, layerIndex
+
 	for (size_t i = 0; text16[i] != u'\0'; i++) {
 		if (text16[i] == '\n') {
 			current_x = x;
@@ -159,13 +162,23 @@ void Font::DrawTexts(string text, float x, float y, float scale, SDL_Color color
 			{ render_x + glyph_width, render_y               , tex_u_max, 0.0f     , current_layer_idx },
 			{ render_x + glyph_width, render_y + glyph_height, tex_u_max, tex_v_max, current_layer_idx }
 		};
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// 頂点データをall_verticesに追加
+		memcpy(&all_vertices[i * 5 * 6], vertices, sizeof(vertices));
 		current_x += ch.Advance * scale;
 	}
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(all_vertices), all_vertices, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_TRIANGLES, 0, (all_vertices_size * 6));
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	//glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+}
+
+void Font::DrawTexts() {
+	glUseProgram(shaderProgram);
+	glBindVertexArray(vao);
+	glDrawArrays(GL_TRIANGLES, 0, (12 * 6));
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 

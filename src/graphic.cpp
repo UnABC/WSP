@@ -72,7 +72,7 @@ SDL_Texture* Graphic::CashText(const string& text) {
 void Graphic::printText(const string& text) {
 	if (!SDL_GL_SwapWindow(window))
 		FailedToInitialize(SDL_GetError());
-	font.DrawTexts(text, pos.x, pos.y, 1.0f, color, width);
+	font.SetTexts(text, pos.x, pos.y, 1.0f, color, width);
 	if (!SDL_GL_SwapWindow(window))
 		FailedToInitialize(SDL_GetError());
 	// SDL_Texture* textTexture = CashText(text);
@@ -106,21 +106,26 @@ void Graphic::Clear() {
 }
 
 void Graphic::Draw() {
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 	//テクスチャの描画
+	font.DrawTexts();
 	/*for (const auto& texture : textures) {
 		SDL_RenderTexture(renderer, get<0>(texture), &get<1>(texture), &get<2>(texture));
 		SDL_DestroyTexture(get<0>(texture));
 	}
 	textures.clear();
 	SDL_RenderPresent(renderer);*/
+	if (!SDL_GL_SwapWindow(window))
+		FailedToInitialize(SDL_GetError());
 }
 
 void Graphic::Stop() {
 	bool running = true;
+	SDL_Event event;
 	while (running) {
-		SDL_Event event;
 		while (SDL_PollEvent(&event)) if (event.type == SDL_EVENT_QUIT) running = false;
-
+		Draw();
 		//背景の初期化
 		// glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		//glClear(GL_COLOR_BUFFER_BIT);

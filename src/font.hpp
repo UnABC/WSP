@@ -35,7 +35,7 @@ private:
 	int nextLayerIndex; // レイヤーインデックスの管理
 	unsigned long long maxGlyphWidth, maxGlyphHeight; // 最大グリフの大きさ
 	int maxTextureSize = 1024;
-
+    //頂点シェーダー
 	const char* vertexShaderSource = R"glsl(
         #version 330 core
         layout (location = 0) in vec2 position;
@@ -52,7 +52,7 @@ private:
             vs_out.LayerIndex = layerIndex;
         }
     )glsl";
-
+    //色の計算
 	const char* fragmentShaderSource = R"glsl(
         #version 330 core
         out vec4 FragColor;
@@ -78,7 +78,8 @@ public:
 	void Init(int width, int height);
 	void SetFont(const char* font_path, int size);
 	void recalcProjection(int width, int height) { projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); }
-	void DrawTexts(std::string text, float x, float y, float scale, SDL_Color color, int width);
+	void SetTexts(std::string text, float x, float y, float scale, SDL_Color color, int width);
+    void DrawTexts();
 };
 
 
