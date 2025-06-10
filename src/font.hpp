@@ -41,15 +41,18 @@ private:
         layout (location = 0) in vec2 position;
         layout (location = 1) in vec2 texCoord;
         layout (location = 2) in float layerIndex;
+        layout (location = 3) in vec3 color;
         out VS_OUT {
             vec2 TexCoords;
             float LayerIndex;
         } vs_out;
+        out vec3 outColor;
         uniform mat4 projection;
         void main() {
             gl_Position = projection * vec4(position.x, position.y, 0.0, 1.0);
             vs_out.TexCoords = texCoord;
             vs_out.LayerIndex = layerIndex;
+            outColor = color;
         }
     )glsl";
     //色の計算
@@ -60,11 +63,11 @@ private:
             vec2 TexCoords;
             float LayerIndex;
         } fs_in;
+        in vec3 outColor;
         uniform sampler2DArray textTextureArray;
-        uniform vec3 textColor;
         void main() {
             float alpha = texture(textTextureArray, vec3(fs_in.TexCoords, fs_in.LayerIndex)).r;
-            FragColor = vec4(textColor, alpha);
+            FragColor = vec4(outColor, alpha);
         }
     )glsl";
 	GLuint shaderProgram;
@@ -72,6 +75,7 @@ private:
 	//フォントのキャッシュ
 	std::map<char16_t, Character> characters;
 	int font_size;
+    std::vector<float> all_vertices; // 全ての頂点データを保持するベクター
 public:
 	Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0), nextLayerIndex(0), maxGlyphWidth(0), maxGlyphHeight(0), textureArrayID(0) {};
 	~Font();
