@@ -73,7 +73,7 @@ private:
 	GLuint shaderProgram;
 
 	//フォントのキャッシュ
-	std::map<char16_t, Character> characters;
+	std::unordered_map<char16_t, Character> characters;
 	int font_size;
     std::vector<float> all_vertices; // 全ての頂点データを保持するベクター
 public:
@@ -84,6 +84,7 @@ public:
 	void recalcProjection(int width, int height) { projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); }
 	void SetTexts(std::string text, float x, float y, float scale, SDL_Color color, int width);
     void DrawTexts();
+    void Clear();
 };
 
 

@@ -30,6 +30,9 @@ private:
 	unsigned long long font_size = 24;	//フォントサイズ
 	bool redraw = true;	//描画フラグ
 
+	//各種内部変数
+	float fps = 60.0;	//フレームレート
+	unsigned long long lastTime = 0;	//タイマー
 	//描画するテクスチャ達
 	std::vector<std::tuple<SDL_Texture*,SDL_FRect,SDL_FRect>> textures;
 

@@ -102,8 +102,7 @@ void Font::SetTexts(string text, float x, float y, float scale, SDL_Color color,
 	if (!face || !shaderProgram || !vbo || !vao)
 		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
-	//色の設定
-	//glUniform3f(glGetUniformLocation(shaderProgram, "textColor"), color.r / 255.0f, color.g / 255.0f, color.b / 255.0f);
+	//表示座標の計算
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, textureArrayID);
@@ -176,17 +175,20 @@ void Font::SetTexts(string text, float x, float y, float scale, SDL_Color color,
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * all_vertices.size(), all_vertices.data(), GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, (all_vertices.size()));
-	glBindVertexArray(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	//glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
 void Font::DrawTexts() {
+	if (all_vertices.empty())return;
+	if (!shaderProgram || !vbo || !vao)
+		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, (all_vertices.size()));
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Font::Clear() {
+	all_vertices.clear();
 }
 
