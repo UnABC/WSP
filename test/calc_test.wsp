@@ -9,4 +9,7 @@ print(d)
 e = 1
 e <<= 3
 print(e)
+//未定義変数の処理
+print(hogehoge+="3")
+print(e--)
 

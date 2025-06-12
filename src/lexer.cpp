@@ -155,7 +155,7 @@ string AnalysisLine::ReadOperator() {
 		{"<<",true},{">>",true},{"+=",true},
 		{"-=",true},{"*=",true},{"/=",true},
 		{"%=",true},{"&=",true},{"|=",true},
-		{"^=",true}
+		{"^=",true},{"++",true},{"--",true}
 	};
 	string double_operator = line.substr(column, 2);
 	if (operators.count(double_operator)) {

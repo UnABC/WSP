@@ -301,7 +301,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 				return scoped_var[variableName];
 			}
 		}
-		throw RuntimeException("Undefined variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		//未定義の場合0で初期化
+		return var.back()[variableName] = Var(0LL);
 	}
 	case Node::ReturnStatement: {
 		throw EvaluatorException("Return statement should not be evaluated.");
@@ -377,7 +378,7 @@ Var Evaluator::BinaryAssignmentOperator(AST* left_node, Var Left, Var Right, str
 	for (auto& scoped_var : var | views::reverse) {\
 		if (scoped_var.count(variableName))return scoped_var[variableName] = Var(Left op Right);\
 	}\
-	throw RuntimeException("Undefined variable: " + variableName + ".", node->lineNumber, node->columnNumber);}
+	return var.back()[variableName] = Var(Left op Right);}
 
 	if (operatorType == "+=") AssignOperator(+);
 	if (operatorType == "-=") AssignOperator(-);

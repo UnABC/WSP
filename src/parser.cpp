@@ -33,15 +33,24 @@ AST* Parser::ExprBool() {
 		{"<<",true},{">>",true},{"+=",true},
 		{"-=",true},{"*=",true},{"/=",true},
 		{"%=",true},{"&=",true},{"|=",true},
+		{"++",true},{"--",true},
 		{"<<=",true},{">>=",true},
 		{"^=",true},{"&",true},
 		{"^",true},{"|",true}
 	};
 	while ((currentToken->type == TokenType::Operator) && ((bool)operators.count(currentToken->value))) {
-		string operatorType = currentToken->value;
-		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
-		AST* right = ExprAdd();
-		left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber); //二項演算子ノードを作成
+		if (currentToken->value == "++" || currentToken->value == "--") {
+			//インクリメント・デクリメント演算子の処理
+			string operatorType = (currentToken->value == "++") ? "+=" : "-=";
+			currentToken = lexer.ExtractNextToken(); //演算子をスキップ
+			AST* right = new NumberNode("1", 0, currentToken->lineNumber, currentToken->columnNumber);
+			left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber);
+		} else {
+			string operatorType = currentToken->value;
+			currentToken = lexer.ExtractNextToken(); //演算子をスキップ
+			AST* right = ExprAdd();
+			left = new BinaryOperatorNode(operatorType, left, right, currentToken->lineNumber, currentToken->columnNumber); //二項演算子ノードを作成
+		}
 	}
 	return left;
 }
@@ -218,7 +227,7 @@ AST* Parser::Statement(TokenPtr token) {
 			if (while_statement.empty())
 				throw ParserException("Break or Continue statement should be in loop.", currentToken->lineNumber, currentToken->columnNumber);
 			//break文またはcontinue文を解析する
-			int statementType = 2+(currentToken->value == "continue");
+			int statementType = 2 + (currentToken->value == "continue");
 			currentToken = lexer.ExtractNextToken(); //breakまたはcontinueをスキップ
 			if (currentToken->type != TokenType::EndOfLine && currentToken->type != TokenType::EndOfFile && currentToken->type != TokenType::RBrace)
 				throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected EOL or EOF.", currentToken->lineNumber, currentToken->columnNumber);
