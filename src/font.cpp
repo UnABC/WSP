@@ -133,9 +133,12 @@ void Font::SetTexts(string text, float x, float y, float scale, SDL_Color color,
 		}
 		//キャッシュ作成
 		if (!characters.count(text16[i])) {
-			//TODO:OVERFLOW対策
-			if (nextLayerIndex >= maxTextureSize)
-				throw FontException("Maximum texture array size exceeded.");
+			bool is_overflow = false;
+			if (nextLayerIndex >= maxTextureSize) {
+				is_overflow = true;
+				nextLayerIndex = (characters.begin()->second).LayerIndex;
+				characters.erase(begin(characters));
+			}
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glBindTexture(GL_TEXTURE_2D_ARRAY, textureArrayID);
 			if (FT_Load_Glyph(face, FT_Get_Char_Index(face, text16[i]), FT_LOAD_RENDER))
@@ -147,7 +150,11 @@ void Font::SetTexts(string text, float x, float y, float scale, SDL_Color color,
 			character_data.Bearing = { (float)slot->bitmap_left, (float)slot->bitmap_top };
 			character_data.Advance = (float)(slot->advance.x >> 6);
 			characters[text16[i]] = character_data;
-			nextLayerIndex++;
+			if (is_overflow) {
+				nextLayerIndex = maxTextureSize;
+			} else {
+				nextLayerIndex++;
+			}
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 		}
 		Character ch = characters[text16[i]];
@@ -183,7 +190,7 @@ void Font::DrawTexts() {
 		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
 	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, (all_vertices.size()));
+	glDrawArrays(GL_TRIANGLES, 0, (all_vertices.size() / 8));
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
