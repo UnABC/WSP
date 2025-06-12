@@ -4,7 +4,12 @@ void test(string str,int n){
 }
 
 
+color(0,0,0)
 pos(1,1)
 console("test")
+color(255,0,0)
 print("Hello world!")
-test("Titech",10)
+color(0,91,148)
+test("Titech",4)
+color(0,0,255)
+print("日本語テスト")
