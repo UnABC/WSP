@@ -40,7 +40,7 @@ public:
 	~Evaluator();
 	std::pair<Var, bool> evaluate(AST* ast);
 	void RegisterFunctions(AST* ast);
-	Graphic GetGraphic() { return graphic; };
+	void Stop() { graphic.Stop(); };
 };
 #endif // EVALUATOR_HPP
 

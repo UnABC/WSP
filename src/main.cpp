@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 		for (AST* ast : statements)
 			evaluator.evaluate(ast); //評価実行
 		
-		evaluator.GetGraphic().Stop(); //ウィンドウは表示したまま
+		evaluator.Stop(); //ウィンドウは表示したまま
 		//以下Lexer testの残骸//////////////////////////////////////////////////////////////////
 		// for (AST *ast : statements) {
 		// 	//ASTを表示する
@@ -59,6 +59,12 @@ int main(int argc, char* argv[]) {
 		cerr << "Runtime error: " << e.what() << "\n" << e.where() << endl;
 	}
 	catch (const WindowException& e) {
+		cerr << "Graphic error: " << e.what() << endl;
+	}
+	catch (const FontException& e) {
+		cerr << "Font error: " << e.what() << endl;
+	}
+	catch (const ShaderException& e) {
 		cerr << "Graphic error: " << e.what() << endl;
 	}
 	catch (const std::logic_error& e) {

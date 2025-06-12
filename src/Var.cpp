@@ -56,9 +56,15 @@ Var Var::operator*(const Var& value) const {
 	case 1: return Var(double_value * value.double_value);
 	case 2: {
 		//Pythonみたいな感じ
-		string result = string_value;
-		if (string_value.size() == 1) return Var(string(value.int_value, string_value[0]));
-		for (int i = 1; i < value.int_value; i++)result += string_value;
+		const size_t len = string_value.size();
+		const size_t count = (value.int_value > 0) ? value.int_value : 0;
+		if ((len == 0) || (count == 0)) return Var(string());
+		string result;
+		result.resize_and_overwrite(len * count, [&](char* dst, size_t) {
+			for (size_t i = 0; i < count; i++)
+				memcpy(dst + i * len, string_value.data(), len);
+			return len * count;
+			});
 		return Var(result);
 	}
 	case 4: return Var(int_value * value.int_value);

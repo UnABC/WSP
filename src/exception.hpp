@@ -105,4 +105,26 @@ public:
 	}
 };
 
+class FontException : public std::exception {
+	std::string msg;
+public:
+	explicit FontException(const std::string& message)
+		: msg(message) {
+	};
+	virtual const char* what() const noexcept override {
+		return msg.c_str();
+	}
+};
+
+class ShaderException : public std::exception {
+	std::string msg;
+public:
+	explicit ShaderException(const std::string& message)
+		: msg(message) {
+	};
+	virtual const char* what() const noexcept override {
+		return msg.c_str();
+	}
+};
+
 #endif // EXCEPTION_HPP
