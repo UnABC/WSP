@@ -24,11 +24,12 @@ private:
 	Var ProcessBinaryOperator(AST* left_node, AST* right, std::string operatorType, BinaryOperatorNode* node);
 	Var BinaryAssignmentOperator(AST* left_node, Var Left, Var Right, std::string operatorType, BinaryOperatorNode* node);
 	Var EvaluateFunction(UserFunctionNode* node);
-	std::pair<Var, bool> IfStatement(AST* node);
+	std::pair<Var, int> IfStatement(AST* node);
+	std::pair<Var, int> WhileStatement(AST* ast);
 	void VoidFunction(AST* ast);
 	Var ProcessVariables(AST* ast, bool is_static, int type);
 	void ProcessStaticVar(AST* ast);
-	std::pair<Var, bool> ProcessFunction(AST* ast);
+	std::pair<Var, int> ProcessFunction(AST* ast);
 	inline long long GetTime();
 	//Graphic関数
 	Graphic graphic;
@@ -38,7 +39,7 @@ private:
 public:
 	Evaluator();
 	~Evaluator();
-	std::pair<Var, bool> evaluate(AST* ast);
+	std::pair<Var, int> evaluate(AST* ast);
 	void RegisterFunctions(AST* ast);
 	Graphic GetGraphic() { return graphic; };
 };

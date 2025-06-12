@@ -177,9 +177,8 @@ AST* Parser::Statement(TokenPtr token) {
 		if (currentToken->value == "if") {
 			currentToken = lexer.ExtractNextToken(); //ifをスキップ
 			AST* condition = ExprTernary(); //条件式を解析する
-			AST* trueExpr = nullptr;
 			//真の場合の文を解析する
-			trueExpr = (currentToken->type == TokenType::LBrace) ? BlockStatement(currentToken) : Statement(currentToken);
+			AST* trueExpr = (currentToken->type == TokenType::LBrace) ? BlockStatement(currentToken) : Statement(currentToken);
 			AST* falseExpr = nullptr;
 			//else以降が存在すれば処理する
 			if (currentToken->type == TokenType::Identifier && currentToken->value == "else") {
@@ -207,6 +206,23 @@ AST* Parser::Statement(TokenPtr token) {
 			if (!returnValue.back() && (expression != nullptr))
 				throw ParserException("Void function should not return value.", currentToken->lineNumber, currentToken->columnNumber);
 			return new ReturnStatementNode(expression, currentToken->lineNumber, currentToken->columnNumber); //return文ノードを作成
+		} else if (currentToken->value == "while") {
+			currentToken = lexer.ExtractNextToken(); //whileをスキップ
+			AST* condition = ExprTernary(); //条件式を解析する
+			while_statement.push_back(true); //while文のスタックに追加
+			AST* block = (currentToken->type == TokenType::LBrace) ? BlockStatement(currentToken) : Statement(currentToken);
+			while_statement.pop_back(); //while文のスタックから削除
+			return new WhileStatementNode(condition, block, currentToken->lineNumber, currentToken->columnNumber); //while文ノードを作成
+		} else if ((currentToken->value == "break") || (currentToken->value == "continue")) {
+			//ループ内にあるかどうか
+			if (while_statement.empty())
+				throw ParserException("Break or Continue statement should be in loop.", currentToken->lineNumber, currentToken->columnNumber);
+			//break文またはcontinue文を解析する
+			int statementType = 2+(currentToken->value == "continue");
+			currentToken = lexer.ExtractNextToken(); //breakまたはcontinueをスキップ
+			if (currentToken->type != TokenType::EndOfLine && currentToken->type != TokenType::EndOfFile && currentToken->type != TokenType::RBrace)
+				throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected EOL or EOF.", currentToken->lineNumber, currentToken->columnNumber);
+			return new JumpStatementNode(statementType, currentToken->lineNumber, currentToken->columnNumber); //break,continueノードを作成
 		}
 	} else if (currentToken->type == TokenType::LBrace) {
 		//ブロック文を解析する

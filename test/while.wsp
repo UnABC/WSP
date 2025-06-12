@@ -1,0 +1,38 @@
+double test(){
+	cnt = 0
+	while (1){
+		cnt+=1
+		if rnd(10) == 3 return 1.0/cnt
+	}
+}
+
+
+int a = 10
+//通常While
+while(a-=1){
+	color(a*25,255-a*25,a*25)
+	print("a is "+a)
+}
+//関数内While return test
+color(0,0,0)
+pos(200,100)
+print("1～10で3が出る確率は..."+(test()*100)+"%")
+
+//break test
+while (1){
+	if (rnd(10) == 0){
+		print("BREAK!")
+		break
+	}
+}
+color(255,255,255)
+print("BROKEN!")
+
+//continue test
+a = 10
+while (a-=1){
+	if (a == 5)continue
+	color(a*25,a*25,255-a*25)
+	print("a is "+a)
+}
+console("ALL TEST WAS PASSED!")

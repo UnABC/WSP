@@ -9,6 +9,7 @@ private:
 	Lexer& lexer;	//字句解析器
 	TokenPtr currentToken;	//現在のトークン
 	std::vector<bool> returnValue;	//戻り値があるかどうか
+	std::vector<bool> while_statement;	//while文のスタック
 
 	AST* ExprTernary();
 	AST* ExprUnary();
@@ -27,6 +28,7 @@ private:
 public:
 	Parser(Lexer& lexer) : lexer(lexer) {};
 	AST* ParseStatement(TokenPtr token);
+	//DEBUG用関数
 	void show(AST* ast);
 };
 

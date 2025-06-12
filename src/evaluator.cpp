@@ -19,7 +19,8 @@ std::map<Node, std::string> nodeTypeStr = {
 	{Node::DefFunction, "DefFunction"},
 	{Node::ArgumentNode, "ArgumentNode"},
 	{Node::IfStatement, "IfStatement"},
-	{Node::ReturnStatement, "ReturnStatement"}
+	{Node::ReturnStatement, "ReturnStatement"},
+	{Node::WhileStatement, "WhileStatement"}
 };
 
 
@@ -53,9 +54,8 @@ Evaluator::~Evaluator() {
 	return;
 }
 
-pair<Var, bool> Evaluator::evaluate(AST* ast) {
-	//ASTを表示する
-	if (ast == nullptr) return make_pair(Var(), true);
+pair<Var, int> Evaluator::evaluate(AST* ast) {
+	if (ast == nullptr) return make_pair(Var(), 1);
 	bool is_static = false;
 	int type;
 	switch (ast->GetNodeType()) {
@@ -63,18 +63,18 @@ pair<Var, bool> Evaluator::evaluate(AST* ast) {
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
 		EnterScope();
 		for (unsigned long long i = 0;AST * stmt = node->ReadStatement(i); i++) {
-			pair<Var, bool> retval = evaluate(stmt);
-			if (!retval.second) {
+			pair<Var, int> retval = evaluate(stmt);
+			if (retval.second != 1) {
 				ExitScope();
 				return retval;
 			}
 		}
 		ExitScope();
-		return make_pair(Var(), true);
+		return make_pair(Var(), 1);
 	}
 	case Node::IfStatement: {
 		EnterScope();
-		pair<Var, bool> retval = IfStatement(ast);
+		pair<Var, int> retval = IfStatement(ast);
 		ExitScope();
 		return retval;
 	}
@@ -83,14 +83,14 @@ pair<Var, bool> Evaluator::evaluate(AST* ast) {
 		EnterScope();
 		VoidFunction(ast);
 		ExitScope();
-		return make_pair(Var(), true);
+		return make_pair(Var(), 1);
 	}
 	case Node::DefFunction: {
-		return make_pair(Var(), true);
+		return make_pair(Var(), 1);
 	}
 	case Node::StaticVarWithoutAssignment: {
 		ProcessStaticVar(ast);
-		return make_pair(Var(), true);
+		return make_pair(Var(), 1);
 	}
 	case Node::StaticVarWithAssignment:
 		type = static_cast<StaticVariableNode*>(ast)->GetType();
@@ -99,18 +99,26 @@ pair<Var, bool> Evaluator::evaluate(AST* ast) {
 	case Node::Assignment: {
 		//変数定義、計算等
 		ProcessVariables(ast, is_static, type);
-		return make_pair(Var(), true);
+		return make_pair(Var(), 1);
 	}
 	case Node::BinaryOperator: {
 		BinaryOperatorNode* node = static_cast<BinaryOperatorNode*>(ast);
 		ProcessBinaryOperator(node->GetLeft(), node->GetRight(), node->GetOperatorType(), node);
-		return make_pair(Var(), true);
+		return make_pair(Var(), 1);
 	}
 	case Node::ReturnStatement: {
 		ReturnStatementNode* node = static_cast<ReturnStatementNode*>(ast);
 		if (node->GetExpression() == nullptr)
-			return make_pair(Var(), false);
-		return make_pair(CalcExpr(node->GetExpression()), false);
+			return make_pair(Var(), 0);
+		return make_pair(CalcExpr(node->GetExpression()), 0);
+	}
+	case Node::WhileStatement: {
+		//while文
+		return WhileStatement(ast);
+	}
+	case Node::JumpStatement: {
+		JumpStatementNode* node = static_cast<JumpStatementNode*>(ast);
+		return make_pair(Var(), node->GetJumpType());
 	}
 	default:
 		throw EvaluatorException("RuntimeError: Invaild Statement." + nodeTypeStr[ast->GetNodeType()]);
@@ -385,7 +393,7 @@ Var Evaluator::BinaryAssignmentOperator(AST* left_node, Var Left, Var Right, str
 #undef AssignOperator
 }
 
-std::pair<Var, bool> Evaluator::IfStatement(AST* ast) {
+std::pair<Var, int> Evaluator::IfStatement(AST* ast) {
 	//if文の処理
 	IfStatementNode* node = static_cast<IfStatementNode*>(ast);
 	AST* falseExpr = node->GetFalseExpr();
@@ -394,7 +402,7 @@ std::pair<Var, bool> Evaluator::IfStatement(AST* ast) {
 	} else if (falseExpr != nullptr) {
 		return evaluate(falseExpr);
 	}
-	return make_pair(Var(), true);
+	return make_pair(Var(), 1);
 }
 
 //戻り値のない関数の処理
@@ -607,12 +615,12 @@ inline long long Evaluator::GetTime() {
 	return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count() - start_time;
 }
 
-pair<Var, bool> Evaluator::ProcessFunction(AST* ast) {
+pair<Var, int> Evaluator::ProcessFunction(AST* ast) {
 	//関数の中身(BlockStatement)を実行
 	switch (ast->GetNodeType()) {
 	case Node::BlockStatement: {
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
-		pair<Var, bool> result;
+		pair<Var, int> result;
 		EnterScope();
 		for (unsigned long long i = 0;((node->ReadStatement(i) != nullptr) && (result = ProcessFunction(node->ReadStatement(i))).second);i++);
 		ExitScope();
@@ -621,9 +629,27 @@ pair<Var, bool> Evaluator::ProcessFunction(AST* ast) {
 	case Node::ReturnStatement: {
 		ReturnStatementNode* node = static_cast<ReturnStatementNode*>(ast);
 		if (node->GetExpression() == nullptr)
-			return make_pair(Var(), false);
-		return make_pair(CalcExpr(node->GetExpression()), false);
+			return make_pair(Var(), 0);
+		return make_pair(CalcExpr(node->GetExpression()), 0);
 	}
 	default:return evaluate(ast);
 	}
+}
+
+pair<Var, int> Evaluator::WhileStatement(AST* ast) {
+	//while文の処理
+	WhileStatementNode* node = static_cast<WhileStatementNode*>(ast);
+	pair<Var, int> retval;
+	EnterScope();
+	while (CalcExpr(node->GetCondition()).GetValue<bool>()) {
+		retval = evaluate(node->GetStatements());
+		if (retval.second == 0) {
+			ExitScope();
+			return retval;
+		} else if (retval.second == 2) {
+			break;
+		}
+	}
+	ExitScope();
+	return make_pair(Var(), 1);
 }

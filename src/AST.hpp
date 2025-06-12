@@ -22,7 +22,9 @@ enum class Node {
 	DefFunction,	            //関数定義
 	ArgumentNode,	        	//関数の引数
 	IfStatement,		        //If文
-	ReturnStatement,	        //Return文 
+	WhileStatement,	        	//While文
+	ReturnStatement,	        //Return文
+	JumpStatement,	        	//break,continue
 };
 
 class AST {
@@ -302,6 +304,34 @@ public:
 	};
 	const Node GetNodeType() override { return Node::ReturnStatement; };
 	AST* GetExpression() { return expression; };
+};
+
+class WhileStatementNode : public AST {
+private:
+	AST* condition;	//条件式
+	AST* Statements;	//ブロック文
+public:
+	unsigned long long lineNumber;	//行番号
+	unsigned long long columnNumber;	//列番号
+	WhileStatementNode(AST* condition, AST* statements, unsigned long long lineNumber, unsigned long long columnNumber)
+		: condition(condition), Statements(statements), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::WhileStatement; };
+	AST* GetCondition() { return condition; };
+	AST* GetStatements() { return Statements; };
+};
+
+class JumpStatementNode : public AST {
+private:
+	int jumpType;	//ジャンプの種類(2:break,3:continue)
+public:
+	unsigned long long lineNumber;	//行番号
+	unsigned long long columnNumber;	//列番号
+	JumpStatementNode(int jumpType, unsigned long long lineNumber, unsigned long long columnNumber)
+		: jumpType(jumpType), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::JumpStatement; };
+	const int GetJumpType() { return jumpType; };
 };
 
 #endif
