@@ -83,6 +83,12 @@ bool Lexer::LoadNextLine() {
 		} else if (line.isRBrace()) {
 			//右波括弧を読み込む
 			PUSH_BACK(RBrace);
+		} else if (line.isLSquareBracket()) {
+			//左角括弧を読み込む
+			PUSH_BACK(LSquareBracket);
+		} else if (line.isRSquareBracket()) {
+			//右角括弧を読み込む
+			PUSH_BACK(RSquareBracket);
 		} else if (line.isSymbol()) {
 			//記号を読み込む
 			PUSH_BACK(Symbol);

@@ -101,9 +101,6 @@ AST* Parser::ExprPrimary() {
 		if (nextToken->type == TokenType::LParentheses) {
 			//関数の処理
 			return ExprFunction(currentToken);
-		} else if ((nextToken->type == TokenType::Operator) && (nextToken->value == "=")) {
-			//代入演算子の処理
-			return ExprAssignment(currentToken);
 		} else if (nextToken->type == TokenType::Identifier) {
 			if (currentToken->value == "int") {
 				//int型の変数の処理
@@ -115,11 +112,11 @@ AST* Parser::ExprPrimary() {
 				//string型の変数の処理
 				return Declaration(2);
 			}
-		} else {
-			AST* ast = new VariableNode(currentToken->value, currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
-			currentToken = lexer.ExtractNextToken(); //トークンを進める
-			return ast;
 		}
+		string variableName;
+		AST* ast = ExprVariable(currentToken,variableName); //変数を解析する
+		//代入演算子の処理
+		return ((currentToken->type == TokenType::Operator) && (currentToken->value == "=")) ? ExprAssignment(currentToken, variableName, ast) : ast;
 	} else if (currentToken->type == TokenType::LParentheses) {
 		currentToken = lexer.ExtractNextToken(); //左括弧をスキップ
 		AST* left = ExprTernary();
@@ -127,8 +124,51 @@ AST* Parser::ExprPrimary() {
 			throw ParserException("Not found right parenthesis.", currentToken->lineNumber, currentToken->columnNumber);
 		currentToken = lexer.ExtractNextToken(); //右括弧をスキップ
 		return left;
+	} else if (currentToken->type == TokenType::LSquareBracket) {
+		currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
+		vector<AST*> elements;
+		while (currentToken->type != TokenType::RSquareBracket) {
+			if ((currentToken->type == TokenType::EndOfFile) || (currentToken->type == TokenType::EndOfLine))
+				throw ParserException("Not found right square bracket.", currentToken->lineNumber, currentToken->columnNumber);
+			elements.push_back(ExprTernary()); //要素を解析する
+			if (currentToken->type == TokenType::Symbol && currentToken->value == ",") {
+				currentToken = lexer.ExtractNextToken(); //,をスキップ
+			} else if (currentToken->type != TokenType::RSquareBracket) {
+				throw ParserException("Invalid token.\"" + currentToken->value + "\"", currentToken->lineNumber, currentToken->columnNumber);
+			}
+		}
+		currentToken = lexer.ExtractNextToken(); //右角括弧をスキップ
+		return new ArrayNode(elements, currentToken->lineNumber, currentToken->columnNumber); //配列ノードを作成
 	}
 	throw ParserException("Invalid token.\"" + currentToken->value + "\"", currentToken->lineNumber, currentToken->columnNumber);
+}
+
+AST* Parser::ExprVariable(TokenPtr token,string &variableName) {
+	//変数を解析する
+	unsigned long long tmp_lineNumber = token->lineNumber;
+	unsigned long long tmp_columnNumber = token->columnNumber;
+	variableName = token->value;
+	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
+	AST* ast;
+	if (currentToken->type == TokenType::LSquareBracket) {
+		vector<AST*> arrayIndex; //配列のインデックスを格納するベクター
+		//配列のインデックスを解析する
+		while (currentToken->type == TokenType::LSquareBracket) {
+			currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
+			if (currentToken->type == TokenType::RSquareBracket) {
+				throw ParserException("Not found array index.", currentToken->lineNumber, currentToken->columnNumber);
+			} else {
+				arrayIndex.push_back(ExprTernary()); //インデックスを解析する
+			}
+			if (currentToken->type != TokenType::RSquareBracket)
+				throw ParserException("Not found right square bracket.", currentToken->lineNumber, currentToken->columnNumber);
+			currentToken = lexer.ExtractNextToken(); //右角括弧をスキップ
+		}
+		ast = new VariableNode(variableName, arrayIndex, tmp_lineNumber, tmp_columnNumber); //変数ノードを作成
+	} else {
+		ast = new VariableNode(variableName, {}, tmp_lineNumber, tmp_columnNumber); //変数ノードを作成
+	}
+	return ast;
 }
 
 AST* Parser::ExprNumber(TokenPtr token) {
@@ -146,15 +186,10 @@ AST* Parser::ExprString(TokenPtr token) {
 	return ast;
 }
 
-AST* Parser::ExprAssignment(TokenPtr token) {
-	//代入演算子を解析する
-	string variableName = token->value;
-	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
+AST* Parser::ExprAssignment(TokenPtr token, string variableName, AST* variable) {
 	currentToken = lexer.ExtractNextToken(); //演算子をスキップ
 	AST* right = ExprTernary(); //式を解析する
-	AST* variable = new VariableNode(variableName, currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
-	AST* ast = new AssignmentNode(variableName, variable, right, currentToken->lineNumber, currentToken->columnNumber); //代入ノードを作成
-	return ast;
+	return new AssignmentNode(variableName, variable, right, currentToken->lineNumber, currentToken->columnNumber); //代入ノードを作成
 }
 
 AST* Parser::ExprFunction(TokenPtr token) {
@@ -266,9 +301,12 @@ AST* Parser::Declaration(int type) {
 	//静的変数or関数を解析する
 	currentToken = lexer.ExtractNextToken(); //型をスキップ
 	TokenPtr nextToken = lexer.PeekTokens(0); //次のトークンを取得
+	vector<AST*> arrayIndex; //配列のインデックスを格納するベクター
 	if ((type != 3) && (nextToken->type == TokenType::Operator) && (nextToken->value == "=")) {
 		//静的変数の初期化
-		AST* assignment = ExprAssignment(currentToken); //型の変数を宣言&代入
+		string variableName;
+		AST* variable = ExprVariable(currentToken, variableName); //変数を解析する
+		AST* assignment = ExprAssignment(currentToken,variableName,variable); //型の変数を宣言&代入
 		return new StaticVariableNode(assignment, type, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
 	} else if (nextToken->type == TokenType::LParentheses) {
 		//関数の初期化
@@ -301,12 +339,26 @@ AST* Parser::Declaration(int type) {
 		AST* block = BlockStatement(currentToken); //関数の内容を解析する
 		returnValue.pop_back(); //戻り値の有無を削除
 		return new UserFunctionNode(functionName, args, block, type, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
+	} else if (nextToken->type == TokenType::LSquareBracket) {
+		type += 10;
+		currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
+		while (currentToken->type == TokenType::LSquareBracket) {
+			currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
+			if (currentToken->type == TokenType::RSquareBracket) {
+				throw ParserException("Not found array index.", currentToken->lineNumber, currentToken->columnNumber);
+			} else {
+				arrayIndex.push_back(ExprTernary()); //インデックスを解析する
+			}
+			if (currentToken->type != TokenType::RSquareBracket)
+				throw ParserException("Not found right square bracket.", currentToken->lineNumber, currentToken->columnNumber);
+			currentToken = lexer.ExtractNextToken(); //右角括弧をスキップ
+		}
 	}
 	if (type == 3)
 		throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected function declaration.", currentToken->lineNumber, currentToken->columnNumber);
 	//静的変数(初期値なし)
 	string variableName = currentToken->value; //変数名を取得
-	AST* ast = new StaticVarNodeWithoutAssignment(variableName, type, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
+	AST* ast = new StaticVarNodeWithoutAssignment(variableName, type, arrayIndex, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
 	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
 	return ast;
 }
@@ -319,11 +371,11 @@ AST* Parser::Argument(int type) {
 	bool isReference = (type == 3);
 	if (type == 3) {
 		//参照渡し
-		ast = new VariableNode(variableName, currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
+		ast = new VariableNode(variableName, vector<AST*>(), currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
 		ast->SetType(0); //型をintで仮設定
 	} else {
 		//値渡し
-		ast = new StaticVarNodeWithoutAssignment(variableName, type, currentToken->lineNumber, currentToken->columnNumber);
+		ast = new StaticVarNodeWithoutAssignment(variableName, type, vector<AST*>(), currentToken->lineNumber, currentToken->columnNumber);
 	}
 	currentToken = lexer.ExtractNextToken(); //変数名をスキップ
 	if ((currentToken->type == TokenType::Operator) && (currentToken->value == "=")) {

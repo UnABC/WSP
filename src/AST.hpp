@@ -1,5 +1,5 @@
 /*仕様(メモ)
-type;0:int,1:double,2:string,3:void,-1:不定,-2:未定義
+type;0:int,1:double,2:string,3:void,10:int(配列),11:double(配列),12:string(配列),-1:不定,-2:未定義
 */
 #ifndef AST_HPP
 #define AST_HPP
@@ -9,6 +9,7 @@ type;0:int,1:double,2:string,3:void,-1:不定,-2:未定義
 enum class Node {
 	Number,			            //数値リテラル
 	String,			            //文字列リテラル
+	Array,			            //配列リテラル
 	UnaryOperator,	            //単項演算子
 	BinaryOperator,	            //二項演算子
 	TernaryOperator,            //三項演算子
@@ -92,6 +93,22 @@ public:
 	const inline int GetType() { return 2; };
 };
 
+class ArrayNode : public AST {
+private:
+	std::vector<AST*> elements;	//配列の要素
+	int type = -2;
+public:
+	unsigned long long lineNumber;	//行番号
+	unsigned long long columnNumber;	//列番号
+	ArrayNode(std::vector<AST*> elements, unsigned long long lineNumber, unsigned long long columnNumber)
+		: elements(elements), lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	const Node GetNodeType() override { return Node::Array; };
+	std::vector<AST*> GetElements() { return elements; };
+	const int GetType() override { return type; };
+	void SetType(int type) override { this->type = type; };
+};
+
 class UnaryOperatorNode : public AST {
 private:
 	AST* expression;	//式
@@ -166,6 +183,7 @@ public:
 	};
 	const Node GetNodeType() override { return Node::Assignment; };
 	const std::string GetVariableName() { return variableName; };
+	AST* GetVariable() { return variable; };
 	AST* GetExpression() { return expression; };
 	const int GetType() override { return type; };
 	void SetType(int type) override { this->type = type; };
@@ -174,17 +192,19 @@ public:
 class VariableNode : public AST {
 private:
 	std::string variableName;	//変数名
-	int type = -2;	//式の型(0:int,1:double)
+	int type = -2;	//式の型(0:int,1:double,2:string,3:var,10:int(配列),11:double(配列),12:string(配列),-1:不定,-2:未定義)
+	std::vector<AST*> arrayIndex;	//配列のインデックス(配列の場合のみ)
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	VariableNode(std::string variableName, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variableName(variableName), lineNumber(lineNumber), columnNumber(columnNumber) {
+	VariableNode(std::string variableName, std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
+		: variableName(variableName), arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::Variable; };
 	const std::string GetVariableName() { return variableName; };
 	const int GetType() override { return type; };
 	void SetType(int type) override { this->type = type; };
+	std::vector<AST*> GetArrayIndex() { return arrayIndex; };
 };
 
 class SystemFunctionNode : public AST {
@@ -282,15 +302,17 @@ class StaticVarNodeWithoutAssignment : public AST {
 private:
 	std::string variableName;	//変数名
 	int type = -2;	//式の型
+	std::vector<AST*> arrayIndex;	//配列のインデックス(配列の場合のみ)
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	StaticVarNodeWithoutAssignment(std::string variableName, int type, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variableName(variableName), type(type), lineNumber(lineNumber), columnNumber(columnNumber) {
+	StaticVarNodeWithoutAssignment(std::string variableName, int type,std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
+		: variableName(variableName), type(type),arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::StaticVarWithoutAssignment; };
 	const std::string GetVariableName() { return variableName; };
 	const int GetType() override { return type; };
+	std::vector<AST*> GetArrayIndex() { return arrayIndex;};
 };
 
 class ReturnStatementNode : public AST {

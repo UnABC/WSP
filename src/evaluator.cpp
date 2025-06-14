@@ -242,34 +242,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 		is_static = true;
 	case Node::Assignment:return ProcessVariables(ast, is_static, type);
 	case Node::StaticVarWithoutAssignment: {
-		//静的変数の処理
-		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
-		string variableName = node->GetVariableName();
-		for (auto& ref_static : ref_static_var | views::reverse) {
-			if (ref_static.count(variableName))
-				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-		}
-		for (auto& ref : ref_var | views::reverse) {
-			if (ref.count(variableName))
-				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-		}
-		for (auto& scoped_static_var : static_var | views::reverse) {
-			if (scoped_static_var.count(variableName))
-				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-		}
-		for (auto& scoped_var : var | views::reverse) {
-			if (scoped_var.count(variableName))
-				throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-		}
-		switch (node->GetType())
-		{
-		case 0:return ((static_var.back()[variableName] = StaticVar(0LL)));
-		case 1:return ((static_var.back()[variableName] = StaticVar(0.0L)));
-		case 2:return ((static_var.back()[variableName] = StaticVar(string())));
-		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
-		default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
-		}
-		throw EvaluatorException("Unknown type");
+		return ProcessStaticVar(ast);
 	}
 	case Node::Variable: {
 		VariableNode* node = static_cast<VariableNode*>(ast);
@@ -283,26 +256,75 @@ Var Evaluator::CalcExpr(AST* ast) {
 			return math_const[variableName];
 		}
 		//変数の存在を確認
-		for (auto& ref_static : ref_static_var | views::reverse) {
-			if (ref_static.count(variableName))
-				return *ref_static[variableName];
-		}
-		for (auto& ref : ref_var | views::reverse) {
-			if (ref.count(variableName))
-				return *ref[variableName];
-		}
-		for (auto& scoped_static_var : static_var | views::reverse) {
-			if (scoped_static_var.count(variableName)) {
-				return scoped_static_var[variableName];
+		if (node->GetArrayIndex().empty()) {
+			//通常変数
+			for (auto& ref_static : ref_static_var | views::reverse) {
+				if (ref_static.count(variableName))
+					return *ref_static[variableName];
 			}
-		}
-		for (auto& scoped_var : var | views::reverse) {
-			if (scoped_var.count(variableName)) {
-				return scoped_var[variableName];
+			for (auto& ref : ref_var | views::reverse) {
+				if (ref.count(variableName))
+					return *ref[variableName];
 			}
+			for (auto& scoped_static_var : static_var | views::reverse) {
+				if (scoped_static_var.count(variableName)) {
+					return scoped_static_var[variableName];
+				}
+			}
+			for (auto& scoped_var : var | views::reverse) {
+				if (scoped_var.count(variableName)) {
+					return scoped_var[variableName];
+				}
+			}
+			//未定義の場合0で初期化
+			return var.back()[variableName] = Var(0LL);
+		} else {
+			for (auto& array : var | views::reverse) {
+				if (array.count(variableName)) {
+					//配列変数
+					Var retval(array[variableName].GetValue<vector<Var>>());
+					for (AST* index_node : node->GetArrayIndex()) {
+						long long index = CalcExpr(index_node).GetValue<long long>();
+						//配列のインデックスが範囲外の場合
+						if (index < 0 || index >= retval.GetValue<vector<Var>>().size())
+							throw RuntimeException("Array index out of range.", node->lineNumber, node->columnNumber);
+						retval = retval.GetValue<vector<Var>>().at(index);
+					}
+					return retval;
+				}
+			}
+			for (auto& array : static_var | views::reverse) {
+				if (array.count(variableName)) {
+					//静的配列変数
+					StaticVar retval(array[variableName].GetValue<vector<Var>>());
+					for (AST* index_node : node->GetArrayIndex()) {
+						long long index = CalcExpr(index_node).GetValue<long long>();
+						//配列のインデックスが範囲外の場合
+						if (index < 0 || index >= retval.GetValue<vector<Var>>().size())
+							throw RuntimeException("Array index out of range.", node->lineNumber, node->columnNumber);
+						retval = retval.GetValue<vector<Var>>().at(index);
+					}
+					return retval;
+				}
+			}
+			//配列変数が存在しない場合はエラー
+			throw RuntimeException("Undefined array: " + variableName + ".", node->lineNumber, node->columnNumber);
 		}
-		//未定義の場合0で初期化
-		return var.back()[variableName] = Var(0LL);
+
+	}
+	case Node::Array: {
+		//配列リテラル
+		ArrayNode* node = static_cast<ArrayNode*>(ast);
+		vector<Var> array;
+		bool first_loop = true;
+		int type;
+		for (AST* element : node->GetElements()) {
+			array.push_back(CalcExpr(element));
+			if (first_loop)type = element->GetType();
+			first_loop = false;
+		}
+		node->SetType(10 + type);
+		return Var(array);
 	}
 	case Node::ReturnStatement: {
 		throw EvaluatorException("Return statement should not be evaluated.");
@@ -437,7 +459,7 @@ void Evaluator::VoidFunction(AST* ast) {
 	} else if (functionName == "randomize") {
 		if (args.size() > 1)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		srand((unsigned int)((args.size() == 0)?time(NULL):CalcExpr(args.at(0)).GetValue<long long>()));
+		srand((unsigned int)((args.size() == 0) ? time(NULL) : CalcExpr(args.at(0)).GetValue<long long>()));
 		return;
 	} else if (functionName == "print") {
 		if (args.size() != 1)
@@ -450,18 +472,17 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>());
 		return;
-	}else if (functionName == "cls") {
+	} else if (functionName == "cls") {
 		if (args.size() != 0)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.Clear();
 		return;
-	}else if (functionName == "color"){
+	} else if (functionName == "color") {
 		if (args.size() != 3)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
 		return;
 	}
-	//TODO:ユーザー定義関数
 	if (user_func.count(functionName)) {
 		//関数の中身を実行
 		EvaluateFunction(static_cast<UserFunctionNode*>(ast));
@@ -547,31 +568,65 @@ Var Evaluator::EvaluateFunction(UserFunctionNode* node) {
 	ExitScope();
 	return retval;
 }
-
-Var Evaluator::ProcessVariables(AST* ast, bool is_static, int type) {
+//XXX:配列変数の処理!!
+Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 	AssignmentNode* node = static_cast<AssignmentNode*>(ast);
 	string variableName = node->GetVariableName();
 	AST* expression = node->GetExpression();
-	//変数の存在を確認
-	for (auto& ref_static : ref_static_var | views::reverse) {
-		if (ref_static.count(variableName))
-			return *ref_static[variableName] = CalcExpr(expression);
-	}
-	for (auto& ref : ref_var | views::reverse) {
-		if (ref.count(variableName))
-			return *ref[variableName] = CalcExpr(expression);
-	}
-	for (auto& scoped_static_var : static_var | views::reverse) {
-		if (scoped_static_var.count(variableName))
-			return scoped_static_var[variableName] = CalcExpr(expression);
-	}
-	for (auto& scoped_var : var | views::reverse) {
-		if (scoped_var.count(variableName))
-			return scoped_var[variableName] = CalcExpr(expression);
+	VariableNode* variable = static_cast<VariableNode*>(node->GetVariable());
+	if (variable->GetArrayIndex().empty()) {
+		//変数の存在を確認
+		for (auto& ref_static : ref_static_var | views::reverse) {
+			if (ref_static.count(variableName))
+				return *ref_static[variableName] = CalcExpr(expression);
+		}
+		for (auto& ref : ref_var | views::reverse) {
+			if (ref.count(variableName))
+				return *ref[variableName] = CalcExpr(expression);
+		}
+		for (auto& scoped_static_var : static_var | views::reverse) {
+			if (scoped_static_var.count(variableName))
+				return scoped_static_var[variableName] = CalcExpr(expression);
+		}
+		for (auto& scoped_var : var | views::reverse) {
+			if (scoped_var.count(variableName))
+				return scoped_var[variableName] = CalcExpr(expression);
+		}
+	} else {
+		//配列変数の存在を確認
+		for (auto& array : var | views::reverse) {
+			if (array.count(variableName)) {
+				//配列変数
+				Var* retval = &array[variableName];
+				for (AST* index_node : variable->GetArrayIndex()) {
+					long long index = CalcExpr(index_node).GetValue<long long>();
+					//配列のインデックスが範囲外の場合
+					if (index < 0 || index >= retval->GetValue<vector<Var>>().size())
+						throw RuntimeException("Array index out of range.", node->lineNumber, node->columnNumber);
+					retval = &(retval->EditValue<vector<Var>>().at(index));
+				}
+				return *retval = CalcExpr(expression);
+			}
+		}
+		for (auto& array : static_var | views::reverse) {
+			if (array.count(variableName)) {
+				//静的配列変数
+				StaticVar* retval = &array[variableName];
+				for (AST* index_node : variable->GetArrayIndex()) {
+					long long index = CalcExpr(index_node).GetValue<long long>();
+					//配列のインデックスが範囲外の場合
+					if (index < 0 || index >= retval->GetValue<vector<StaticVar>>().size())
+						throw RuntimeException("Array index out of range.", node->lineNumber, node->columnNumber);
+					retval = &(retval->EditValue<vector<StaticVar>>().at(index));
+				}
+				return *retval = CalcExpr(expression);
+			}
+		}
 	}
 	//変数の定義！！
 	if (is_static) {
 		StaticVar retval = CalcExpr(expression);
+		if (retval.GetType() >= 10)type += 10;
 		retval.SetType(type);
 		return static_var.back()[variableName] = retval;
 	} else {
@@ -579,35 +634,58 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int type) {
 	}
 }
 
-void Evaluator::ProcessStaticVar(AST* ast) {
+Var Evaluator::ProcessStaticVar(AST* ast) {
 	//静的変数の処理
 	StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
 	string variableName = node->GetVariableName();
 	//変数の存在を確認
 	for (auto& ref_static : ref_static_var | views::reverse) {
 		if (ref_static.count(variableName))
-			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
+			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 	}
 	for (auto& ref : ref_var | views::reverse) {
 		if (ref.count(variableName))
-			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
+			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 	}
 	for (auto& scoped_static_var : static_var | views::reverse) {
 		if (scoped_static_var.count(variableName))
-			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
+			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 	}
 	for (auto& scoped_var : var | views::reverse) {
 		if (scoped_var.count(variableName))
-			throw EvaluatorException("Redefinition of static variable: " + variableName + ".");
+			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 	}
 	//変数の定義
 	switch (node->GetType())
 	{
-	case 0:static_var.back()[variableName] = StaticVar(0LL); break;
-	case 1:static_var.back()[variableName] = StaticVar(0.0L); break;
-	case 2:static_var.back()[variableName] = StaticVar(string()); break;
+	case 0:return ((static_var.back()[variableName] = StaticVar(0LL)));
+	case 1:return ((static_var.back()[variableName] = StaticVar(0.0L)));
+	case 2:return ((static_var.back()[variableName] = StaticVar(string())));
 	case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
-	default:throw RuntimeException("Unknown function variable type.", node->lineNumber, node->columnNumber);
+	case 10:
+	case 11:
+	case 12:
+	{
+		Var* array = &static_var.back()[variableName];
+		Var init_value;
+		if (node->GetType() == 10) {
+			init_value = Var(0LL);
+		} else if (node->GetType() == 11) {
+			init_value = Var(0.0L);
+		} else if (node->GetType() == 12) {
+			init_value = Var(string());
+		}
+		for (AST* index_node : node->GetArrayIndex()) {
+			long long index = CalcExpr(index_node).GetValue<long long>();
+			if (index < 0)
+				throw RuntimeException("Array index cannot be negative.", node->lineNumber, node->columnNumber);
+			if (index >= array->GetValue<vector<Var>>().size())
+				array->GetValue<vector<Var>>().resize(index + 1, init_value);
+			array = &array->GetValue<vector<Var>>().at(index);
+		}
+		return static_var.back()[variableName];
+	}
+	default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
 	}
 }
 

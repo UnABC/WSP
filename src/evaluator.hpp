@@ -27,8 +27,8 @@ private:
 	std::pair<Var, int> IfStatement(AST* node);
 	std::pair<Var, int> WhileStatement(AST* ast);
 	void VoidFunction(AST* ast);
-	Var ProcessVariables(AST* ast, bool is_static, int type);
-	void ProcessStaticVar(AST* ast);
+	Var ProcessVariables(AST* ast, bool is_static, int &type);
+	Var ProcessStaticVar(AST* ast);
 	std::pair<Var, int> ProcessFunction(AST* ast);
 	inline long long GetTime();
 	//Graphic関数

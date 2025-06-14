@@ -20,7 +20,8 @@ private:
 	AST* ExprNumber(TokenPtr token);
 	AST* ExprString(TokenPtr token);
 	AST* ExprFunction(TokenPtr token);
-	AST* ExprAssignment(TokenPtr token);
+	AST* ExprAssignment(TokenPtr token, std::string, AST* veriable);
+	AST* ExprVariable(TokenPtr token,std::string &variableName);
 	AST* Statement(TokenPtr token);
 	AST* BlockStatement(TokenPtr token);
 	AST* Declaration(int type);

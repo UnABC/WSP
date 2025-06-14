@@ -14,6 +14,8 @@ enum class TokenType {
 	RParentheses,	//右括弧
 	LBrace,			//左波括弧
 	RBrace,			//右波括弧
+	LSquareBracket,	//左角括弧
+	RSquareBracket,	//右角括弧
 	StringLiteral,	//文字列リテラル
 	NumberLiteral,	//数値リテラル
 	Escape,			//エスケープシーケンス
@@ -97,6 +99,9 @@ private:
 	//波括弧検出
 	const bool isLBrace() { return (line[column] == '{'); };
 	const bool isRBrace() { return (line[column] == '}'); };
+	//角括弧検出
+	const bool isLSquareBracket() { return (line[column] == '['); };
+	const bool isRSquareBracket() { return (line[column] == ']'); };
 	//各種記号検出
 	const bool isSymbol() { return strchr(";,:()[]{}#$~@?\\", line[column]); };
 
@@ -121,6 +126,9 @@ private:
 	//波括弧の処理
 	inline std::string ReadLBrace() { return ReadOperator(); };
 	inline std::string ReadRBrace() { return ReadOperator(); };
+	//角括弧の処理
+	inline std::string ReadLSquareBracket() { return ReadOperator(); };
+	inline std::string ReadRSquareBracket() { return ReadOperator(); };
 	//その他記号の処理
 	inline std::string ReadSymbol() { return ReadOperator(); };
 	//識別子の処理
