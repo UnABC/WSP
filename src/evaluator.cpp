@@ -297,7 +297,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 			for (auto& array : static_var | views::reverse) {
 				if (array.count(variableName)) {
 					//静的配列変数
-					StaticVar retval(array[variableName].GetValue<vector<Var>>());
+					StaticVar retval(array[variableName]);
 					for (AST* index_node : node->GetArrayIndex()) {
 						long long index = CalcExpr(index_node).GetValue<long long>();
 						//配列のインデックスが範囲外の場合
@@ -593,7 +593,7 @@ Var Evaluator::EvaluateFunction(UserFunctionNode* node) {
 	ExitScope();
 	return retval;
 }
-//XXX:配列変数の処理!!
+
 Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 	AssignmentNode* node = static_cast<AssignmentNode*>(ast);
 	string variableName = node->GetVariableName();

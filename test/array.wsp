@@ -3,24 +3,23 @@ while (i++ < 5){
 	a[i] = i
 	print("a["+i+"] = "+a[i])
 }
-a[3] = "M_PI"
+a[3] = M_PI
 print(a[3])
 */
-int b[9][9]
-while (i < 9){
-	while (j < 9){
+int b[10][10]
+while (i < 10){
+	while (j < 10){
 		b[i][j] = (i+1)*(j+1)
 		j++
 	}
 	i++
 }
-i = 0
-j = 0
 string message
-while (i < 9){
-	while (j < 9){
+while (i < 10){
+	while (j < 10){
+		pos(i*50,j*50)
+		color(25.5*i,255.0-2.55*i*j,255.0-25.5*j)
 		print(b[i][j])
-		console((i+1)*(j+1))
 		j++
 	}
 	i++
