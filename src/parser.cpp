@@ -340,8 +340,9 @@ AST* Parser::Declaration(int type) {
 		returnValue.pop_back(); //戻り値の有無を削除
 		return new UserFunctionNode(functionName, args, block, type, currentToken->lineNumber, currentToken->columnNumber); //関数ノードを作成
 	} else if (nextToken->type == TokenType::LSquareBracket) {
+		string variableName = currentToken->value; //変数名を取得
 		type += 10;
-		currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
+		currentToken = lexer.ExtractNextToken(); //識別子をスキップ
 		while (currentToken->type == TokenType::LSquareBracket) {
 			currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
 			if (currentToken->type == TokenType::RSquareBracket) {
@@ -353,6 +354,7 @@ AST* Parser::Declaration(int type) {
 				throw ParserException("Not found right square bracket.", currentToken->lineNumber, currentToken->columnNumber);
 			currentToken = lexer.ExtractNextToken(); //右角括弧をスキップ
 		}
+		return new StaticVarNodeWithoutAssignment(variableName, type, arrayIndex, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
 	}
 	if (type == 3)
 		throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected function declaration.", currentToken->lineNumber, currentToken->columnNumber);

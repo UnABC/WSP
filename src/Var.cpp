@@ -462,6 +462,8 @@ T Var::GetValue() const {
 	} else if constexpr (is_same_v<T, long double>) {
 		return double_value;
 	} else if constexpr (is_same_v<T, string>) {
+		if (type%10 == 0)return to_string(my_stoll(string_value));
+		if (type%10 == 1)return to_string(my_stold(string_value));
 		return string_value;
 	} else if constexpr (is_same_v<T, bool>) {
 		return int_value != 0;
@@ -512,84 +514,112 @@ template long double Var::GetValue<long double>() const;
 template std::string Var::GetValue<std::string>() const;
 template bool Var::GetValue<bool>() const;
 template std::vector<Var> Var::GetValue<std::vector<Var>>() const;
-template std::vector<StaticVar> Var::GetValue<std::vector<StaticVar>>() const;
 
 template long long& Var::EditValue<long long>();
 template long double& Var::EditValue<long double>();
 template std::string& Var::EditValue<std::string>();
 template bool& Var::EditValue<bool>();
 template std::vector<Var>& Var::EditValue<std::vector<Var>>();
-template std::vector<StaticVar>& Var::EditValue<std::vector<StaticVar>>();
 
-StaticVar& StaticVar::operator=(const std::string& value) {
-	// コピーコンストラクタの実装
-	string_value = value;
-	int_value = my_stoll(value); // int型の値を初期化
-	double_value = my_stold(value); // double型の値を初期化
-	bool_value = (value == "") ? false : true; // bool型の値を初期化
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, Var(value)); // 配列型の値を初期化
-	return *this;
+StaticVar::StaticVar(const Var& value) : Var(value) {
+	static_array_value.clear();
+	static_array_value.reserve(value.GetValue<vector<Var>>().size());
+	for (const auto& v : value.GetValue<vector<Var>>())
+		static_array_value.push_back(StaticVar(v));
 }
 
-StaticVar& StaticVar::operator=(const long long& value) {
-	// コピーコンストラクタの実装
-	int_value = value;
-	string_value = to_string(value); // string型の値を初期化
-	double_value = value; // double型の値を初期化
-	bool_value = (value != 0); // bool型の値を初期化
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, Var(value)); // 配列型の値を初期化
-	return *this;
+StaticVar::StaticVar(const vector<Var>& value) : Var(value) {
+	static_array_value.clear();
+	static_array_value.reserve(value.size());
+	for (const auto& v : value)
+		static_array_value.push_back(StaticVar(v));
 }
 
-StaticVar& StaticVar::operator=(const long double& value) {
-	// コピーコンストラクタの実装
-	double_value = value;
-	int_value = value; // int型の値を初期化
-	string_value = to_string(value); // string型の値を初期化
-	bool_value = (value != 0.0); // bool型の値を初期化
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, Var(value)); // 配列型の値を初期化
-	return *this;
+StaticVar::StaticVar(const std::vector<StaticVar>& value) : Var() {
+	static_array_value = value;
+	std::vector<Var> base_array;
+	base_array.reserve(value.size());
+	for (const auto& sv : value)
+		base_array.push_back(sv);
+	if (!base_array.empty()) {
+		this->type = (base_array.at(0).GetType() % 10) + 10;
+		array_value = base_array;
+		switch (type) {
+		case 10:
+			int_value = array_value.at(0).GetValue<long long>();
+			break;
+		case 11:
+			double_value = array_value.at(0).GetValue<long double>();
+			break;
+		case 12:
+			string_value = array_value.at(0).GetValue<std::string>();
+			break;
+		case 14:
+			bool_value = array_value.at(0).GetValue<bool>();
+			break;
+		default:
+			throw EvaluatorException("Unknown type in StaticVar constructor.");
+		}
+	} else {
+		this->type = 10; // 空の場合はデフォルトで int array type
+		array_value.clear();
+		int_value = 0;
+		double_value = 0.0;
+		string_value = "";
+		bool_value = false;
+	}
 }
 
-StaticVar& StaticVar::operator=(const bool& value) {
-	// コピーコンストラクタの実装
-	int_value = value ? 1 : 0; // int型の値を初期化
-	double_value = value ? 1.0 : 0.0; // double型の値を初期化
-	string_value = value ? "1" : ""; // string型の値を初期化
-	bool_value = value; // bool型の値を初期化
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, Var(value)); // 配列型の値を初期化
+template<typename T>
+StaticVar& StaticVar::operator=(const T& value) {
+	int const_type = type;
+	operator=(value);
+	type = const_type; // 元の型を保持
 	return *this;
 }
 
 StaticVar& StaticVar::operator=(const Var& value) {
-	// コピーコンストラクタの実装
-	int_value = value.GetValue<long long>();
-	double_value = value.GetValue<long double>();
-	string_value = value.GetValue<string>();
-	bool_value = value.GetValue<bool>();
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, value); // 配列型の値を初期化
+	// 配列型の値を設定
+	array_value.clear(); // 既存の配列をクリア
+	array_value.reserve(value.GetValue<vector<Var>>().size()); // 配列のサイズを予約
+	array_value = value.GetValue<vector<Var>>();
+	int_value = value.GetValue<long long>(); // int型の値は初期化
+	double_value = value.GetValue<long double>(); // double型の値は初期化
+	string_value = value.GetValue<std::string>(); // string型の値は初期化
+	bool_value = value.GetValue<bool>(); // bool型の値は初期化
+
+	static_array_value.clear(); // 静的配列用の値をクリア
+	static_array_value.reserve(array_value.size());
+	for (const auto& v : array_value)
+		static_array_value.push_back(StaticVar(v));
 	return *this;
 }
 
 StaticVar& StaticVar::operator=(const std::vector<Var>& value) {
-	// 配列型の値を設定
-	array_value = value;
-	int_value = 0; // int型の値は初期化
-	double_value = 0.0; // double型の値は初期化
-	string_value = ""; // string型の値は初期化
-	bool_value = false; // bool型の値は初期化
-	if (!value.empty()) {
-		switch (type) {
-		case 10:int_value = value.at(0).GetValue<long long>(); break;
-		case 11:double_value = value.at(0).GetValue<long double>(); break;
-		case 12:string_value = value.at(0).GetValue<string>(); break;
-		}
-	}
+	int const_type = type;
+	operator=(value);
+	type = const_type; // 元の型を保持
+	static_array_value.clear(); // 静的配列用の値をクリア
+	static_array_value.reserve(value.size());
+	for (const auto& v : value)
+		static_array_value.push_back(StaticVar(v));
+	return *this;
+}
+
+vector<StaticVar> StaticVar::GetValue() const {
+	return static_array_value;
+}
+
+vector<StaticVar>& StaticVar::EditValue() {
+	return static_array_value;
+}
+
+StaticVar StaticVar::update_array() {
+	// 静的配列を更新
+	array_value.clear(); // 既存の配列をクリア
+	array_value.reserve(static_array_value.size()); // 配列のサイズを予約
+	for (const auto& sv : static_array_value)
+		array_value.push_back(sv);
 	return *this;
 }
 
@@ -607,3 +637,8 @@ bool Var::IsZero(int TYPE) const {
 	default: throw EvaluatorException("Unknown type.");
 	}
 }
+
+template StaticVar& StaticVar::operator=<string>(const string&);
+template StaticVar& StaticVar::operator=<long long>(const long long&);
+template StaticVar& StaticVar::operator=<long double>(const long double&);
+template StaticVar& StaticVar::operator=<bool>(const bool&);

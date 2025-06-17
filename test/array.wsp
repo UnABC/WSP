@@ -1,6 +1,27 @@
-int a = [5,4,3,2,1,0]
+/*int a = [5,4,3,2,1,0]
 while (i++ < 5){
 	a[i] = i
 	print("a["+i+"] = "+a[i])
 }
-
+a[3] = "M_PI"
+print(a[3])
+*/
+int b[9][9]
+while (i < 9){
+	while (j < 9){
+		b[i][j] = (i+1)*(j+1)
+		j++
+	}
+	i++
+}
+i = 0
+j = 0
+string message
+while (i < 9){
+	while (j < 9){
+		print(b[i][j])
+		console((i+1)*(j+1))
+		j++
+	}
+	i++
+}

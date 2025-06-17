@@ -287,7 +287,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 						long long index = CalcExpr(index_node).GetValue<long long>();
 						//配列のインデックスが範囲外の場合
 						if (index < 0 || index >= retval.GetValue<vector<Var>>().size())
-							throw RuntimeException("Array index out of range.", node->lineNumber, node->columnNumber);
+							throw RuntimeException("Array index out of range.:"+variableName+"(which is " + to_string(index) + ") >= " + to_string(retval.GetValue<vector<Var>>().size())\
+								, node->lineNumber, node->columnNumber);
 						retval = retval.GetValue<vector<Var>>().at(index);
 					}
 					return retval;
@@ -300,9 +301,10 @@ Var Evaluator::CalcExpr(AST* ast) {
 					for (AST* index_node : node->GetArrayIndex()) {
 						long long index = CalcExpr(index_node).GetValue<long long>();
 						//配列のインデックスが範囲外の場合
-						if (index < 0 || index >= retval.GetValue<vector<Var>>().size())
-							throw RuntimeException("Array index out of range.", node->lineNumber, node->columnNumber);
-						retval = retval.GetValue<vector<Var>>().at(index);
+						if (index < 0 || index >= retval.GetValue().size())
+							throw RuntimeException("Array index out of range:"+variableName+"(which is " + to_string(index) + ") >= " + to_string(retval.GetValue().size())\
+								, node->lineNumber, node->columnNumber);
+						retval = retval.GetValue().at(index);
 					}
 					return retval;
 				}
@@ -319,9 +321,32 @@ Var Evaluator::CalcExpr(AST* ast) {
 		bool first_loop = true;
 		int type;
 		for (AST* element : node->GetElements()) {
-			array.push_back(CalcExpr(element));
-			if (first_loop)type = element->GetType();
-			first_loop = false;
+			if (first_loop) {
+				array.push_back(CalcExpr(element));
+				type = element->GetType();
+				first_loop = false;
+			} else {
+				switch (type) {
+				case 0: //int
+					array.push_back(CalcExpr(element).GetValue<long long>());
+					break;
+				case 1: //double
+					array.push_back(CalcExpr(element).GetValue<long double>());
+					break;
+				case 2: //string
+					array.push_back(CalcExpr(element).GetValue<string>());
+					break;
+				case 10:
+				case 11:
+				case 12: //配列
+					array.push_back(CalcExpr(element).GetValue<vector<Var>>());
+					break;
+				default:
+					throw RuntimeException("Invalid array element type.", node->lineNumber, node->columnNumber);
+					break;
+				}
+			}
+
 		}
 		node->SetType(10 + type);
 		return Var(array);
@@ -602,7 +627,8 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 					long long index = CalcExpr(index_node).GetValue<long long>();
 					//配列のインデックスが範囲外の場合
 					if (index < 0 || index >= retval->GetValue<vector<Var>>().size())
-						throw RuntimeException("Array index out of range.", node->lineNumber, node->columnNumber);
+						throw RuntimeException("Array index out of range:"+variableName+"(which is "+to_string(index)+") >= "+to_string(retval->GetValue<vector<Var>>().size())\
+							, node->lineNumber, node->columnNumber);
 					retval = &(retval->EditValue<vector<Var>>().at(index));
 				}
 				return *retval = CalcExpr(expression);
@@ -615,11 +641,14 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 				for (AST* index_node : variable->GetArrayIndex()) {
 					long long index = CalcExpr(index_node).GetValue<long long>();
 					//配列のインデックスが範囲外の場合
-					if (index < 0 || index >= retval->GetValue<vector<StaticVar>>().size())
-						throw RuntimeException("Array index out of range.", node->lineNumber, node->columnNumber);
-					retval = &(retval->EditValue<vector<StaticVar>>().at(index));
+					if (index < 0 || index >= retval->GetValue().size())
+						throw RuntimeException("Array index out of range:"+variableName+"(which is "+to_string(index)+") >= "+to_string(retval->GetValue().size())\
+							, node->lineNumber, node->columnNumber);
+					retval = &(retval->EditValue().at(index));
 				}
-				return *retval = CalcExpr(expression);
+				*retval = CalcExpr(expression);
+				array[variableName].update_array();
+				return *retval;
 			}
 		}
 	}
@@ -666,7 +695,6 @@ Var Evaluator::ProcessStaticVar(AST* ast) {
 	case 11:
 	case 12:
 	{
-		Var* array = &static_var.back()[variableName];
 		Var init_value;
 		if (node->GetType() == 10) {
 			init_value = Var(0LL);
@@ -675,14 +703,16 @@ Var Evaluator::ProcessStaticVar(AST* ast) {
 		} else if (node->GetType() == 12) {
 			init_value = Var(string());
 		}
-		for (AST* index_node : node->GetArrayIndex()) {
+
+		//配列の初期化
+		Var init_array(init_value);
+		for (AST* index_node : node->GetArrayIndex() | views::reverse) {
 			long long index = CalcExpr(index_node).GetValue<long long>();
 			if (index < 0)
 				throw RuntimeException("Array index cannot be negative.", node->lineNumber, node->columnNumber);
-			if (index >= array->GetValue<vector<Var>>().size())
-				array->GetValue<vector<Var>>().resize(index + 1, init_value);
-			array = &array->GetValue<vector<Var>>().at(index);
+			init_array = vector<Var>(index, init_array);
 		}
+		static_var.back()[variableName] = move(init_array);
 		return static_var.back()[variableName];
 	}
 	default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);

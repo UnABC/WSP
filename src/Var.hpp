@@ -23,7 +23,7 @@ public:
 	Var(long double        value) : type(1), int_value(value), double_value(value), string_value(std::to_string(value)), bool_value(value != 0.0) {};
 	Var(const std::string& value) : type(2), int_value(my_stoll(value)), double_value(my_stold(value)), string_value(value), bool_value(value != "") {};
 	Var(bool               value) : type(4), int_value(value ? 1 : 0), double_value(value ? 1.0 : 0.0), string_value(value ? "1" : ""), bool_value(value) {};
-	Var(std::vector<Var> array) : type(10 + (array.empty() ? 0 : array.at(0).type)), int_value(0), double_value(0.0), string_value(""), bool_value(false), array_value(array) {};
+	Var(std::vector<Var> array) : type(10 + (array.empty() ? 0 : array.at(0).type) % 10), int_value(0), double_value(0.0), string_value(""), bool_value(false), array_value(array) {};
 
 	Var& operator=(const std::string& value);
 	Var& operator=(const long long& value);
@@ -62,22 +62,28 @@ public:
 };
 
 class StaticVar : public Var {
+	std::vector<StaticVar> static_array_value; // 静的配列用の値
 public:
 	StaticVar() : Var() {};
 	StaticVar(long long value) : Var(value) {};
 	StaticVar(long double value) : Var(value) {};
 	StaticVar(const std::string& value) : Var(value) {};
 	StaticVar(bool value) : Var(value) {};
-	StaticVar(const Var& value) : Var(value) {};
+	StaticVar(const Var& value);
+	StaticVar(const std::vector<Var>& value);
+	StaticVar(const std::vector<StaticVar>& value);
 
-	StaticVar& operator=(const std::string& value);
-	StaticVar& operator=(const long long& value);
-	StaticVar& operator=(const long double& value);
-	StaticVar& operator=(const bool& value);
+	template<typename T>
+	StaticVar& operator=(const T& value);
 	StaticVar& operator=(const Var& value);
 	StaticVar& operator=(const std::vector<Var>& value);
 
 	void SetType(int type) { this->type = type; };
+	using Var::GetValue;
+	using Var::EditValue;
+	std::vector<StaticVar> GetValue() const;
+	std::vector<StaticVar>& EditValue();
+	StaticVar update_array();
 };
 
 
