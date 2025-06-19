@@ -1,11 +1,11 @@
-/*int a = [5,4,3,2,1,0]
+int a = [5,4,3,2,1,0]
 while (i++ < 5){
 	a[i] = i
 	print("a["+i+"] = "+a[i])
 }
 a[3] = M_PI
 print(a[3])
-*/
+
 int b[10][10]
 while (i < 10){
 	while (j < 10){
@@ -17,10 +17,13 @@ while (i < 10){
 string message
 while (i < 10){
 	while (j < 10){
-		pos(i*50,j*50)
-		color(25.5*i,255.0-2.55*i*j,255.0-25.5*j)
+		pos(150+i*50,j*50)
+		color(25.5*i,255.0-2.55*i*j,25.5*j)
 		print(b[i][j])
 		j++
 	}
 	i++
 }
+color(0,0,0)
+pos(0,120)
+print(size(a))

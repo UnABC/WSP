@@ -124,19 +124,45 @@ string AnalysisLine::ReadStringLiteral(char quotaion) {
 	string value;
 	column++; // "をスキップ
 	while (!isEndStringLiteral(quotaion)) {
+		if (line[column] == '\\') {
+			//エスケープシーケンスを読み込む
+			if (column + 1 >= line.length())
+				throw LexerException("Escape sequence not closed.\n", lineNumber, column);
+			if (line[column + 1] == '\\') {
+				value += "\\";
+			} else if (line[column + 1] == 'n') {
+				value += "\n";
+			} else if (line[column + 1] == 't') {
+				value += "\t";
+			} else if (line[column + 1] == 'r') {
+				value += "\r";
+			} else if (line[column + 1] == '0') {
+				value += "\0"; //ヌル文字
+			} else if (line[column + 1] == '\'') {
+				value += '\'';
+			} else if (line[column + 1] == '\"') {
+				value += "\"";
+			} else if (line[column + 1] == '?') {
+				value += '\?'; //疑問符
+			} else if (line[column + 1] == 'a') {
+				value += '\a'; //ベル
+			} else if (line[column + 1] == 'f') {
+				value += '\f'; //改ページ
+			} else if (line[column + 1] == 'v') {
+				value += '\v'; //垂直タブ
+			} else {
+				value += line.substr(column, 2); //その他の文字はそのまま追加
+			}
+			column += 2;
+			continue;
+		}
 		value += line[column];
 		column++;
+		if (column >= line.length())
+			throw LexerException("String literal not closed.\n", lineNumber, column);
 	}
 	if (column < line.length()) column++; // "をスキップ
 	return value;
-}
-
-const bool AnalysisLine::isEndStringLiteral(char quotaion) {
-	if (column >= line.length()) {
-		throw LexerException("String literal not closed.\n", lineNumber, column);
-		return true;
-	}
-	return isStringLiteral(quotaion);
 }
 
 string AnalysisLine::ReadNumberLiteral() {

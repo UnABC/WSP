@@ -112,7 +112,7 @@ private:
 	inline void SkipBlockComment(bool& blockComment);
 	//String等の処理
 	std::string ReadStringLiteral(char quotaion);
-	const bool isEndStringLiteral(char quotaion);
+	inline const bool isEndStringLiteral(char quotaion) { return isStringLiteral(quotaion); };
 	std::string ReadCharLiteral();
 	//数値の処理
 	std::string ReadNumberLiteral();

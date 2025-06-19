@@ -222,6 +222,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 				return StaticVar(CalcExpr(args.at(0)).GetValue<string>());
 			} else if (functionName == "rnd") {
 				return Var((long long)(rand() % (CalcExpr(args.at(0)).GetValue<long long>() + 1)));
+			} else if (functionName == "size") {
+				return Var((long long)CalcExpr(args.at(0)).GetValue<vector<Var>>().size());
 			}
 		} else if (args.size() == 2) {
 			//引数2つ
@@ -287,7 +289,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 						long long index = CalcExpr(index_node).GetValue<long long>();
 						//配列のインデックスが範囲外の場合
 						if (index < 0 || index >= retval.GetValue<vector<Var>>().size())
-							throw RuntimeException("Array index out of range.:"+variableName+"(which is " + to_string(index) + ") >= " + to_string(retval.GetValue<vector<Var>>().size())\
+							throw RuntimeException("Array index out of range.:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval.GetValue<vector<Var>>().size())\
 								, node->lineNumber, node->columnNumber);
 						retval = retval.GetValue<vector<Var>>().at(index);
 					}
@@ -302,7 +304,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 						long long index = CalcExpr(index_node).GetValue<long long>();
 						//配列のインデックスが範囲外の場合
 						if (index < 0 || index >= retval.GetValue().size())
-							throw RuntimeException("Array index out of range:"+variableName+"(which is " + to_string(index) + ") >= " + to_string(retval.GetValue().size())\
+							throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval.GetValue().size())\
 								, node->lineNumber, node->columnNumber);
 						retval = retval.GetValue().at(index);
 					}
@@ -627,7 +629,7 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 					long long index = CalcExpr(index_node).GetValue<long long>();
 					//配列のインデックスが範囲外の場合
 					if (index < 0 || index >= retval->GetValue<vector<Var>>().size())
-						throw RuntimeException("Array index out of range:"+variableName+"(which is "+to_string(index)+") >= "+to_string(retval->GetValue<vector<Var>>().size())\
+						throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval->GetValue<vector<Var>>().size())\
 							, node->lineNumber, node->columnNumber);
 					retval = &(retval->EditValue<vector<Var>>().at(index));
 				}
@@ -642,7 +644,7 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 					long long index = CalcExpr(index_node).GetValue<long long>();
 					//配列のインデックスが範囲外の場合
 					if (index < 0 || index >= retval->GetValue().size())
-						throw RuntimeException("Array index out of range:"+variableName+"(which is "+to_string(index)+") >= "+to_string(retval->GetValue().size())\
+						throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval->GetValue().size())\
 							, node->lineNumber, node->columnNumber);
 					retval = &(retval->EditValue().at(index));
 				}
