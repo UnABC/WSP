@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <string>
+#include <SDL3/SDL.h>
 
 class LexerException : public std::exception {
 	std::string msg;
@@ -47,23 +48,8 @@ public:
 		: msg(message) {
 	};
 	virtual const char* what() const noexcept override {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Evaluator Error", msg.c_str(), nullptr);
 		return msg.c_str();
-	}
-};
-
-class CheckTypeException : public std::exception {
-	std::string msg;
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
-public:
-	explicit CheckTypeException(const std::string& message, unsigned long long line, unsigned long long column)
-		: msg(message), lineNumber(line), columnNumber(column) {
-	};
-	virtual const char* what() const noexcept override {
-		return msg.c_str();
-	}
-	const char* where() const noexcept {
-		return ("Line: " + std::to_string(lineNumber) + ", Column: " + std::to_string(columnNumber)).c_str();
 	}
 };
 
@@ -79,6 +65,7 @@ public:
 		return msg.c_str();
 	}
 	const char* where() const noexcept {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Runtime Error", msg.c_str(), nullptr);
 		return ("Line: " + std::to_string(lineNumber) + ", Column: " + std::to_string(columnNumber)).c_str();
 	}
 };
@@ -90,6 +77,7 @@ public:
 		: msg(message) {
 	};
 	virtual const char* what() const noexcept override {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Calculation Error", msg.c_str(), nullptr);
 		return msg.c_str();
 	}
 };
@@ -101,6 +89,7 @@ public:
 		: msg(message) {
 	};
 	virtual const char* what() const noexcept override {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Window Error", msg.c_str(), nullptr);
 		return msg.c_str();
 	}
 };
@@ -112,6 +101,7 @@ public:
 		: msg(message) {
 	};
 	virtual const char* what() const noexcept override {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Font Error", msg.c_str(), nullptr);
 		return msg.c_str();
 	}
 };
@@ -123,6 +113,7 @@ public:
 		: msg(message) {
 	};
 	virtual const char* what() const noexcept override {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Shader Error", msg.c_str(), nullptr);
 		return msg.c_str();
 	}
 };

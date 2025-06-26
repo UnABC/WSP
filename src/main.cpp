@@ -4,7 +4,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/escape.wsp";
+		string file_name = "test/dialog.wsp";
 		if (argc == 2)file_name = argv[1];
 		Lexer lexer(file_name);
 		//Lexer実行
@@ -51,9 +51,6 @@ int main(int argc, char* argv[]) {
 	}
 	catch (const EvaluatorException& e) {
 		cerr << "Evaluator error:" << e.what() << endl;
-	}
-	catch (const CheckTypeException& e) {
-		cerr << "CheckType error: " << e.what() << "\n" << e.where() << endl;
 	}
 	catch (const RuntimeException& e) {
 		cerr << "Runtime error: " << e.what() << "\n" << e.where() << endl;

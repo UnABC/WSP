@@ -39,7 +39,7 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	//フォント初期化+読み込み
 	font.Init(width, height);
 	font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
-	
+
 	//開始時刻記録
 	lastTime = SDL_GetTicks();
 
@@ -52,10 +52,10 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	}
 	SDL_DisplayID primary_display_id = displays[0];
 	SDL_free(displays);
-	const SDL_DisplayMode *displayMode = SDL_GetCurrentDisplayMode(primary_display_id);
-	if (!displayMode) 
+	const SDL_DisplayMode* displayMode = SDL_GetCurrentDisplayMode(primary_display_id);
+	if (!displayMode)
 		FailedToInitialize(SDL_GetError());
-	fps = max(displayMode->refresh_rate,24.0F); // ディスプレイのリフレッシュレートをFPSに設定
+	fps = max(displayMode->refresh_rate, 24.0F); // ディスプレイのリフレッシュレートをFPSに設定
 	//ウィンドウ表示
 	SDL_ShowWindow(window);
 }
@@ -69,7 +69,20 @@ void Graphic::printText(const string& text) {
 	font.SetTexts(text, pos.x, pos.y, 1.0f, color, width);
 	Draw();
 	//下にずらす
-	pos.y += font_size*(count(text.begin(), text.end(), '\n') + 1);
+	pos.y += font_size * (count(text.begin(), text.end(), '\n') + 1);
+}
+
+//ダイアログ表示
+//type: 0=情報, 1=警告, 2=エラー
+void Graphic::CallDialog(const string& title, const string& message, int type) const {
+	SDL_MessageBoxFlags flags;
+	switch (type) {
+	case 0: flags = SDL_MESSAGEBOX_INFORMATION; break;
+	case 1: flags = SDL_MESSAGEBOX_WARNING; break;
+	case 2: flags = SDL_MESSAGEBOX_ERROR; break;
+	default: flags = SDL_MESSAGEBOX_INFORMATION; break; //デフォルトは情報
+	}
+	SDL_ShowSimpleMessageBox(flags, title.c_str(), message.c_str(), window);
 }
 
 void Graphic::Clear() {

@@ -224,6 +224,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 				return Var((long long)(rand() % (CalcExpr(args.at(0)).GetValue<long long>() + 1)));
 			} else if (functionName == "size") {
 				return Var((long long)CalcExpr(args.at(0)).GetValue<vector<Var>>().size());
+			} else if (functionName == "strlen") {
+				return Var((long long)CalcExpr(args.at(0)).GetValue<string>().size());
 			}
 		} else if (args.size() == 2) {
 			//引数2つ
@@ -233,6 +235,37 @@ Var Evaluator::CalcExpr(AST* ast) {
 			MATH_FUNC(pow);
 			MATH_FUNC(atan2);
 #undef MATH_FUNC
+			//その他組み込み関数(!=void,引数は2つ)
+			if (functionName == "min") {
+				Var left = CalcExpr(args.at(0));
+				Var right = CalcExpr(args.at(1));
+				return (left < right) ? left : right;
+			} else if (functionName == "max") {
+				Var left = CalcExpr(args.at(0));
+				Var right = CalcExpr(args.at(1));
+				return (left > right) ? left : right;
+			} else if (functionName == "findstr") {
+				size_t pos = CalcExpr(args.at(0)).GetValue<string>().find(CalcExpr(args.at(1)).GetValue<string>());
+				return Var((long long)(pos == string::npos ? -1 : pos));
+			} else if (functionName == "strmid") {
+				return Var(CalcExpr(args.at(0)).GetValue<string>().substr(CalcExpr(args.at(1)).GetValue<long long>()));
+			}
+		} else if (args.size() == 3) {
+			//引数3つ
+			if (functionName == "strmid") {
+				return Var(CalcExpr(args.at(0)).GetValue<string>().substr(
+					CalcExpr(args.at(1)).GetValue<long long>(),
+					CalcExpr(args.at(2)).GetValue<long long>()
+				));
+			} else if (functionName == "limit") {
+				//引数1つ目:値,2つ目:最小値,3つ目:最大値
+				Var value = CalcExpr(args.at(0));
+				Var min_value = CalcExpr(args.at(1));
+				Var max_value = CalcExpr(args.at(2));
+				if (value < min_value) return min_value;
+				if (value > max_value) return max_value;
+				return value;
+			}
 		}
 		//ユーザー定義関数
 		if (user_func.count(functionName)) return EvaluateFunction(static_cast<UserFunctionNode*>(ast));
@@ -249,9 +282,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 	case Node::Variable: {
 		VariableNode* node = static_cast<VariableNode*>(ast);
 		VariableNode* dynamic_casted_node = dynamic_cast<VariableNode*>(ast);
-		if (dynamic_casted_node == nullptr) {
+		if (dynamic_casted_node == nullptr)
 			throw EvaluatorException("Segmentation fault: Invalid node type.");
-		}
 		string variableName = node->GetVariableName();
 		//各種数学定数
 		if (math_const.count(variableName)) {
@@ -509,6 +541,14 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
 		return;
+	} else if (functionName == "dialog") {
+		if (args.size() > 3)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		Var message = (args.size() < 1) ? "" : CalcExpr(args.at(0));
+		Var title = (args.size() < 2) ? "" : CalcExpr(args.at(1));
+		Var type = (args.size() < 3) ? 0LL : CalcExpr(args.at(2));
+		graphic.CallDialog(title.GetValue<string>(), message.GetValue<string>(), type.GetValue<long long>());
+		return;
 	}
 	if (user_func.count(functionName)) {
 		//関数の中身を実行
@@ -628,9 +668,11 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 				for (AST* index_node : variable->GetArrayIndex()) {
 					long long index = CalcExpr(index_node).GetValue<long long>();
 					//配列のインデックスが範囲外の場合
-					if (index < 0 || index >= retval->GetValue<vector<Var>>().size())
-						throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval->GetValue<vector<Var>>().size())\
+					if (index < 0)
+						throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
 							, node->lineNumber, node->columnNumber);
+					if (index >= retval->GetValue<vector<Var>>().size())
+						retval->EditValue<vector<Var>>().resize(index + 1);
 					retval = &(retval->EditValue<vector<Var>>().at(index));
 				}
 				return *retval = CalcExpr(expression);
@@ -643,9 +685,11 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 				for (AST* index_node : variable->GetArrayIndex()) {
 					long long index = CalcExpr(index_node).GetValue<long long>();
 					//配列のインデックスが範囲外の場合
-					if (index < 0 || index >= retval->GetValue().size())
-						throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval->GetValue().size())\
+					if (index < 0)
+						throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
 							, node->lineNumber, node->columnNumber);
+					if (index >= retval->GetValue().size())
+						retval->ResizeArray(index + 1);
 					retval = &(retval->EditValue().at(index));
 				}
 				*retval = CalcExpr(expression);

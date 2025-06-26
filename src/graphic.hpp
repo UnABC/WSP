@@ -50,6 +50,7 @@ public:
 	void SetPos(float x, float y) { pos.x = x; pos.y = y; };
 	void SetColor(int r, int g, int b) { color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 }; };
 	void SetFontSize(unsigned long long size) { font_size = size; };
+	void CallDialog(const std::string& title, const std::string& message,int type = 0) const;
 	void Clear();
 
 	void Draw();

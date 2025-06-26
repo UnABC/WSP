@@ -83,6 +83,7 @@ public:
 	using Var::EditValue;
 	std::vector<StaticVar> GetValue() const;
 	std::vector<StaticVar>& EditValue();
+	void ResizeArray(size_t size);
 	StaticVar update_array();
 };
 

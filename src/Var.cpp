@@ -614,6 +614,13 @@ vector<StaticVar>& StaticVar::EditValue() {
 	return static_array_value;
 }
 
+void StaticVar::ResizeArray(size_t size) {
+	// 静的配列のサイズを変更
+	static_array_value.resize(size);
+	array_value.resize(size);
+	return;
+}
+
 StaticVar StaticVar::update_array() {
 	// 静的配列を更新
 	array_value.clear(); // 既存の配列をクリア

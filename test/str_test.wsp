@@ -1,0 +1,5 @@
+string find(string hoge,string hogehoge){
+	return (pos = findstr(hoge,hogehoge)) == -1?"Not found":pos
+}
+print(find("abcdef","c"))
+
