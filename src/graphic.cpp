@@ -107,6 +107,7 @@ void Graphic::DrawTriangle(double x1, double y1, double x2, double y2, double x3
 void Graphic::Clear(int r, int g, int b) {
 	//テクスチャのクリア
 	font.Clear();
+	shape.Clear();
 	pos = { 0, 0 };	//表示位置を初期化
 	system_color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 }; //システム色を設定
 	color = { 255,255,255, 255 };	//色を初期化
@@ -114,6 +115,7 @@ void Graphic::Clear(int r, int g, int b) {
 }
 
 void Graphic::Draw() {
+	if (!redraw) return; //描画フラグがfalseなら何もしない
 	if (lastTime + 1000 / fps > SDL_GetTicks()) return; //フレームレート制限
 	lastTime = SDL_GetTicks();
 
@@ -142,6 +144,7 @@ bool Graphic::Wait(unsigned long long milliseconds) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) return false; // ウィンドウが閉じられた場合はfalseを返す
 		}
+		//Draw(); // 描画を更新
 		SDL_Delay(1); // CPU使用率を下げるために少し待機
 	}
 	return true;

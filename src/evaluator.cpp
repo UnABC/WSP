@@ -571,6 +571,11 @@ void Evaluator::VoidFunction(AST* ast) {
 				exit(0);
 		}
 		return;
+	} else if (functionName == "redraw") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.SetRedraw(CalcExpr(args.at(0)).GetValue<bool>());
+		return;
 	} else if (functionName == "triangle") {
 		if (args.size() != 6)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);

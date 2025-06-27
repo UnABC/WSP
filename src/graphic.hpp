@@ -60,6 +60,7 @@ public:
 	bool Wait(unsigned long long milliseconds = 1);
 	void DrawTriangle(double x1, double y1, double x2, double y2, double x3, double y3);
 	void Clear(int r = 255, int g = 255, int b = 255);
+	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 
 	void Draw();
 	void Stop();

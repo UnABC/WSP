@@ -5,6 +5,7 @@ double time_offset_2 = M_PI * 4 / 3
 int i = 0
 int old_time = gettime()
 while (1){
+	redraw(0)
     cls(0,0,0)
 
     // 時間を基に色の値を計算（0.0～1.0の範囲）
@@ -30,6 +31,10 @@ while (1){
     color(r2, g2, b2, 2)
 
     triangle(320,124,220,298,420,298)
+    pos(320,200)
+    color(255,255,255)
+    print("HELLO!")
+    redraw(1)
     i++
     wait(16)
 }

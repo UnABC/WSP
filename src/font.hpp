@@ -64,6 +64,8 @@ private:
         uniform sampler2DArray textTextureArray;
         void main() {
             float alpha = texture(textTextureArray, vec3(fs_in.TexCoords, fs_in.LayerIndex)).r;
+            if(alpha < 0.1)
+                discard;
             FragColor = vec4(outColor, alpha);
         }
     )glsl";

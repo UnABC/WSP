@@ -17,7 +17,6 @@ class Shape {
 		layout (location = 0) in vec2 position;
 		layout (location = 1) in vec3 color;
 		out vec3 outColor;
-		out float outLayerIndex;
 		uniform mat4 projection;
 		void main() {
 			gl_Position = projection * vec4(position, 0.0, 1.0);
@@ -40,6 +39,7 @@ public:
 	void draw_triangle(double x1, double y1, double x2, double y2, double x3, double y3, SDL_Color color1,SDL_Color color2, SDL_Color color3);
 
 	void draw_shapes();
+	void Clear() { all_vertices.clear(); };
 };
 
 #endif
