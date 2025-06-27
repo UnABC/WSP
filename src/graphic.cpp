@@ -136,9 +136,19 @@ void Graphic::Draw() {
 		FailedToInitialize(SDL_GetError());
 }
 
+bool Graphic::Wait(unsigned long long milliseconds) {
+	unsigned long long start = SDL_GetTicks();
+	while (SDL_GetTicks() - start < milliseconds) {
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_EVENT_QUIT) return false; // ウィンドウが閉じられた場合はfalseを返す
+		}
+		SDL_Delay(1); // CPU使用率を下げるために少し待機
+	}
+	return true;
+}
+
 void Graphic::Stop() {
 	bool running = true;
-	SDL_Event event;
 	while (running) {
 		while (SDL_PollEvent(&event)) if (event.type == SDL_EVENT_QUIT) running = false;
 		Draw();

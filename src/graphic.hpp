@@ -35,6 +35,7 @@ private:
 	//各種内部変数
 	float fps = 60.0;	//フレームレート
 	unsigned long long lastTime = 0;	//タイマー
+	SDL_Event event;
 	//描画するテクスチャ達
 	std::vector<std::tuple<SDL_Texture*, SDL_FRect, SDL_FRect>> textures;
 
@@ -56,7 +57,7 @@ public:
 	void SetColors(int r, int g, int b, int index);
 	void SetFontSize(unsigned long long size) { font_size = size; };
 	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
-	void Wait(unsigned long long milliseconds = 1) const {SDL_Delay(milliseconds);}
+	bool Wait(unsigned long long milliseconds = 1);
 	void DrawTriangle(double x1, double y1, double x2, double y2, double x3, double y3);
 	void Clear(int r = 255, int g = 255, int b = 255);
 

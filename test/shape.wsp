@@ -1,15 +1,35 @@
+double time_offset_0 = 0.0
+double time_offset_1 = M_PI * 2 / 3
+double time_offset_2 = M_PI * 4 / 3
+
 int i = 0
 int old_time = gettime()
 while (1){
-	cls(0,0,0)
-	color(255-(i%250),0,0,0)
-	color(0,255-(i%250),0,1)
-	color(0,0,255-(i%250),2)
-	triangle(320,124,220,298,420,298)
-	if (old_time+50 < gettime()){
-		old_time = gettime()
-		i++
-	}
-	wait(16)
-}
+    cls(0,0,0)
 
+    // 時間を基に色の値を計算（0.0～1.0の範囲）
+    // sin関数は-1から1の範囲を返すので、(sin(x) + 1) / 2 で0から1の範囲に正規化
+    double t = double(i) * 0.05 // 時間の進行速度を調整
+
+    // 頂点0の色（赤からシアンへの変化）
+    int r0 = int(255.0 * (sin(t + time_offset_0) * 0.5 + 0.5))
+    int g0 = int(255.0 * (sin(t + time_offset_0 + M_PI * 2/3) * 0.5 + 0.5))
+    int b0 = int(255.0 * (sin(t + time_offset_0 + M_PI * 4/3) * 0.5 + 0.5))
+    color(r0, g0, b0, 0)
+
+    // 頂点1の色（緑からマゼンタへの変化）
+    int r1 = int(255.0 * (sin(t + time_offset_1) * 0.5 + 0.5))
+    int g1 = int(255.0 * (sin(t + time_offset_1 + M_PI * 2/3) * 0.5 + 0.5))
+    int b1 = int(255.0 * (sin(t + time_offset_1 + M_PI * 4/3) * 0.5 + 0.5))
+    color(r1, g1, b1, 1)
+
+    // 頂点2の色（青からイエローへの変化）
+    int r2 = int(255.0 * (sin(t + time_offset_2) * 0.5 + 0.5))
+    int g2 = int(255.0 * (sin(t + time_offset_2 + M_PI * 2/3) * 0.5 + 0.5))
+    int b2 = int(255.0 * (sin(t + time_offset_2 + M_PI * 4/3) * 0.5 + 0.5))
+    color(r2, g2, b2, 2)
+
+    triangle(320,124,220,298,420,298)
+    i++
+    wait(16)
+}

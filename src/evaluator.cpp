@@ -564,9 +564,11 @@ void Evaluator::VoidFunction(AST* ast) {
 		if (args.size() > 1)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		if (args.size() == 0) {
-			graphic.Wait();
+			if (!graphic.Wait())
+				exit(0);
 		} else {
-			graphic.Wait(CalcExpr(args.at(0)).GetValue<long long>());
+			if (!graphic.Wait(CalcExpr(args.at(0)).GetValue<long long>()))
+				exit(0);
 		}
 		return;
 	} else if (functionName == "triangle") {
