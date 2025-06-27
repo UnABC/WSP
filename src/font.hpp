@@ -5,8 +5,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include "exception.hpp"
 #include "shader.hpp"
 #include <map>
@@ -75,12 +73,13 @@ private:
 	std::unordered_map<char16_t, Character> characters;
 	int font_size;
     std::vector<float> all_vertices; // 全ての頂点データを保持するベクター
+
+    //void recalcProjection(int width, int height) { projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); }
 public:
 	Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0), nextLayerIndex(0), maxGlyphWidth(0), maxGlyphHeight(0), textureArrayID(0) {};
 	~Font();
 	void Init(int width, int height);
 	void SetFont(const char* font_path, int size);
-	void recalcProjection(int width, int height) { projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); }
 	void SetTexts(std::string text, float x, float y, float scale, SDL_Color color, int width);
     void DrawTexts();
     void Clear();

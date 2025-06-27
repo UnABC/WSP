@@ -532,14 +532,25 @@ void Evaluator::VoidFunction(AST* ast) {
 		graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>());
 		return;
 	} else if (functionName == "cls") {
-		if (args.size() != 0)
+		if (args.size() == 0) {
+			graphic.Clear();
+		} else if (args.size() == 3) {
+			graphic.Clear(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.Clear();
+		}
 		return;
 	} else if (functionName == "color") {
-		if (args.size() != 3)
+		if (args.size() == 3) {
+			graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 4) {
+			graphic.SetColors(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>());
+		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+		}
 		return;
 	} else if (functionName == "dialog") {
 		if (args.size() > 3)
@@ -548,6 +559,27 @@ void Evaluator::VoidFunction(AST* ast) {
 		Var title = (args.size() < 2) ? "" : CalcExpr(args.at(1));
 		Var type = (args.size() < 3) ? 0LL : CalcExpr(args.at(2));
 		graphic.CallDialog(title.GetValue<string>(), message.GetValue<string>(), type.GetValue<long long>());
+		return;
+	} else if (functionName == "wait") {
+		if (args.size() > 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		if (args.size() == 0) {
+			graphic.Wait();
+		} else {
+			graphic.Wait(CalcExpr(args.at(0)).GetValue<long long>());
+		}
+		return;
+	} else if (functionName == "triangle") {
+		if (args.size() != 6)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.DrawTriangle(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>()
+		);
 		return;
 	}
 	if (user_func.count(functionName)) {

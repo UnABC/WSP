@@ -1,7 +1,9 @@
+#include <GL/glew.h>
 #include "graphic.hpp"
 using namespace std;
 
-Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), height(height), is_fullscreen(is_fullscreen) {
+Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), height(height), is_fullscreen(is_fullscreen), colors(4)
+{
 	//色々初期化
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		throw WindowException("Failed to initialize SDL.");
@@ -36,9 +38,15 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	glClear(GL_COLOR_BUFFER_BIT);
 	if (!SDL_GL_SwapWindow(window))
 		FailedToInitialize(SDL_GetError());
+	glewExperimental = GL_TRUE;
+	GLenum err = glewInit();
+	if (err != GLEW_OK)
+		throw WindowException(reinterpret_cast<const char*>(glewGetErrorString(err)));
 	//フォント初期化+読み込み
 	font.Init(width, height);
 	font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
+	//各種図形の初期化
+	shape.Init(width, height);
 
 	//開始時刻記録
 	lastTime = SDL_GetTicks();
@@ -65,6 +73,12 @@ void Graphic::FailedToInitialize(const string& message) {
 	throw WindowException(message);
 }
 
+void Graphic::SetColors(int r, int g, int b, int index) {
+	if (index < 0 || index >= colors.size()) return; //範囲外アクセス防止
+	colors.at(index) = { (Uint8)r, (Uint8)g, (Uint8)b, 255 };
+	if (index == 0) color = colors.at(0); //0番目の色を現在の色に設定
+}
+
 void Graphic::printText(const string& text) {
 	font.SetTexts(text, pos.x, pos.y, 1.0f, color, width);
 	Draw();
@@ -85,21 +99,33 @@ void Graphic::CallDialog(const string& title, const string& message, int type) c
 	SDL_ShowSimpleMessageBox(flags, title.c_str(), message.c_str(), window);
 }
 
-void Graphic::Clear() {
+void Graphic::DrawTriangle(double x1, double y1, double x2, double y2, double x3, double y3) {
+	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2));
+	Draw();
+}
+
+void Graphic::Clear(int r, int g, int b) {
 	//テクスチャのクリア
 	font.Clear();
 	pos = { 0, 0 };	//表示位置を初期化
-	color = { 255, 255, 255, 255 };	//色を初期化
+	system_color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 }; //システム色を設定
+	color = { 255,255,255, 255 };	//色を初期化
+	fill(colors.begin(), colors.end(), color); //色のリストを現在の色で埋める
 }
 
 void Graphic::Draw() {
 	if (lastTime + 1000 / fps > SDL_GetTicks()) return; //フレームレート制限
 	lastTime = SDL_GetTicks();
 
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(system_color.r / 255.0f,
+		system_color.g / 255.0f,
+		system_color.b / 255.0f,
+		system_color.a / 255.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//テクスチャの描画
 	font.DrawTexts();
+	//図形の描画
+	shape.draw_shapes();
 	/*for (const auto& texture : textures) {
 		SDL_RenderTexture(renderer, get<0>(texture), &get<1>(texture), &get<2>(texture));
 		SDL_DestroyTexture(get<0>(texture));

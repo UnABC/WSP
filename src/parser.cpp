@@ -70,7 +70,7 @@ AST* Parser::ExprAdd() {
 AST* Parser::ExprMul() {
 	//乗算式を解析する
 	AST* left = ExprUnary();
-	while ((currentToken->type == TokenType::Operator) && (currentToken->value == "*" || currentToken->value == "/")) {
+	while ((currentToken->type == TokenType::Operator) && (currentToken->value == "*" || currentToken->value == "/" || currentToken->value =="%")) {
 		string operatorType = currentToken->value;
 		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
 		AST* right = ExprUnary();

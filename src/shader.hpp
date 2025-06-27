@@ -6,6 +6,8 @@
 #include <SDL3/SDL_opengl_glext.h>
 #include "exception.hpp"
 #include <string>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 class ShaderUtil {
 private:
@@ -13,6 +15,9 @@ private:
 public:
     ShaderUtil() = delete;
     static GLuint createShaderProgram(const char* vsSource, const char* fsSource);
+    static glm::mat4 recalcProjection(int width, int height) {
+        glm::mat4 projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); return projection;
+    };
 };
 
 

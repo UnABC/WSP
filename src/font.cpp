@@ -13,10 +13,6 @@ Font::~Font() {
 }
 
 void Font::Init(int width, int height) {
-	glewExperimental = GL_TRUE;
-	GLenum err = glewInit();
-	if (err != GLEW_OK)
-		throw FontException(reinterpret_cast<const char*>(glewGetErrorString(err)));
 	if (FT_Init_FreeType(&library))
 		throw FontException("Failed to initialize FreeType library.");
 	glGenVertexArrays(1, &vao);
@@ -42,7 +38,7 @@ void Font::Init(int width, int height) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	//shaderProgram = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
-	recalcProjection(width, height);
+	projection = ShaderUtil::recalcProjection(width, height);
 }
 
 void Font::SetFont(const char* font_path, int size) {
