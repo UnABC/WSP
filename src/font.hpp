@@ -12,28 +12,28 @@
 #include FT_FREETYPE_H
 
 struct Character {
-	//GLuint TextureID;	//グリフのテクスチャID
-	int LayerIndex;
-	glm::ivec2 Size;	//グリフのサイズ
-	glm::ivec2 Bearing;	//グリフのベアリング
-	float Advance;		//グリフのアドバンス
+    //GLuint TextureID;	//グリフのテクスチャID
+    int LayerIndex;
+    glm::ivec2 Size;	//グリフのサイズ
+    glm::ivec2 Bearing;	//グリフのベアリング
+    float Advance;		//グリフのアドバンス
 };
 
 class Font {
 private:
-	FT_Library library;
-	FT_Face face;
-	FT_GlyphSlot slot;
-	glm::mat4 projection;
-	GLuint vao, vbo;
+    FT_Library library;
+    FT_Face face;
+    FT_GlyphSlot slot;
+    glm::mat4 projection;
+    GLuint vao, vbo;
 
-	// font関連
-	GLuint textureArrayID;
-	int nextLayerIndex; // レイヤーインデックスの管理
-	unsigned long long maxGlyphWidth, maxGlyphHeight; // 最大グリフの大きさ
-	int maxTextureSize = 1024;
+    // font関連
+    GLuint textureArrayID;
+    int nextLayerIndex; // レイヤーインデックスの管理
+    unsigned long long maxGlyphWidth, maxGlyphHeight; // 最大グリフの大きさ
+    int maxTextureSize = 1024;
     //頂点シェーダー
-	const char* vertexShaderSource = R"glsl(
+    const char* vertexShaderSource = R"glsl(
         #version 330 core
         layout (location = 0) in vec3 position;
         layout (location = 1) in vec2 texCoord;
@@ -53,7 +53,7 @@ private:
         }
     )glsl";
     //色の計算
-	const char* fragmentShaderSource = R"glsl(
+    const char* fragmentShaderSource = R"glsl(
         #version 330 core
         out vec4 FragColor;
         in VS_OUT {
@@ -69,20 +69,20 @@ private:
             FragColor = vec4(outColor, alpha);
         }
     )glsl";
-	GLuint shaderProgram;
+    GLuint shaderProgram;
 
-	//フォントのキャッシュ
-	std::unordered_map<char16_t, Character> characters;
-	int font_size;
+    //フォントのキャッシュ
+    std::unordered_map<char16_t, Character> characters;
+    int font_size;
     std::vector<float> all_vertices; // 全ての頂点データを保持するベクター
 
     //void recalcProjection(int width, int height) { projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); }
 public:
-	Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0), nextLayerIndex(0), maxGlyphWidth(0), maxGlyphHeight(0), textureArrayID(0) {};
-	~Font();
-	void Init(int width, int height);
-	void SetFont(const char* font_path, int size);
-	void SetTexts(std::string text, float x, float y, float scale, SDL_Color color, int width,float depth);
+    Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0), nextLayerIndex(0), maxGlyphWidth(0), maxGlyphHeight(0), textureArrayID(0) {};
+    ~Font();
+    void Init(int width, int height);
+    void SetFont(const char* font_path, int size);
+    void SetTexts(std::string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth);
     void DrawTexts();
     void Clear();
 };

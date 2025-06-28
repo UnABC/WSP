@@ -94,7 +94,7 @@ void Font::SetFont(const char* font_path, int size) {
 	shaderProgram = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
 }
 
-void Font::SetTexts(string text, float x, float y, float scale, SDL_Color color, int width, float depth) {
+void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth) {
 	if (!face || !shaderProgram || !vbo || !vao)
 		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
@@ -119,7 +119,10 @@ void Font::SetTexts(string text, float x, float y, float scale, SDL_Color color,
 
 	struct normalized_color {
 		float r, g, b;
-	} normalized_color = { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f };
+	} normalized_color1 = { color1.r / 255.0f, color1.g / 255.0f, color1.b / 255.0f };
+	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f };
+	struct normalized_color normalized_color3 = { color3.r / 255.0f, color3.g / 255.0f, color3.b / 255.0f };
+	struct normalized_color normalized_color4 = { color4.r / 255.0f, color4.g / 255.0f, color4.b / 255.0f };
 
 	for (size_t i = 0; text16[i] != u'\0'; i++) {
 		if (text16[i] == '\n') {
@@ -164,13 +167,13 @@ void Font::SetTexts(string text, float x, float y, float scale, SDL_Color color,
 		float current_layer_idx = (float)ch.LayerIndex;
 
 		float vertices[6][9] = { // posX, posY, texU, texV, layerIndex,color
-			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color.r,normalized_color.g,normalized_color.b },
-			{ render_x              , render_y               ,depth, 0.0f     , 0.0f     , current_layer_idx,normalized_color.r,normalized_color.g,normalized_color.b },
-			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color.r,normalized_color.g,normalized_color.b },
+			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b },
+			{ render_x              , render_y               ,depth, 0.0f     , 0.0f     , current_layer_idx,normalized_color1.r,normalized_color1.g,normalized_color1.b },
+			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b },
 
-			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color.r,normalized_color.g,normalized_color.b },
-			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color.r,normalized_color.g,normalized_color.b },
-			{ render_x + glyph_width, render_y + glyph_height,depth, tex_u_max, tex_v_max, current_layer_idx,normalized_color.r,normalized_color.g,normalized_color.b },
+			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b },
+			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b },
+			{ render_x + glyph_width, render_y + glyph_height,depth, tex_u_max, tex_v_max, current_layer_idx,normalized_color3.r,normalized_color3.g,normalized_color3.b },
 		};
 		// 頂点データをall_verticesに追加
 		memcpy(&all_vertices[before_size + i * 6 * 9], vertices, sizeof(vertices));

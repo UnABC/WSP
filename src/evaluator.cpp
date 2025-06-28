@@ -571,6 +571,16 @@ void Evaluator::VoidFunction(AST* ast) {
 				exit(0);
 		}
 		return;
+	} else if (functionName == "font") {
+		if (args.size() > 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		if (args.size() == 0)
+			graphic.SetFont();
+		else if (args.size() == 1)
+			graphic.SetFont(CalcExpr(args.at(0)).GetValue<long long>());
+		else if (args.size() == 2)
+			graphic.SetFont(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>());
+		return;
 	} else if (functionName == "redraw") {
 		if (args.size() != 1)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
@@ -600,6 +610,17 @@ void Evaluator::VoidFunction(AST* ast) {
 			CalcExpr(args.at(5)).GetValue<long double>(),
 			CalcExpr(args.at(6)).GetValue<long double>(),
 			CalcExpr(args.at(7)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "roundrect") {
+		if (args.size() != 5)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.DrawRoundRect(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>()
 		);
 		return;
 	}

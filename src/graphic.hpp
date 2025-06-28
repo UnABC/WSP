@@ -38,8 +38,6 @@ private:
 
 	float current_depth = 0.0f;	//現在の深度
 	const float depth_increment = 0.0000001f;	//深度の増分
-	//現在のレイヤー(0:Text, 1:Shape)
-	int current_layer = 0;
 
 	SDL_Event event;
 	//描画するテクスチャ達
@@ -62,10 +60,12 @@ public:
 	void SetColor(int r, int g, int b) { color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 };std::fill(colors.begin(), colors.end(), color); };
 	void SetColors(int r, int g, int b, int index);
 	void SetFontSize(unsigned long long size) { font_size = size; };
+	void SetFont(unsigned long long size = 24, const std::string& font_path = "C:/Windows/Fonts/msgothic.ttc");
 	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
 	bool Wait(unsigned long long milliseconds = 1);
 	void DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
 	void DrawRectangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
+	void DrawRoundRect(float x, float y, float width, float height, float radius);
 	void Clear(int r = 255, int g = 255, int b = 255);
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 

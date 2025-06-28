@@ -1,0 +1,60 @@
+double time_offset_0 = 0.0
+double time_offset_1 = M_PI * 2 / 4 // 4頂点なので2πを4分割
+double time_offset_2 = M_PI * 4 / 4
+double time_offset_3 = M_PI * 6 / 4
+
+int i = 0
+int old_time = gettime()
+int r[4]
+int g[4]
+int b[4]
+while (1){
+    cls(0,0,0)
+	redraw(0)
+    // 時間を基に色の値を計算（0.0～1.0の範囲）
+    // sin関数は-1から1の範囲を返すので、(sin(x) + 1) / 2 で0から1の範囲に正規化
+    // double(i)としてiを明示的にdouble型に変換
+    double t = double(i) * 0.01 // 時間の進行速度を調整
+
+    // 頂点0の色
+    // 255.0を掛けることで浮動小数点演算を強制
+    r[0] = int(255.0 * (sin(t + time_offset_0) * 0.5 + 0.5))
+    g[0] = int(255.0 * (sin(t + time_offset_0 + M_PI * 2/3) * 0.5 + 0.5))
+    b[0] = int(255.0 * (sin(t + time_offset_0 + M_PI * 4/3) * 0.5 + 0.5))
+    //color(r0, g0, b0, 0)
+
+    // 頂点1の色
+    r[1] = int(255.0 * (sin(t + time_offset_1) * 0.5 + 0.5))
+    g[1] = int(255.0 * (sin(t + time_offset_1 + M_PI * 2/3) * 0.5 + 0.5))
+    b[1] = int(255.0 * (sin(t + time_offset_1 + M_PI * 4/3) * 0.5 + 0.5))
+    //color(r1, g1, b1, 1)
+
+    // 頂点2の色
+    r[2] = int(255.0 * (sin(t + time_offset_2) * 0.5 + 0.5))
+    g[2] = int(255.0 * (sin(t + time_offset_2 + M_PI * 2/3) * 0.5 + 0.5))
+    b[2] = int(255.0 * (sin(t + time_offset_2 + M_PI * 4/3) * 0.5 + 0.5))
+    //color(r2, g2, b2, 2)
+
+    // 頂点3の色
+    r[3] = int(255.0 * (sin(t + time_offset_3) * 0.5 + 0.5))
+    g[3] = int(255.0 * (sin(t + time_offset_3 + M_PI * 2/3) * 0.5 + 0.5))
+    b[3] = int(255.0 * (sin(t + time_offset_3 + M_PI * 4/3) * 0.5 + 0.5))
+    //color(r3, g3, b3, 3)
+    
+    int j = 4
+    while((j--) >= 0){color(r[j],g[j],b[j],j)}
+
+    roundrect(50,50, 280,124, 20)
+    
+    color(0,0,0)
+    roundrect(55,55, 270,114, 20)
+    
+    j = 4
+    while((j--) >= 0){color(r[j],g[j],b[j],3-j)}
+    pos(165,50)
+    font(32)
+    print("OpenGL\n完全に理解した")
+    redraw(1)
+    i++
+    wait(1)
+}
