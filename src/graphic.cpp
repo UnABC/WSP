@@ -24,6 +24,7 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_DEPTH_TEST);
 
 	glViewport(0, 0, width, height);
 	glMatrixMode(GL_PROJECTION);
@@ -80,7 +81,11 @@ void Graphic::SetColors(int r, int g, int b, int index) {
 }
 
 void Graphic::printText(const string& text) {
-	font.SetTexts(text, pos.x, pos.y, 1.0f, color, width);
+	if (current_layer != 0) {
+		current_layer = 0; // レイヤーをテキストに変更
+		current_depth += depth_increment; // 深度を更新
+	}
+	font.SetTexts(text, pos.x, pos.y, 1.0f, color, width, current_depth);
 	Draw();
 	//下にずらす
 	pos.y += font_size * (count(text.begin(), text.end(), '\n') + 1);
@@ -99,8 +104,22 @@ void Graphic::CallDialog(const string& title, const string& message, int type) c
 	SDL_ShowSimpleMessageBox(flags, title.c_str(), message.c_str(), window);
 }
 
-void Graphic::DrawTriangle(double x1, double y1, double x2, double y2, double x3, double y3) {
-	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2));
+void Graphic::DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+	if (current_layer != 1) {
+		current_layer = 1; // レイヤーを図形に変更
+		current_depth += depth_increment; // 深度を更新
+	}
+	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), current_depth);
+	Draw();
+}
+
+void Graphic::DrawRectangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
+	if (current_layer != 1) {
+		current_layer = 1; // レイヤーを図形に変更
+		current_depth += depth_increment; // 深度を更新
+	}
+	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), current_depth);
+	shape.draw_triangle(x1, y1, x3, y3, x4, y4, colors.at(0), colors.at(2), colors.at(3), current_depth);
 	Draw();
 }
 
@@ -109,6 +128,7 @@ void Graphic::Clear(int r, int g, int b) {
 	font.Clear();
 	shape.Clear();
 	pos = { 0, 0 };	//表示位置を初期化
+	current_depth = 0.0f; //深度を初期化
 	system_color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 }; //システム色を設定
 	color = { 255,255,255, 255 };	//色を初期化
 	fill(colors.begin(), colors.end(), color); //色のリストを現在の色で埋める
@@ -123,7 +143,7 @@ void Graphic::Draw() {
 		system_color.g / 255.0f,
 		system_color.b / 255.0f,
 		system_color.a / 255.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // カラーバッファと深度バッファをクリア
 	//テクスチャの描画
 	font.DrawTexts();
 	//図形の描画

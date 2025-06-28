@@ -35,7 +35,7 @@ private:
     //頂点シェーダー
 	const char* vertexShaderSource = R"glsl(
         #version 330 core
-        layout (location = 0) in vec2 position;
+        layout (location = 0) in vec3 position;
         layout (location = 1) in vec2 texCoord;
         layout (location = 2) in float layerIndex;
         layout (location = 3) in vec3 color;
@@ -46,7 +46,7 @@ private:
         out vec3 outColor;
         uniform mat4 projection;
         void main() {
-            gl_Position = projection * vec4(position.x, position.y, 0.0, 1.0);
+            gl_Position = projection * vec4(position, 1.0);
             vs_out.TexCoords = texCoord;
             vs_out.LayerIndex = layerIndex;
             outColor = color;
@@ -82,7 +82,7 @@ public:
 	~Font();
 	void Init(int width, int height);
 	void SetFont(const char* font_path, int size);
-	void SetTexts(std::string text, float x, float y, float scale, SDL_Color color, int width);
+	void SetTexts(std::string text, float x, float y, float scale, SDL_Color color, int width,float depth);
     void DrawTexts();
     void Clear();
 };

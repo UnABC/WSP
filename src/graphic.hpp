@@ -35,6 +35,12 @@ private:
 	//各種内部変数
 	float fps = 60.0;	//フレームレート
 	unsigned long long lastTime = 0;	//タイマー
+
+	float current_depth = 0.0f;	//現在の深度
+	const float depth_increment = 0.0000001f;	//深度の増分
+	//現在のレイヤー(0:Text, 1:Shape)
+	int current_layer = 0;
+
 	SDL_Event event;
 	//描画するテクスチャ達
 	std::vector<std::tuple<SDL_Texture*, SDL_FRect, SDL_FRect>> textures;
@@ -58,7 +64,8 @@ public:
 	void SetFontSize(unsigned long long size) { font_size = size; };
 	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
 	bool Wait(unsigned long long milliseconds = 1);
-	void DrawTriangle(double x1, double y1, double x2, double y2, double x3, double y3);
+	void DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
+	void DrawRectangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 	void Clear(int r = 255, int g = 255, int b = 255);
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 

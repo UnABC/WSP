@@ -14,12 +14,12 @@ class Shape {
 	glm::mat4 projection;
 	const char* vertexShaderSource = R"glsl(
 		#version 330 core
-		layout (location = 0) in vec2 position;
+		layout (location = 0) in vec3 position;
 		layout (location = 1) in vec3 color;
 		out vec3 outColor;
 		uniform mat4 projection;
 		void main() {
-			gl_Position = projection * vec4(position, 0.0, 1.0);
+			gl_Position = projection * vec4(position, 1.0);
 			outColor = color;
 		}
 	)glsl";
@@ -36,7 +36,7 @@ public:
 	Shape() : width(640), height(480), vao(0), vbo(0), shaderProgram(0) {};
 	~Shape();
 	void Init(int w, int h);
-	void draw_triangle(double x1, double y1, double x2, double y2, double x3, double y3, SDL_Color color1,SDL_Color color2, SDL_Color color3);
+	void draw_triangle(double x1, double y1, double x2, double y2, double x3, double y3, SDL_Color color1,SDL_Color color2, SDL_Color color3,float depth);
 
 	void draw_shapes();
 	void Clear() { all_vertices.clear(); };

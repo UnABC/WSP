@@ -588,6 +588,20 @@ void Evaluator::VoidFunction(AST* ast) {
 			CalcExpr(args.at(5)).GetValue<long double>()
 		);
 		return;
+	} else if (functionName == "quad") {
+		if (args.size() != 8)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.DrawRectangle(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>(),
+			CalcExpr(args.at(6)).GetValue<long double>(),
+			CalcExpr(args.at(7)).GetValue<long double>()
+		);
+		return;
 	}
 	if (user_func.count(functionName)) {
 		//関数の中身を実行

@@ -18,12 +18,12 @@ void Shape::Init(int w, int h) {
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	// 頂点バッファを初期化(posX,posY,color)
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * 5, nullptr, GL_DYNAMIC_DRAW);
-	// 位置属性 (vec2)
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * 6, nullptr, GL_DYNAMIC_DRAW);
+	// 位置属性 (vec3)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// 色属性 (vec3)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -35,7 +35,7 @@ void Shape::Init(int w, int h) {
 	projection = ShaderUtil::recalcProjection(width, height);
 }
 
-void Shape::draw_triangle(double x1, double y1, double x2, double y2, double x3, double y3, SDL_Color color1, SDL_Color color2, SDL_Color color3) {
+void Shape::draw_triangle(double x1, double y1, double x2, double y2, double x3, double y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, float depth) {
 	if (!shaderProgram || !vbo || !vao)
 		throw ShapeException("Shape not initialized.");
 	glUseProgram(shaderProgram);
@@ -49,15 +49,15 @@ void Shape::draw_triangle(double x1, double y1, double x2, double y2, double x3,
 	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f };
 	struct normalized_color normalized_color3 = { color3.r / 255.0f, color3.g / 255.0f, color3.b / 255.0f };
 	// 頂点データの設定
-	float vertices[3][5] = {
-		{static_cast<float>(x1), static_cast<float>(y1), normalized_color1.r, normalized_color1.g, normalized_color1.b},
-		{static_cast<float>(x2), static_cast<float>(y2), normalized_color2.r, normalized_color2.g, normalized_color2.b},
-		{static_cast<float>(x3), static_cast<float>(y3), normalized_color3.r, normalized_color3.g, normalized_color3.b}
+	float vertices[3][6] = {
+		{static_cast<float>(x1), static_cast<float>(y1),depth, normalized_color1.r, normalized_color1.g, normalized_color1.b},
+		{static_cast<float>(x2), static_cast<float>(y2),depth, normalized_color2.r, normalized_color2.g, normalized_color2.b},
+		{static_cast<float>(x3), static_cast<float>(y3),depth, normalized_color3.r, normalized_color3.g, normalized_color3.b}
 	};
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	//キャッシュ作成
 	int before_size = all_vertices.size();
-	all_vertices.resize(before_size + 3 * 5);
+	all_vertices.resize(before_size + 3 * 6);
 	memcpy(&all_vertices.at(before_size), vertices, sizeof(vertices));
 	glBufferData(GL_ARRAY_BUFFER, all_vertices.size() * sizeof(float), all_vertices.data(), GL_DYNAMIC_DRAW);
 }
@@ -68,7 +68,7 @@ void Shape::draw_shapes() {
 		throw ShapeException("Shape not initialized.");
 	glUseProgram(shaderProgram);
 	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, all_vertices.size() / 5);
+	glDrawArrays(GL_TRIANGLES, 0, all_vertices.size() / 6);
 	glBindVertexArray(0);
 }
 
