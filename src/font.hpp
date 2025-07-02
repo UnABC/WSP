@@ -73,7 +73,9 @@ private:
 
     //フォントのキャッシュ
     std::unordered_map<char16_t, Character> characters;
-    int font_size;
+    int font_size = 24;
+    int old_font_size = 0; // フォントのサイズ
+    std::string old_font_path; // フォントのパス
     std::vector<float> all_vertices; // 全ての頂点データを保持するベクター
 
     //void recalcProjection(int width, int height) { projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); }

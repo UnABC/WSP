@@ -8,8 +8,8 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		throw WindowException("Failed to initialize SDL.");
 	//ウィンドウ作成
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	window = SDL_CreateWindow("WSP", 640, 480, (is_fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_HIDDEN) | SDL_WINDOW_OPENGL);
 	if (!window)FailedToInitialize("Failed to create SDL Window.");
@@ -125,6 +125,14 @@ void Graphic::DrawRoundRect(float x, float y, float width, float height, float r
 	Draw();
 }
 
+void Graphic::DrawLine(float x1, float y1, float x2, float y2) {
+	current_depth += depth_increment; // 深度を更新
+	shape.draw_line(x1, y1, x2, y2, colors.at(0), colors.at(1), current_depth);
+	Draw();
+	pos.x = x1; // 最後の座標を表示位置に設定
+	pos.y = y1; // 最後の座標を表示位置に設定
+}
+
 void Graphic::Clear(int r, int g, int b) {
 	//テクスチャのクリア
 	font.Clear();
@@ -151,6 +159,7 @@ void Graphic::Draw() {
 	//図形の描画
 	shape.draw_shapes();
 	shape.draw_roundrect();
+	shape.draw_lines();
 	/*for (const auto& texture : textures) {
 		SDL_RenderTexture(renderer, get<0>(texture), &get<1>(texture), &get<2>(texture));
 		SDL_DestroyTexture(get<0>(texture));

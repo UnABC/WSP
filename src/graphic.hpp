@@ -66,6 +66,8 @@ public:
 	void DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
 	void DrawRectangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 	void DrawRoundRect(float x, float y, float width, float height, float radius);
+	void DrawLine(float x1, float y1, float x2, float y2);
+	void DrawLine(float x1, float y1){DrawLine(x1, y1, pos.x, pos.y);};
 	void Clear(int r = 255, int g = 255, int b = 255);
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 

@@ -623,6 +623,23 @@ void Evaluator::VoidFunction(AST* ast) {
 			CalcExpr(args.at(4)).GetValue<long double>()
 		);
 		return;
+	} else if (functionName == "line") {
+		if (args.size() == 2) {
+			graphic.DrawLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>()
+			);
+		} else if (args.size() == 4) {
+			graphic.DrawLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
 	}
 	if (user_func.count(functionName)) {
 		//関数の中身を実行

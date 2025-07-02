@@ -53,6 +53,22 @@ void Shape::Init(int w, int h) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+	// 線分の頂点配列オブジェクトとバッファオブジェクトを生成
+	glGenVertexArrays(1, &vao_line);
+	glGenBuffers(1, &vbo_line);
+	glBindVertexArray(vao_line);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_line);
+	// 頂点バッファを初期化(posX,posY,color)
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * 6, nullptr, GL_DYNAMIC_DRAW);
+	// 位置属性 (vec3)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// 色属性 (vec3)
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
 	// シェーダープログラムの作成
 	shaderProgram_triangle = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
 	if (!shaderProgram_triangle)
@@ -129,6 +145,31 @@ void Shape::draw_round_rectangle(float x, float y, float width, float height, fl
 	glBufferData(GL_ARRAY_BUFFER, all_roundrect_vertices.size() * sizeof(float), all_roundrect_vertices.data(), GL_DYNAMIC_DRAW);
 }
 
+void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, float depth) {
+	if (!shaderProgram_triangle || !vbo_line || !vao_line)
+		throw ShapeException("Shape not initialized.");
+	glUseProgram(shaderProgram_triangle);
+	//表示座標の計算
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram_triangle, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+	glBindVertexArray(vao_line);
+	// 色の設定
+	struct normalized_color {
+		float r, g, b;
+	} normalized_color1 = { color1.r / 255.0f, color1.g / 255.0f, color1.b / 255.0f };
+	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f };
+	// 頂点データの設定
+	float vertices[2][6] = {
+		{x1, y1, depth, normalized_color1.r, normalized_color1.g, normalized_color1.b},
+		{x2, y2, depth, normalized_color2.r, normalized_color2.g, normalized_color2.b}
+	};
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_line);
+	//キャッシュ作成
+	int before_size = all_line_vertices.size();
+	all_line_vertices.resize(before_size + 2 * 6);
+	memcpy(&all_line_vertices.at(before_size), vertices, sizeof(vertices));
+	glBufferData(GL_ARRAY_BUFFER, all_line_vertices.size() * sizeof(float), all_line_vertices.data(), GL_DYNAMIC_DRAW);
+}
+
 
 void Shape::draw_shapes() {
 	if (all_triangle_vertices.empty())return;
@@ -150,3 +191,18 @@ void Shape::draw_roundrect() {
 	glBindVertexArray(0);
 }
 
+void Shape::draw_lines() {
+	if (all_line_vertices.empty())return;
+	if (!shaderProgram_triangle || !vbo_line || !vao_line)
+		throw ShapeException("Shape not initialized.");
+	glUseProgram(shaderProgram_triangle);
+	glBindVertexArray(vao_line);
+	glDrawArrays(GL_LINES, 0, all_line_vertices.size() / 6);
+	glBindVertexArray(0);
+}
+
+void Shape::Clear() {
+	all_triangle_vertices.clear();
+	all_roundrect_vertices.clear();
+	all_line_vertices.clear();
+}

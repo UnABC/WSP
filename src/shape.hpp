@@ -12,9 +12,12 @@ class Shape {
 	// 角丸四角形の頂点配列オブジェクトとバッファオブジェクト
 	GLuint vao_roundrect, vbo_roundrect;
 	GLuint shaderProgram_roundrect;
+	// 線分の頂点配列オブジェクトとバッファオブジェクト
+	GLuint vao_line, vbo_line;
 	// すべての頂点を格納するベクター
 	std::vector<float> all_triangle_vertices;
 	std::vector<float> all_roundrect_vertices;
+	std::vector<float> all_line_vertices;
 
 	glm::mat4 projection;
 	//三角形のシェーダー
@@ -66,8 +69,6 @@ class Shape {
 		in float v_radius; // フラグメントシェーダーへ渡された角の半径
 		in vec4 u_box; // 四角形の位置とサイズ (x, y, width, height)
 
-		uniform vec2 u_resolution; // ビューポートの解像度
-
 		// 角丸四角形の符号付き距離関数(SDF)
 		float sdRoundedBox(vec2 p, vec2 b, float r) {
 			vec2 d = abs(p) - b;
@@ -107,10 +108,12 @@ public:
 	void Init(int w, int h);
 	void draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, float depth);
 	void draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth);
+	void draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, float depth);
 
 	void draw_shapes();
 	void draw_roundrect();
-	void Clear() { all_triangle_vertices.clear();all_roundrect_vertices.clear(); };
+	void draw_lines();
+	void Clear();
 };
 
 #endif

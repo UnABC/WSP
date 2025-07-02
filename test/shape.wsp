@@ -8,6 +8,7 @@ double time_offset_3 = M_PI * 6 / 4
 int i = 0
 int old_time = gettime()
 while (1){
+	redraw(0)
     cls(0,0,0)
 
     // 時間を基に色の値を計算（0.0～1.0の範囲）
@@ -42,6 +43,11 @@ while (1){
 
     // 四角形の描画命令をrectangleに変更 (左上のX, 左上のY, 幅, 高さ)
     quad(220,124, 420,124, 420,298, 220,298)
+    
+    //line描画テスト
+    line(100,100,0,0)
+    line(500,80)
+    redraw(1)
     i++
     wait(1)
 }

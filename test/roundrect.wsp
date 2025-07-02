@@ -8,13 +8,14 @@ int old_time = gettime()
 int r[4]
 int g[4]
 int b[4]
+font(32)
 while (1){
     cls(0,0,0)
 	redraw(0)
     // 時間を基に色の値を計算（0.0～1.0の範囲）
     // sin関数は-1から1の範囲を返すので、(sin(x) + 1) / 2 で0から1の範囲に正規化
     // double(i)としてiを明示的にdouble型に変換
-    double t = double(i) * 0.01 // 時間の進行速度を調整
+    double t = double(i) * 0.16 // 時間の進行速度を調整
 
     // 頂点0の色
     // 255.0を掛けることで浮動小数点演算を強制
@@ -52,9 +53,8 @@ while (1){
     j = 4
     while((j--) >= 0){color(r[j],g[j],b[j],3-j)}
     pos(165,50)
-    font(32)
     print("OpenGL\n完全に理解した")
     redraw(1)
     i++
-    wait(1)
+    wait(16)
 }

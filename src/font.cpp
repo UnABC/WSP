@@ -42,6 +42,9 @@ void Font::Init(int width, int height) {
 }
 
 void Font::SetFont(const char* font_path, int size) {
+	if (old_font_path == font_path && old_font_size == size) return;
+	old_font_path = font_path;
+	old_font_size = size;
 	//フォントの初期化
 	if (face) {
 		FT_Done_Face(face);
