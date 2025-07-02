@@ -68,6 +68,7 @@ public:
 	void DrawRoundRect(float x, float y, float width, float height, float radius);
 	void DrawLine(float x1, float y1, float x2, float y2);
 	void DrawLine(float x1, float y1){DrawLine(x1, y1, pos.x, pos.y);};
+	void DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle = 0.0f);
 	void Clear(int r = 255, int g = 255, int b = 255);
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 

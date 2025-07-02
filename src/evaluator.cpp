@@ -640,6 +640,36 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
 		return;
+	} else if (functionName == "ellipse") {
+		if (args.size() == 4) {
+			graphic.DrawEllipse(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else if (args.size() == 5) {
+			graphic.DrawEllipse(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "circle") {
+		if (args.size() != 3)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		long double radius = CalcExpr(args.at(2)).GetValue<long double>();
+		graphic.DrawEllipse(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			radius, radius
+		);
+		return;
 	}
 	if (user_func.count(functionName)) {
 		//関数の中身を実行

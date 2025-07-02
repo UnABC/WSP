@@ -133,6 +133,12 @@ void Graphic::DrawLine(float x1, float y1, float x2, float y2) {
 	pos.y = y1; // 最後の座標を表示位置に設定
 }
 
+void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle) {
+	current_depth += depth_increment; // 深度を更新
+	shape.draw_ellipse(center_x, center_y, major_axis, minor_axis, -angle, colors.at(0), colors.at(1), colors.at(2), colors.at(3), current_depth);
+	Draw();
+}
+
 void Graphic::Clear(int r, int g, int b) {
 	//テクスチャのクリア
 	font.Clear();
@@ -160,6 +166,7 @@ void Graphic::Draw() {
 	shape.draw_shapes();
 	shape.draw_roundrect();
 	shape.draw_lines();
+	shape.draw_ellipses();
 	/*for (const auto& texture : textures) {
 		SDL_RenderTexture(renderer, get<0>(texture), &get<1>(texture), &get<2>(texture));
 		SDL_DestroyTexture(get<0>(texture));
