@@ -48,6 +48,8 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
 	//各種図形の初期化
 	shape.Init(width, height);
+	//画像の初期化
+	image.Init(width, height);
 
 	//開始時刻記録
 	lastTime = SDL_GetTicks();
@@ -91,6 +93,10 @@ void Graphic::printText(const string& text) {
 	Draw();
 	//下にずらす
 	pos.y += font_size * (count(text.begin(), text.end(), '\n') + 1);
+}
+
+void Graphic::Load_Image(const string& file_path, unsigned int id,int center_x, int center_y) {
+	image.Load(file_path, id, center_x, center_y);
 }
 
 //ダイアログ表示
@@ -139,10 +145,18 @@ void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, floa
 	Draw();
 }
 
+void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle) {
+	current_depth += depth_increment; // 深度を更新
+	SDL_Color image_color = { 255, 255, 255, 255 }; // デフォルトの画像色
+	image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, image_color, image_color, image_color, image_color, current_depth);
+	Draw();
+}
+
 void Graphic::Clear(int r, int g, int b) {
 	//テクスチャのクリア
 	font.Clear();
 	shape.Clear();
+	image.Clear();
 	pos = { 0, 0 };	//表示位置を初期化
 	current_depth = 0.0f; //深度を初期化
 	system_color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 }; //システム色を設定
@@ -167,12 +181,9 @@ void Graphic::Draw() {
 	shape.draw_roundrect();
 	shape.draw_lines();
 	shape.draw_ellipses();
-	/*for (const auto& texture : textures) {
-		SDL_RenderTexture(renderer, get<0>(texture), &get<1>(texture), &get<2>(texture));
-		SDL_DestroyTexture(get<0>(texture));
-	}
-	textures.clear();
-	SDL_RenderPresent(renderer);*/
+	//画像の描画
+	image.Draw();
+
 	if (!SDL_GL_SwapWindow(window))
 		FailedToInitialize(SDL_GetError());
 }

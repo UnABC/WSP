@@ -11,6 +11,7 @@
 #include "exception.hpp"
 #include "font.hpp"
 #include "shape.hpp"
+#include "Image.hpp"
 #include <vector>
 #include <map>
 
@@ -45,10 +46,12 @@ private:
 
 	//キャッシュ
 	std::map<std::string, SDL_Texture*> text_cache;
+
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	Font font;
 	Shape shape;
+	Image image;
 	SDL_GLContext glContext;
 
 	void FailedToInitialize(const std::string& message);
@@ -61,6 +64,8 @@ public:
 	void SetColors(int r, int g, int b, int index);
 	void SetFontSize(unsigned long long size) { font_size = size; };
 	void SetFont(unsigned long long size = 24, const std::string& font_path = "C:/Windows/Fonts/msgothic.ttc");
+	void Load_Image(const std::string& file_path, unsigned int id,int center_x = 0, int center_y = 0);
+
 	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
 	bool Wait(unsigned long long milliseconds = 1);
 	void DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
@@ -69,6 +74,9 @@ public:
 	void DrawLine(float x1, float y1, float x2, float y2);
 	void DrawLine(float x1, float y1){DrawLine(x1, y1, pos.x, pos.y);};
 	void DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle = 0.0f);
+
+	void DrawImage(unsigned int id, float x_size = 1.0f, float y_size = 1.0f, float angle = 0.0f);
+
 	void Clear(int r = 255, int g = 255, int b = 255);
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 

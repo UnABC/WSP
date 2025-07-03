@@ -4,7 +4,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/roundrect.wsp";
+		string file_name = "test/image.wsp";
 		if (argc == 2)file_name = argv[1];
 		Lexer lexer(file_name);
 		//Lexer実行
@@ -66,6 +66,9 @@ int main(int argc, char* argv[]) {
 	}
 	catch (const ShapeException& e) {
 		cerr << "Shape error: " << e.what() << endl;
+	}
+	catch (const ImageException& e) {
+		cerr << "Image error: " << e.what() << endl;
 	}
 	catch (const std::logic_error& e) {
 		cerr << "Logic error: " << e.what() << endl;

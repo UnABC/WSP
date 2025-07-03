@@ -1,5 +1,4 @@
 #include "evaluator.hpp"
-#include "Var.hpp"
 using namespace std;
 
 //TODO:Debug用
@@ -288,6 +287,11 @@ Var Evaluator::CalcExpr(AST* ast) {
 		//各種数学定数
 		if (math_const.count(variableName)) {
 			return math_const[variableName];
+		}
+		//システム変数
+		if (variableName == "dir_cur") {
+			filesystem::path current_path = filesystem::current_path();
+			return Var(current_path.string());
 		}
 		//変数の存在を確認
 		if (node->GetArrayIndex().empty()) {
@@ -669,6 +673,56 @@ void Evaluator::VoidFunction(AST* ast) {
 			CalcExpr(args.at(1)).GetValue<long double>(),
 			radius, radius
 		);
+		return;
+	} else if (functionName == "LoadImage") {
+		if (args.size() == 2) {
+			//画像を読み込む
+			graphic.Load_Image(
+				CalcExpr(args.at(0)).GetValue<string>(),
+				CalcExpr(args.at(1)).GetValue<long long>()
+			);
+		} else if (args.size() == 3) {
+			graphic.Load_Image(
+				CalcExpr(args.at(0)).GetValue<string>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>()
+			);
+		} else if (args.size() == 4) {
+			graphic.Load_Image(
+				CalcExpr(args.at(0)).GetValue<string>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "DrawImage") {
+		if (args.size() == 1) {
+			graphic.DrawImage(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			long double scaled_size = CalcExpr(args.at(1)).GetValue<long double>();
+			graphic.DrawImage(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				scaled_size, scaled_size
+			);
+		} else if (args.size() == 3) {
+			graphic.DrawImage(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>()
+			);
+		} else if (args.size() == 4) {
+			graphic.DrawImage(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
 		return;
 	}
 	if (user_func.count(functionName)) {
