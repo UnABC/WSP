@@ -8,8 +8,8 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 		throw WindowException("Failed to initialize SDL.");
 	//ウィンドウ作成
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	window = SDL_CreateWindow("WSP", 640, 480, (is_fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_HIDDEN) | SDL_WINDOW_OPENGL);
 	if (!window)FailedToInitialize("Failed to create SDL Window.");
@@ -43,6 +43,8 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	GLenum err = glewInit();
 	if (err != GLEW_OK)
 		throw WindowException(reinterpret_cast<const char*>(glewGetErrorString(err)));
+	if (!GLEW_ARB_bindless_texture)
+		throw WindowException("OpenGL does not support bindless textures.");
 	//フォント初期化+読み込み
 	font.Init(width, height);
 	font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);

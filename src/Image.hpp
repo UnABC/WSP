@@ -4,11 +4,11 @@
 #include <SDL3/SDL_opengl.h>
 #include <map>
 #include "shader.hpp"
-#include <stb_image.h>
+#include "BLTexture.hpp"
 
 struct image_data {
-	int width, height, channels, center_x, center_y;
-	unsigned int texture;
+	int width, height, center_x, center_y;
+	BLTexture texture; // Bindless texture for OpenGL
 };
 
 class Image {
@@ -22,27 +22,33 @@ private:
 	GLuint vao, vbo;
 	GLuint shaderProgram;
 	const char* vertexShaderSource = R"glsl(
-		#version 330 core
+		#version 450 core
 		layout (location = 0) in vec3 position;
 		layout (location = 1) in vec2 texCoord;
 		layout (location = 2) in vec3 color;
+		layout (location = 3) in uvec2 aTexHandle;
+		layout (location = 4) in mat4 transform;
 		out vec3 outColor;
 		out vec2 TexCoords;
+		flat out uvec2 TexHandle;
+
 		uniform mat4 projection;
-		uniform mat4 transform;
 		void main() {
-			gl_Position = projection * transform * vec4(position, 1.0);
+			gl_Position = projection * vec4(position, 1.0);
 			outColor = color;
 			TexCoords = texCoord;
+			TexHandle = uvec2(aTexHandle);
 		}
 	)glsl";
 	const char* fragmentShaderSource = R"glsl(
-		#version 330 core
+		#version 450 core
+		#extension GL_ARB_bindless_texture : require
 		out vec4 FragColor;
 		in vec2 TexCoords;
 		in vec3 outColor;
-		uniform sampler2D image;
+		flat in uvec2 TexHandle;
 		void main() {
+			sampler2D image = sampler2D(TexHandle);
 			FragColor = texture(image, TexCoords) * vec4(outColor, 1.0);
 		}
 	)glsl";

@@ -1,17 +1,17 @@
 LoadImage("test/image/tech_chan.png",1,315,372)
-//LoadImage("test/image/sakura.png",2,115,216)
+LoadImage("test/image/sakura.png",2,115,216)
 
 double angle = 0.0
 while(1){
 	redraw(0)
 	cls(0,0,0)
-	pos(220,240)
+	pos(200,240)
 	DrawImage(1,0.5,0.5,angle)
-	pos(420,240)
-	//DrawImage(2,1.0,1.0,-angle)
+	pos(500,240)
+	DrawImage(2,0.8,0.8,-angle)
 	angle += M_PI/120
 	pos(320,240)
-	//print("A")
+	print("A")
 	redraw(1)
 	wait(10)
 }
