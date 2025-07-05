@@ -20,19 +20,18 @@ void Font::Init(int width, int height) {
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	//頂点バッファ(posX, posY, texX, texY,layerIndex, color)
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 9, nullptr, GL_DYNAMIC_DRAW);
-
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 10, nullptr, GL_DYNAMIC_DRAW);
 	// 位置属性 (vec3)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// テクスチャ座標属性 (vec2)
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	// レイヤーインデックス属性 (float)
-	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(5 * sizeof(float)));
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(5 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-	// 色属性 (vec3)
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+	// 色属性 (vec4)
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(3);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -116,16 +115,12 @@ void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_C
 	u16string text16str = boost::locale::conv::utf_to_utf<char16_t>(text);
 	const char16_t* text16 = text16str.c_str();
 
-	int all_vertices_size = text16str.size() * 6 * 9;
-	int before_size = all_vertices.size();
-	all_vertices.resize(before_size + all_vertices_size);
-
 	struct normalized_color {
-		float r, g, b;
-	} normalized_color1 = { color1.r / 255.0f, color1.g / 255.0f, color1.b / 255.0f };
-	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f };
-	struct normalized_color normalized_color3 = { color3.r / 255.0f, color3.g / 255.0f, color3.b / 255.0f };
-	struct normalized_color normalized_color4 = { color4.r / 255.0f, color4.g / 255.0f, color4.b / 255.0f };
+		float r, g, b, a;
+	} normalized_color1 = { color1.r / 255.0f, color1.g / 255.0f, color1.b / 255.0f, color1.a / 255.0f };
+	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f, color2.a / 255.0f };
+	struct normalized_color normalized_color3 = { color3.r / 255.0f, color3.g / 255.0f, color3.b / 255.0f, color3.a / 255.0f };
+	struct normalized_color normalized_color4 = { color4.r / 255.0f, color4.g / 255.0f, color4.b / 255.0f, color4.a / 255.0f };
 
 	for (size_t i = 0; text16[i] != u'\0'; i++) {
 		if (text16[i] == '\n') {
@@ -169,17 +164,17 @@ void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_C
 		float tex_v_max = (ch.Size.y > 0 && maxGlyphHeight > 0) ? (float)ch.Size.y / maxGlyphHeight : 0.0f;
 		float current_layer_idx = (float)ch.LayerIndex;
 
-		float vertices[6][9] = { // posX, posY, texU, texV, layerIndex,color
-			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b },
-			{ render_x              , render_y               ,depth, 0.0f     , 0.0f     , current_layer_idx,normalized_color1.r,normalized_color1.g,normalized_color1.b },
-			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b },
+		float vertices[6][10] = { // posX, posY, texU, texV, layerIndex,color
+			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b,normalized_color4.a },
+			{ render_x              , render_y               ,depth, 0.0f     , 0.0f     , current_layer_idx,normalized_color1.r,normalized_color1.g,normalized_color1.b,normalized_color1.a },
+			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b,normalized_color2.a },
 
-			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b },
-			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b },
-			{ render_x + glyph_width, render_y + glyph_height,depth, tex_u_max, tex_v_max, current_layer_idx,normalized_color3.r,normalized_color3.g,normalized_color3.b },
+			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b,normalized_color4.a },
+			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b,normalized_color2.a },
+			{ render_x + glyph_width, render_y + glyph_height,depth, tex_u_max, tex_v_max, current_layer_idx,normalized_color3.r,normalized_color3.g,normalized_color3.b,normalized_color3.a },
 		};
 		// 頂点データをall_verticesに追加
-		memcpy(&all_vertices[before_size + i * 6 * 9], vertices, sizeof(vertices));
+		all_vertices.insert(all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 10);
 		current_x += ch.Advance * scale;
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -192,7 +187,7 @@ void Font::DrawTexts() {
 		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
 	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, (all_vertices.size() / 9));
+	glDrawArrays(GL_TRIANGLES, 0, (all_vertices.size() / 10));
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

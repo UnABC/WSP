@@ -78,9 +78,9 @@ void Graphic::FailedToInitialize(const string& message) {
 	throw WindowException(message);
 }
 
-void Graphic::SetColors(int r, int g, int b, int index) {
+void Graphic::SetColors(int r, int g, int b, int a, int index) {
 	if (index < 0 || index >= colors.size()) return; //範囲外アクセス防止
-	colors.at(index) = { (Uint8)r, (Uint8)g, (Uint8)b, 255 };
+	colors.at(index) = { (Uint8)r, (Uint8)g, (Uint8)b,(Uint8)a };
 	if (index == 0) color = colors.at(0); //0番目の色を現在の色に設定
 }
 
@@ -97,7 +97,7 @@ void Graphic::printText(const string& text) {
 	pos.y += font_size * (count(text.begin(), text.end(), '\n') + 1);
 }
 
-void Graphic::Load_Image(const string& file_path, unsigned int id,int center_x, int center_y) {
+void Graphic::Load_Image(const string& file_path, unsigned int id, int center_x, int center_y) {
 	image.Load(file_path, id, center_x, center_y);
 }
 
@@ -149,8 +149,12 @@ void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, floa
 
 void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle) {
 	current_depth += depth_increment; // 深度を更新
-	SDL_Color image_color = { 255, 255, 255, 255 }; // デフォルトの画像色
-	image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, image_color, image_color, image_color, image_color, current_depth);
+	if (gmode & 1) {
+		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, colors.at(0), colors.at(1), colors.at(2), colors.at(3), current_depth);
+	} else {
+		SDL_Color image_color = { 255, 255, 255, 255 }; // デフォルトの画像色
+		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, image_color, image_color, image_color, image_color, current_depth);
+	}
 	Draw();
 }
 

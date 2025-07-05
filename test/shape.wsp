@@ -21,25 +21,25 @@ while (1){
     int r0 = int(255.0 * (sin(t + time_offset_0) * 0.5 + 0.5))
     int g0 = int(255.0 * (sin(t + time_offset_0 + M_PI * 2/3) * 0.5 + 0.5))
     int b0 = int(255.0 * (sin(t + time_offset_0 + M_PI * 4/3) * 0.5 + 0.5))
-    color(r0, g0, b0, 0)
+    color(r0, g0, b0,255, 0)
 
     // 頂点1の色
     int r1 = int(255.0 * (sin(t + time_offset_1) * 0.5 + 0.5))
     int g1 = int(255.0 * (sin(t + time_offset_1 + M_PI * 2/3) * 0.5 + 0.5))
     int b1 = int(255.0 * (sin(t + time_offset_1 + M_PI * 4/3) * 0.5 + 0.5))
-    color(r1, g1, b1, 1)
+    color(r1, g1, b1,255, 1)
 
     // 頂点2の色
     int r2 = int(255.0 * (sin(t + time_offset_2) * 0.5 + 0.5))
     int g2 = int(255.0 * (sin(t + time_offset_2 + M_PI * 2/3) * 0.5 + 0.5))
     int b2 = int(255.0 * (sin(t + time_offset_2 + M_PI * 4/3) * 0.5 + 0.5))
-    color(r2, g2, b2, 2)
+    color(r2, g2, b2,255, 2)
 
     // 頂点3の色
     int r3 = int(255.0 * (sin(t + time_offset_3) * 0.5 + 0.5))
     int g3 = int(255.0 * (sin(t + time_offset_3 + M_PI * 2/3) * 0.5 + 0.5))
     int b3 = int(255.0 * (sin(t + time_offset_3 + M_PI * 4/3) * 0.5 + 0.5))
-    color(r3, g3, b3, 3)
+    color(r3, g3, b3,255, 3)
 
     // 四角形の描画命令をrectangleに変更 (左上のX, 左上のY, 幅, 高さ)
     quad(260,124, 380,124, 420,298, 220,298)
@@ -49,7 +49,8 @@ while (1){
     line(500,80)
     //ellipse描画テスト
     ellipse(400,400,100,50,M_PI/3)
-    circle(100,400,100)
+    color(255,0,0,100)
+    circle(250,300,100)
     redraw(1)
     i++
     wait(1)

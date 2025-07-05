@@ -9,6 +9,8 @@ int r[4]
 int g[4]
 int b[4]
 font(32)
+LoadImage("test/image/tech_chan.png",1,315,372)
+gmode(1)
 while (1){
     cls(0,0,0)
 	redraw(0)
@@ -44,17 +46,12 @@ while (1){
     
     int j = 4
     while((j--) >= 0){color(r[j],g[j],b[j],255,j)}
+	pos(100+157,50+186)
+    DrawImage(1,0.5,0.5,M_PI*i/120)
+    
 
-    roundrect(50,50, 280,124, 20)
-    
-    color(0,0,0)
-    roundrect(55,55, 270,114, 20)
-    
-    j = 4
-    while((j--) >= 0){color(r[j],g[j],b[j],255,3-j)}
-    pos(165,50)
-    print("OpenGL\n完全に理解した")
     redraw(1)
     i++
-    wait(16)
+    wait(10)
 }
+

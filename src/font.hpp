@@ -38,12 +38,12 @@ private:
         layout (location = 0) in vec3 position;
         layout (location = 1) in vec2 texCoord;
         layout (location = 2) in float layerIndex;
-        layout (location = 3) in vec3 color;
+        layout (location = 3) in vec4 color;
         out VS_OUT {
             vec2 TexCoords;
             float LayerIndex;
         } vs_out;
-        out vec3 outColor;
+        out vec4 outColor;
         uniform mat4 projection;
         void main() {
             gl_Position = projection * vec4(position, 1.0);
@@ -60,13 +60,13 @@ private:
             vec2 TexCoords;
             float LayerIndex;
         } fs_in;
-        in vec3 outColor;
+        in vec4 outColor;
         uniform sampler2DArray textTextureArray;
         void main() {
             float alpha = texture(textTextureArray, vec3(fs_in.TexCoords, fs_in.LayerIndex)).r;
             if(alpha < 0.1)
                 discard;
-            FragColor = vec4(outColor, alpha);
+            FragColor = vec4(outColor.rgb, alpha*outColor.a);
         }
     )glsl";
     GLuint shaderProgram;

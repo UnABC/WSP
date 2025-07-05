@@ -25,10 +25,10 @@ private:
 		#version 450 core
 		layout (location = 0) in vec3 position;
 		layout (location = 1) in vec2 texCoord;
-		layout (location = 2) in vec3 color;
+		layout (location = 2) in vec4 color;
 		layout (location = 3) in uvec2 aTexHandle;
 		layout (location = 4) in mat4 transform;
-		out vec3 outColor;
+		out vec4 outColor;
 		out vec2 TexCoords;
 		flat out uvec2 TexHandle;
 
@@ -45,11 +45,11 @@ private:
 		#extension GL_ARB_bindless_texture : require
 		out vec4 FragColor;
 		in vec2 TexCoords;
-		in vec3 outColor;
+		in vec4 outColor;
 		flat in uvec2 TexHandle;
 		void main() {
 			sampler2D image = sampler2D(TexHandle);
-			FragColor = texture(image, TexCoords) * vec4(outColor, 1.0);
+			FragColor = texture(image, TexCoords) * outColor;
 		}
 	)glsl";
 public:

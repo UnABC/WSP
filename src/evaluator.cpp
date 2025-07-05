@@ -546,15 +546,28 @@ void Evaluator::VoidFunction(AST* ast) {
 		return;
 	} else if (functionName == "color") {
 		if (args.size() == 3) {
-			graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+			graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>());
 		} else if (args.size() == 4) {
-			graphic.SetColors(CalcExpr(args.at(0)).GetValue<long long>(),
+			graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(),
 				CalcExpr(args.at(1)).GetValue<long long>(),
 				CalcExpr(args.at(2)).GetValue<long long>(),
 				CalcExpr(args.at(3)).GetValue<long long>());
+		} else if (args.size() == 5) {
+			graphic.SetColors(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				CalcExpr(args.at(4)).GetValue<long long>());
 		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
+		return;
+	} else if (functionName == "gmode") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.SetGmode(CalcExpr(args.at(0)).GetValue<long long>());
 		return;
 	} else if (functionName == "dialog") {
 		if (args.size() > 3)

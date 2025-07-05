@@ -11,18 +11,18 @@ void Image::Init(int width, int height) {
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	// 頂点バッファを初期化(posX,posY,texX,texY,color)
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 10, nullptr, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 11, nullptr, GL_DYNAMIC_DRAW);
 	// 位置属性 (vec3)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	// テクスチャ座標属性 (vec2)
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-	// 色属性 (vec3)
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(5 * sizeof(float)));
+	// 色属性 (vec4)
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(5 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 	// テクスチャハンドル属性 (uvec2)
-	glVertexAttribIPointer(3, 2, GL_UNSIGNED_INT, 10 * sizeof(float), (void*)(8 * sizeof(float)));
+	glVertexAttribIPointer(3, 2, GL_UNSIGNED_INT, 11 * sizeof(float), (void*)(9 * sizeof(float)));
 	glEnableVertexAttribArray(3);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -59,11 +59,11 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 
 	// 色の設定
 	struct normalized_color {
-		float r, g, b;
-	} normalized_color1 = { color1.r / 255.0f, color1.g / 255.0f, color1.b / 255.0f };
-	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f };
-	struct normalized_color normalized_color3 = { color3.r / 255.0f, color3.g / 255.0f, color3.b / 255.0f };
-	struct normalized_color normalized_color4 = { color4.r / 255.0f, color4.g / 255.0f, color4.b / 255.0f };
+		float r, g, b, a;
+	} normalized_color1 = { color1.r / 255.0f, color1.g / 255.0f, color1.b / 255.0f ,color1.a / 255.0f };
+	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f, color2.a / 255.0f };
+	struct normalized_color normalized_color3 = { color3.r / 255.0f, color3.g / 255.0f, color3.b / 255.0f, color3.a / 255.0f };
+	struct normalized_color normalized_color4 = { color4.r / 255.0f, color4.g / 255.0f, color4.b / 255.0f, color4.a / 255.0f };
 	//位置
 	float min_x = -images[id].center_x;
 	float min_y = -images[id].center_y;
@@ -76,19 +76,17 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 	glm::vec3 v4 = transform * glm::vec4(min_x, max_y, depth, 1.0f);
 
 	// 頂点データの設定
-	float vertices[6][10] = {
+	float vertices[6][11] = {
 		// 位置 (x, y, depth), テクスチャ座標 (texX, texY), 色 (r, g, b)
-		{v1.x , v1.y , v1.z, 0.0f, 0.0f, normalized_color1.r, normalized_color1.g, normalized_color1.b, *(float*)&handle1, *(float*)&handle2},
-		{v2.x , v2.y , v2.z, 1.0f, 0.0f, normalized_color2.r, normalized_color2.g, normalized_color2.b, *(float*)&handle1, *(float*)&handle2},
-		{v4.x , v4.y , v4.z, 0.0f, 1.0f, normalized_color4.r, normalized_color4.g, normalized_color4.b, *(float*)&handle1, *(float*)&handle2},
+		{v1.x , v1.y , v1.z, 0.0f, 0.0f, normalized_color1.r, normalized_color1.g, normalized_color1.b,normalized_color1.a, *(float*)&handle1, *(float*)&handle2},
+		{v2.x , v2.y , v2.z, 1.0f, 0.0f, normalized_color2.r, normalized_color2.g, normalized_color2.b,normalized_color2.a, *(float*)&handle1, *(float*)&handle2},
+		{v4.x , v4.y , v4.z, 0.0f, 1.0f, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, *(float*)&handle1, *(float*)&handle2},
 
-		{v2.x , v2.y , v2.z, 1.0f, 0.0f, normalized_color2.r, normalized_color2.g, normalized_color2.b, *(float*)&handle1, *(float*)&handle2},
-		{v3.x , v3.y , v3.z, 1.0f, 1.0f, normalized_color3.r, normalized_color3.g, normalized_color3.b, *(float*)&handle1, *(float*)&handle2},
-		{v4.x , v4.y , v4.z, 0.0f, 1.0f, normalized_color4.r, normalized_color4.g, normalized_color4.b, *(float*)&handle1, *(float*)&handle2}
+		{v2.x , v2.y , v2.z, 1.0f, 0.0f, normalized_color2.r, normalized_color2.g, normalized_color2.b,normalized_color2.a, *(float*)&handle1, *(float*)&handle2},
+		{v3.x , v3.y , v3.z, 1.0f, 1.0f, normalized_color3.r, normalized_color3.g, normalized_color3.b,normalized_color3.a, *(float*)&handle1, *(float*)&handle2},
+		{v4.x , v4.y , v4.z, 0.0f, 1.0f, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, *(float*)&handle1, *(float*)&handle2}
 	};
-	//glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	all_image_vertices.insert(all_image_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 10);
-	//glBufferData(GL_ARRAY_BUFFER, all_image_vertices.size() * sizeof(float), all_image_vertices.data(), GL_DYNAMIC_DRAW);
+	all_image_vertices.insert(all_image_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 11);
 }
 
 void Image::Draw() {
@@ -101,6 +99,6 @@ void Image::Draw() {
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, all_image_vertices.size() * sizeof(float), all_image_vertices.data(), GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, all_image_vertices.size() / 10);
+	glDrawArrays(GL_TRIANGLES, 0, all_image_vertices.size() / 11);
 	glBindVertexArray(0);
 }

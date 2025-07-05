@@ -28,8 +28,8 @@ class Shape {
 	const char* vertexShaderSource = R"glsl(
 		#version 330 core
 		layout (location = 0) in vec3 position;
-		layout (location = 1) in vec3 color;
-		out vec3 outColor;
+		layout (location = 1) in vec4 color;
+		out vec4 outColor;
 		uniform mat4 projection;
 		void main() {
 			gl_Position = projection * vec4(position, 1.0);
@@ -39,9 +39,9 @@ class Shape {
 	const char* fragmentShaderSource = R"glsl(
 		#version 330 core
 		out vec4 FragColor;
-		in vec3 outColor;
+		in vec4 outColor;
 		void main() {
-			FragColor = vec4(outColor, 1.0);
+			FragColor = outColor;
 		}
 	)glsl";
 
@@ -50,10 +50,10 @@ class Shape {
 		#version 330 core
 		layout (location = 0) in vec3 position;
 		layout (location = 1) in float radius; // 角の半径
-		layout (location = 2) in vec3 color;
+		layout (location = 2) in vec4 color;
 		layout (location = 3) in vec4 box_info; // 四角形の位置とサイズ (x,y,width, height)
 		out vec2 v_pixelPos;
-		out vec3 outColor;
+		out vec4 outColor;
 		out float v_radius;
 		out vec4 u_box;
 		uniform mat4 projection;
@@ -67,7 +67,7 @@ class Shape {
 	)glsl";
 	const char* fragmentShaderSource_roundrect = R"glsl(
 		#version 330 core
-		in vec3 outColor;
+		in vec4 outColor;
 		out vec4 FragColor;
 		in vec2 v_pixelPos;
 		in float v_radius; // フラグメントシェーダーへ渡された角の半径
@@ -103,7 +103,7 @@ class Shape {
 				discard;
 
 			// 7. 最終的な色の出力
-			FragColor = vec4(outColor.rgb, alpha);
+			FragColor = vec4(outColor.rgb, alpha*outColor.a);
 	})glsl";
 
 	// (楕)円のシェーダー
@@ -114,8 +114,8 @@ class Shape {
 		layout (location = 2) in float major_axis;
 		layout (location = 3) in float minor_axis;
 		layout (location = 4) in float angle;
-		layout (location = 5) in vec3 color;
-		out vec3 outColor;
+		layout (location = 5) in vec4 color;
+		out vec4 outColor;
 		out vec2 PixelPos;
 		out vec2 Center;
 		out float MajorAxis;
@@ -136,7 +136,7 @@ class Shape {
 	const char* fragmentShaderSource_ellipse = R"glsl(
 		#version 330 core
 		out vec4 FragColor;
-		in vec3 outColor;
+		in vec4 outColor;
 		in vec2 PixelPos;
 		in vec2 Center;
 		in float MajorAxis;
@@ -165,7 +165,7 @@ class Shape {
 			if (alpha < 0.01)
 				discard;
 			// 6. 最終的な色の出力
-			FragColor = vec4(outColor, alpha);
+			FragColor = vec4(outColor.rgb, alpha*outColor.a);
 		}
 	)glsl";
 
