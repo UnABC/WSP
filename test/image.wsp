@@ -11,9 +11,12 @@ while(1){
 	DrawImage(1,sin(angle),sin(angle),angle)
 	pos(500,240)
 	color(255,255,255,abs(cos(angle))*255)
+	gmode(2)
 	DrawImage(2,cos(angle),cos(angle),-angle)
 	angle += M_PI/120
 	pos(320,240)
+	gmode(2)
+	color(255,255,100,100)
 	print("Titech")
 	redraw(1)
 	wait(10)

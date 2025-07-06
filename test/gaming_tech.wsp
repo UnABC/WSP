@@ -10,7 +10,7 @@ int g[4]
 int b[4]
 font(32)
 LoadImage("test/image/tech_chan.png",1,315,372)
-gmode(1)
+gmode(3)
 while (1){
     cls(0,0,0)
 	redraw(0)

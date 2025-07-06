@@ -76,7 +76,7 @@ private:
     int font_size = 24;
     int old_font_size = 0; // フォントのサイズ
     std::string old_font_path; // フォントのパス
-    std::vector<float> all_vertices; // 全ての頂点データを保持するベクター
+    std::vector<std::pair<std::vector<float>, int>> all_vertices; // 全ての頂点データを保持するベクター
 
     //void recalcProjection(int width, int height) { projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); }
 public:
@@ -84,7 +84,7 @@ public:
     ~Font();
     void Init(int width, int height);
     void SetFont(const char* font_path, int size);
-    void SetTexts(std::string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth);
+    void SetTexts(std::string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth,int gmode);
     void DrawTexts();
     void Clear();
 };

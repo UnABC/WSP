@@ -41,7 +41,7 @@ void Image::Load(const std::string& file_path, int id, int center_x, int center_
 	images[id].center_y = center_y;
 }
 
-void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth) {
+void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode) {
 	if (!images.count(id))
 		throw ImageException("Image ID not found: " + to_string(id));
 	if (!shaderProgram || !vbo || !vao)
@@ -86,7 +86,10 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 		{v3.x , v3.y , v3.z, 1.0f, 1.0f, normalized_color3.r, normalized_color3.g, normalized_color3.b,normalized_color3.a, *(float*)&handle1, *(float*)&handle2},
 		{v4.x , v4.y , v4.z, 0.0f, 1.0f, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, *(float*)&handle1, *(float*)&handle2}
 	};
-	all_image_vertices.insert(all_image_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 11);
+	int local_gmode = gmode - (gmode % 2);
+	if (all_image_vertices.empty() || (all_image_vertices.back().second != local_gmode))
+		all_image_vertices.push_back({ std::vector<float>(), local_gmode });
+	all_image_vertices.back().first.insert(all_image_vertices.back().first.end(), &vertices[0][0], &vertices[0][0] + 6 * 11);
 }
 
 void Image::Draw() {
@@ -98,7 +101,21 @@ void Image::Draw() {
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, all_image_vertices.size() * sizeof(float), all_image_vertices.data(), GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, all_image_vertices.size() / 11);
+	for (pair<std::vector<float>, int>& image_vertices : all_image_vertices) {
+		if (image_vertices.second == 0) {
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		} else if (image_vertices.second == 2) {
+			// 加算合成
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		} else if (image_vertices.second == 4) {
+			// 減算合成
+			glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+		} else if (image_vertices.second == 6) {
+			// 乗算合成
+			glBlendFunc(GL_DST_ALPHA, GL_ZERO);
+		}
+		glBufferData(GL_ARRAY_BUFFER, image_vertices.first.size() * sizeof(float), image_vertices.first.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, image_vertices.first.size() / 11);
+	}
 	glBindVertexArray(0);
 }

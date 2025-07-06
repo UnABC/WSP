@@ -96,7 +96,7 @@ void Font::SetFont(const char* font_path, int size) {
 	shaderProgram = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
 }
 
-void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth) {
+void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode) {
 	if (!face || !shaderProgram || !vbo || !vao)
 		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
@@ -174,11 +174,13 @@ void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_C
 			{ render_x + glyph_width, render_y + glyph_height,depth, tex_u_max, tex_v_max, current_layer_idx,normalized_color3.r,normalized_color3.g,normalized_color3.b,normalized_color3.a },
 		};
 		// 頂点データをall_verticesに追加
-		all_vertices.insert(all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 10);
+		int local_gmode = gmode - (gmode % 2);
+		if (all_vertices.empty() || (all_vertices.back().second != local_gmode))
+			all_vertices.emplace_back(vector<float>(), local_gmode);
+		// 既存の頂点データに新しい頂点を追加
+		all_vertices.back().first.insert(all_vertices.back().first.end(), &vertices[0][0], &vertices[0][0] + 6 * 10);
 		current_x += ch.Advance * scale;
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * all_vertices.size(), all_vertices.data(), GL_DYNAMIC_DRAW);
 }
 
 void Font::DrawTexts() {
@@ -187,7 +189,23 @@ void Font::DrawTexts() {
 		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
 	glBindVertexArray(vao);
-	glDrawArrays(GL_TRIANGLES, 0, (all_vertices.size() / 10));
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	for (pair<vector<float>, int>& vertex_data : all_vertices) {
+		if (vertex_data.second == 0) {
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		} else if (vertex_data.second == 2) {
+			// 加算合成
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		} else if (vertex_data.second == 4) {
+			// 減算合成
+			glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+		} else if (vertex_data.second == 6) {
+			// 乗算合成
+			glBlendFunc(GL_DST_ALPHA, GL_ZERO);
+		}
+		glBufferData(GL_ARRAY_BUFFER, vertex_data.first.size() * sizeof(float), vertex_data.first.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays(GL_TRIANGLES, 0, vertex_data.first.size() / 10);
+	}
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -9,7 +9,7 @@ int i = 0
 int old_time = gettime()
 while (1){
 	redraw(0)
-    cls(0,0,0)
+    cls(255,255,255)
 
     // 時間を基に色の値を計算（0.0～1.0の範囲）
     // sin関数は-1から1の範囲を返すので、(sin(x) + 1) / 2 で0から1の範囲に正規化
@@ -50,7 +50,9 @@ while (1){
     //ellipse描画テスト
     ellipse(400,400,100,50,M_PI/3)
     color(255,0,0,100)
+    gmode(2)
     circle(250,300,100)
+    gmode(0)
     redraw(1)
     i++
     wait(1)
