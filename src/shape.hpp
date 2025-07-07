@@ -17,11 +17,6 @@ class Shape {
 	// (楕)円の頂点配列オブジェクトとバッファオブジェクト
 	GLuint vao_ellipse, vbo_ellipse;
 	GLuint shaderProgram_ellipse;
-	// すべての頂点を格納するベクター
-	std::vector<std::pair<std::vector<float>, int>> all_triangle_vertices;
-	std::vector<std::pair<std::vector<float>, int>> all_roundrect_vertices;
-	std::vector<std::pair<std::vector<float>, int>> all_line_vertices;
-	std::vector<std::pair<std::vector<float>, int>> all_ellipse_vertices;
 
 	glm::mat4 projection;
 	//三角形のシェーダー
@@ -168,22 +163,14 @@ class Shape {
 			FragColor = vec4(outColor.rgb, alpha*outColor.a);
 		}
 	)glsl";
-
-	void SetGmode(int gmode);
 public:
 	Shape() : width(640), height(480), vao(0), vbo(0), shaderProgram_triangle(0) {};
 	~Shape();
 	void Init(int w, int h);
-	void draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, float depth, int gmode);
-	void draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode);
-	void draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, float depth, int gmode);
-	void draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode);
-
-	void draw_shapes();
-	void draw_roundrect();
-	void draw_lines();
-	void draw_ellipses();
-	void Clear();
+	void draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, std::vector<AllVertexData>& all_vertices);
+	void draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
+	void draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, std::vector<AllVertexData>& all_vertices);
+	void draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };
 
 #endif

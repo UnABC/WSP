@@ -96,7 +96,7 @@ void Font::SetFont(const char* font_path, int size) {
 	shaderProgram = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
 }
 
-void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode) {
+void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode,vector<AllVertexData>& all_vertices) {
 	if (!face || !shaderProgram || !vbo || !vao)
 		throw FontException("Font not initialized.");
 	glUseProgram(shaderProgram);
@@ -165,52 +165,30 @@ void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_C
 		float current_layer_idx = (float)ch.LayerIndex;
 
 		float vertices[6][10] = { // posX, posY, texU, texV, layerIndex,color
-			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b,normalized_color4.a },
-			{ render_x              , render_y               ,depth, 0.0f     , 0.0f     , current_layer_idx,normalized_color1.r,normalized_color1.g,normalized_color1.b,normalized_color1.a },
-			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b,normalized_color2.a },
+			{ render_x              , render_y + glyph_height,0.0, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b,normalized_color4.a },
+			{ render_x              , render_y               ,0.0, 0.0f     , 0.0f     , current_layer_idx,normalized_color1.r,normalized_color1.g,normalized_color1.b,normalized_color1.a },
+			{ render_x + glyph_width, render_y               ,0.0, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b,normalized_color2.a },
 
-			{ render_x              , render_y + glyph_height,depth, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b,normalized_color4.a },
-			{ render_x + glyph_width, render_y               ,depth, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b,normalized_color2.a },
-			{ render_x + glyph_width, render_y + glyph_height,depth, tex_u_max, tex_v_max, current_layer_idx,normalized_color3.r,normalized_color3.g,normalized_color3.b,normalized_color3.a },
+			{ render_x              , render_y + glyph_height,0.0, 0.0f     , tex_v_max, current_layer_idx,normalized_color4.r,normalized_color4.g,normalized_color4.b,normalized_color4.a },
+			{ render_x + glyph_width, render_y               ,0.0, tex_u_max, 0.0f     , current_layer_idx,normalized_color2.r,normalized_color2.g,normalized_color2.b,normalized_color2.a },
+			{ render_x + glyph_width, render_y + glyph_height,0.0, tex_u_max, tex_v_max, current_layer_idx,normalized_color3.r,normalized_color3.g,normalized_color3.b,normalized_color3.a },
 		};
 		// 頂点データをall_verticesに追加
 		int local_gmode = gmode - (gmode % 2);
-		if (all_vertices.empty() || (all_vertices.back().second != local_gmode))
-			all_vertices.emplace_back(vector<float>(), local_gmode);
+		if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 0)) {
+			AllVertexData new_data;
+			new_data.all_vertices = vector<float>();
+			new_data.gmode = local_gmode;
+			new_data.ID = 0; // 0: テキスト
+			new_data.projection = projection;
+			new_data.vao = vao;
+			new_data.vbo = vbo;
+			new_data.shaderProgram = shaderProgram;
+			new_data.division = 10;
+			all_vertices.push_back(new_data);
+		}
 		// 既存の頂点データに新しい頂点を追加
-		all_vertices.back().first.insert(all_vertices.back().first.end(), &vertices[0][0], &vertices[0][0] + 6 * 10);
+		all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 10);
 		current_x += ch.Advance * scale;
 	}
 }
-
-void Font::DrawTexts() {
-	if (all_vertices.empty())return;
-	if (!shaderProgram || !vbo || !vao)
-		throw FontException("Font not initialized.");
-	glUseProgram(shaderProgram);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	for (pair<vector<float>, int>& vertex_data : all_vertices) {
-		if (vertex_data.second == 0) {
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		} else if (vertex_data.second == 2) {
-			// 加算合成
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		} else if (vertex_data.second == 4) {
-			// 減算合成
-			glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-		} else if (vertex_data.second == 6) {
-			// 乗算合成
-			glBlendFunc(GL_DST_ALPHA, GL_ZERO);
-		}
-		glBufferData(GL_ARRAY_BUFFER, vertex_data.first.size() * sizeof(float), vertex_data.first.data(), GL_DYNAMIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, vertex_data.first.size() / 10);
-	}
-	glBindVertexArray(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void Font::Clear() {
-	all_vertices.clear();
-}
-

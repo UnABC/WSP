@@ -14,6 +14,7 @@
 #include "Image.hpp"
 #include <vector>
 #include <map>
+#include <ranges>
 
 struct Position {
 	float x, y;
@@ -38,15 +39,9 @@ private:
 	float fps = 60.0;	//フレームレート
 	unsigned long long lastTime = 0;	//タイマー
 
-	float current_depth = 0.0f;	//現在の深度
-	const float depth_increment = 0.0000001f;	//深度の増分
-
 	SDL_Event event;
-	//描画するテクスチャ達
-	std::vector<std::tuple<SDL_Texture*, SDL_FRect, SDL_FRect>> textures;
-
 	//キャッシュ
-	std::map<std::string, SDL_Texture*> text_cache;
+	std::vector<AllVertexData> all_vertices;	//全ての頂点データを保持するベクター
 
 	SDL_Window* window;
 	SDL_Renderer* renderer;
@@ -56,6 +51,7 @@ private:
 	SDL_GLContext glContext;
 
 	void FailedToInitialize(const std::string& message);
+	void Set_Gmode(int gmode);
 public:
 	Graphic(int width = 640, int height = 480, bool is_fullscreen = false);
 

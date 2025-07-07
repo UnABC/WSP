@@ -75,7 +75,7 @@ void Shape::Init(int w, int h) {
 	glGenBuffers(1, &vbo_ellipse);
 	glBindVertexArray(vao_ellipse);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_ellipse);
-	// 頂点バッファを初期化(posX,posY,depth,centerX,centerY,major_axis,minor_axis,angle,color)
+	// 頂点バッファを初期化(posX,posY,0.0,centerX,centerY,major_axis,minor_axis,angle,color)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 12, nullptr, GL_DYNAMIC_DRAW);
 	// 位置属性 (vec3)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (void*)0);
@@ -111,13 +111,9 @@ void Shape::Init(int w, int h) {
 	projection = ShaderUtil::recalcProjection(width, height);
 }
 
-void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, float depth, int gmode) {
+void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, vector<AllVertexData>& all_vertices) {
 	if (!shaderProgram_triangle || !vbo || !vao)
 		throw ShapeException("Shape not initialized.");
-	glUseProgram(shaderProgram_triangle);
-	//表示座標の計算
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram_triangle, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-	glBindVertexArray(vao);
 	// 色の設定
 	struct normalized_color {
 		float r, g, b, a;
@@ -126,24 +122,30 @@ void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, floa
 	struct normalized_color normalized_color3 = { color3.r / 255.0f, color3.g / 255.0f, color3.b / 255.0f, color3.a / 255.0f };
 	// 頂点データの設定
 	float vertices[3][7] = {
-		{x1, y1,depth, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a},
-		{x2, y2,depth, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a},
-		{x3, y3,depth, normalized_color3.r, normalized_color3.g, normalized_color3.b, normalized_color3.a}
+		{x1, y1,0.0, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a},
+		{x2, y2,0.0, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a},
+		{x3, y3,0.0, normalized_color3.r, normalized_color3.g, normalized_color3.b, normalized_color3.a}
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_triangle_vertices.empty() || (all_triangle_vertices.back().second != local_gmode))
-		all_triangle_vertices.push_back({ std::vector<float>(), local_gmode });
-	all_triangle_vertices.back().first.insert(all_triangle_vertices.back().first.end(), &vertices[0][0], &vertices[0][0] + 3 * 7);
+	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 2)) {
+		AllVertexData new_data;
+		new_data.all_vertices = std::vector<float>();
+		new_data.gmode = local_gmode;
+		new_data.ID = 2; // 2: 三角形
+		new_data.projection = projection;
+		new_data.vao = vao;
+		new_data.vbo = vbo;
+		new_data.shaderProgram = shaderProgram_triangle;
+		new_data.division = 7;
+		all_vertices.push_back(new_data);
+	}
+	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 3 * 7);
 }
 
-void Shape::draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode) {
+void Shape::draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, vector<AllVertexData>& all_vertices) {
 	if (!shaderProgram_roundrect || !vbo_roundrect || !vao_roundrect)
 		throw ShapeException("Shape not initialized.");
-	glUseProgram(shaderProgram_roundrect);
-	//表示座標の計算
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram_roundrect, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-	glBindVertexArray(vao_roundrect);
 	// 色の設定
 	struct normalized_color {
 		float r, g, b, a;
@@ -160,29 +162,35 @@ void Shape::draw_round_rectangle(float x, float y, float width, float height, fl
 	// 頂点データの設定
 	float vertices[6][12] = {
 		// Triangle 1
-		{x_min, y_min, depth, radius, normalized_color1.r, normalized_color1.g, normalized_color1.b,normalized_color1.a, x, y, width, height}, // Bottom-Left
-		{x_max, y_min, depth, radius, normalized_color2.r, normalized_color2.g, normalized_color2.b,normalized_color2.a, x, y, width, height}, // Bottom-Right
-		{x_min, y_max, depth, radius, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, x, y, width, height}, // Top-Left
+		{x_min, y_min, 0.0, radius, normalized_color1.r, normalized_color1.g, normalized_color1.b,normalized_color1.a, x, y, width, height}, // Bottom-Left
+		{x_max, y_min, 0.0, radius, normalized_color2.r, normalized_color2.g, normalized_color2.b,normalized_color2.a, x, y, width, height}, // Bottom-Right
+		{x_min, y_max, 0.0, radius, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, x, y, width, height}, // Top-Left
 		// Triangle 2
-		{x_max, y_min, depth, radius, normalized_color2.r, normalized_color2.g, normalized_color2.b,normalized_color2.a, x, y, width, height}, // Bottom-Right
-		{x_max, y_max, depth, radius, normalized_color3.r, normalized_color3.g, normalized_color3.b,normalized_color3.a, x, y, width, height}, // Top-Right
-		{x_min, y_max, depth, radius, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, x, y, width, height}  // Top-Left
+		{x_max, y_min, 0.0, radius, normalized_color2.r, normalized_color2.g, normalized_color2.b,normalized_color2.a, x, y, width, height}, // Bottom-Right
+		{x_max, y_max, 0.0, radius, normalized_color3.r, normalized_color3.g, normalized_color3.b,normalized_color3.a, x, y, width, height}, // Top-Right
+		{x_min, y_max, 0.0, radius, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, x, y, width, height}  // Top-Left
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_roundrect_vertices.empty() || (all_roundrect_vertices.back().second != local_gmode))
-		all_roundrect_vertices.push_back({ std::vector<float>(), local_gmode });
+	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 3)) {
+		AllVertexData new_data;
+		new_data.all_vertices = std::vector<float>();
+		new_data.gmode = local_gmode;
+		new_data.ID = 3; // 3: 角丸四角形
+		new_data.projection = projection;
+		new_data.vao = vao_roundrect;
+		new_data.vbo = vbo_roundrect;
+		new_data.shaderProgram = shaderProgram_roundrect;
+		new_data.division = 12;
+		all_vertices.push_back(new_data);
+	}
 	// 既存の頂点データに新しい頂点を追加
-	all_roundrect_vertices.back().first.insert(all_roundrect_vertices.back().first.end(), &vertices[0][0], &vertices[0][0] + 6 * 12);
+	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 12);
 }
 
-void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, float depth, int gmode) {
+void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, vector<AllVertexData>& all_vertices) {
 	if (!shaderProgram_triangle || !vbo_line || !vao_line)
 		throw ShapeException("Shape not initialized.");
-	glUseProgram(shaderProgram_triangle);
-	//表示座標の計算
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram_triangle, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-	glBindVertexArray(vao_line);
 	// 色の設定
 	struct normalized_color {
 		float r, g, b, a;
@@ -190,24 +198,31 @@ void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, 
 	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f, color2.a / 255.0f };
 	// 頂点データの設定
 	float vertices[2][7] = {
-		{x1, y1, depth, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a},
-		{x2, y2, depth, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a}
+		{x1, y1, 0.0, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a},
+		{x2, y2, 0.0, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a}
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_line_vertices.empty() || (all_line_vertices.back().second != local_gmode))
-		all_line_vertices.push_back({ std::vector<float>(), local_gmode });
+	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 4)) {
+		AllVertexData new_data;
+		new_data.all_vertices = std::vector<float>();
+		new_data.gmode = local_gmode;
+		new_data.ID = 4; // 4: 線分
+		new_data.projection = projection;
+		new_data.vao = vao_line;
+		new_data.vbo = vbo_line;
+		new_data.shaderProgram = shaderProgram_triangle;
+		new_data.division = 7;
+		new_data.graphics_mode = GL_LINES; // 線分の描画モード
+		all_vertices.push_back(new_data);
+	}
 	// 既存の頂点データに新しい頂点を追加
-	all_line_vertices.back().first.insert(all_line_vertices.back().first.end(), &vertices[0][0], &vertices[0][0] + 2 * 7);
+	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 2 * 7);
 }
 
-void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode) {
+void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, vector<AllVertexData>& all_vertices) {
 	if (!shaderProgram_ellipse || !vbo_ellipse || !vao_ellipse)
 		throw ShapeException("Shape not initialized.");
-	glUseProgram(shaderProgram_ellipse);
-	//表示座標の計算
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram_ellipse, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-	glBindVertexArray(vao_ellipse);
 	// 色の設定
 	struct normalized_color {
 		float r, g, b, a;
@@ -226,102 +241,28 @@ void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float
 	// 頂点データの設定
 	float vertices[6][12] = {
 		// 中心位置と軸の長さ、角度、色を含む
-		{min_x, min_y,depth, center_x, center_y, major_axis, minor_axis, angle, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a},
-		{max_x, min_y,depth, center_x, center_y, major_axis, minor_axis, angle, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a},
-		{min_x, max_y,depth, center_x, center_y, major_axis, minor_axis, angle, normalized_color4.r, normalized_color4.g, normalized_color4.b, normalized_color4.a},
+		{min_x, min_y,0.0, center_x, center_y, major_axis, minor_axis, angle, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a},
+		{max_x, min_y,0.0, center_x, center_y, major_axis, minor_axis, angle, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a},
+		{min_x, max_y,0.0, center_x, center_y, major_axis, minor_axis, angle, normalized_color4.r, normalized_color4.g, normalized_color4.b, normalized_color4.a},
 
-		{max_x, min_y,depth, center_x, center_y, major_axis, minor_axis, angle, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a},
-		{max_x, max_y,depth, center_x, center_y, major_axis, minor_axis, angle, normalized_color3.r, normalized_color3.g, normalized_color3.b, normalized_color3.a},
-		{min_x, max_y,depth, center_x, center_y, major_axis, minor_axis, angle, normalized_color4.r, normalized_color4.g, normalized_color4.b, normalized_color4.a}
+		{max_x, min_y,0.0, center_x, center_y, major_axis, minor_axis, angle, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a},
+		{max_x, max_y,0.0, center_x, center_y, major_axis, minor_axis, angle, normalized_color3.r, normalized_color3.g, normalized_color3.b, normalized_color3.a},
+		{min_x, max_y,0.0, center_x, center_y, major_axis, minor_axis, angle, normalized_color4.r, normalized_color4.g, normalized_color4.b, normalized_color4.a}
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_ellipse_vertices.empty() || (all_ellipse_vertices.back().second != local_gmode))
-		all_ellipse_vertices.push_back({ std::vector<float>(), local_gmode });
+	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 5)) {
+		AllVertexData new_data;
+		new_data.all_vertices = std::vector<float>();
+		new_data.gmode = local_gmode;
+		new_data.ID = 5; // 5: 楕円
+		new_data.projection = projection;
+		new_data.vao = vao_ellipse;
+		new_data.vbo = vbo_ellipse;
+		new_data.shaderProgram = shaderProgram_ellipse;
+		new_data.division = 12;
+		all_vertices.push_back(new_data);
+	}
 	// 既存の頂点データに新しい頂点を追加
-	all_ellipse_vertices.back().first.insert(all_ellipse_vertices.back().first.end(), &vertices[0][0], &vertices[0][0] + 6 * 12);
-}
-
-
-void Shape::draw_shapes() {
-	if (all_triangle_vertices.empty())return;
-	if (!shaderProgram_triangle || !vbo || !vao)
-		throw ShapeException("Shape not initialized.");
-	glUseProgram(shaderProgram_triangle);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	for (pair<std::vector<float>, int>& triangle_vertices : all_triangle_vertices) {
-		SetGmode(triangle_vertices.second);
-		glBufferData(GL_ARRAY_BUFFER, triangle_vertices.first.size() * sizeof(float), triangle_vertices.first.data(), GL_DYNAMIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, triangle_vertices.first.size() / 7);
-	}
-	glBindVertexArray(0);
-}
-
-void Shape::draw_roundrect() {
-	if (all_roundrect_vertices.empty())return;
-	if (!shaderProgram_roundrect || !vbo_roundrect || !vao_roundrect)
-		throw ShapeException("Shape not initialized.");
-	glUseProgram(shaderProgram_roundrect);
-	glBindVertexArray(vao_roundrect);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_roundrect);
-	for (pair<std::vector<float>, int>& roundrect_vertices : all_roundrect_vertices) {
-		SetGmode(roundrect_vertices.second);
-		glBufferData(GL_ARRAY_BUFFER, roundrect_vertices.first.size() * sizeof(float), roundrect_vertices.first.data(), GL_DYNAMIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, roundrect_vertices.first.size() / 12);
-	}
-	glBindVertexArray(0);
-}
-
-void Shape::draw_lines() {
-	if (all_line_vertices.empty())return;
-	if (!shaderProgram_triangle || !vbo_line || !vao_line)
-		throw ShapeException("Shape not initialized.");
-	glUseProgram(shaderProgram_triangle);
-	glBindVertexArray(vao_line);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_line);
-	for (pair<std::vector<float>, int>& line_vertices : all_line_vertices) {
-		SetGmode(line_vertices.second);
-		glBufferData(GL_ARRAY_BUFFER, line_vertices.first.size() * sizeof(float), line_vertices.first.data(), GL_DYNAMIC_DRAW);
-		glDrawArrays(GL_LINES, 0, line_vertices.first.size() / 7);
-	}
-	glBindVertexArray(0);
-}
-
-void Shape::draw_ellipses() {
-	if (all_ellipse_vertices.empty())return;
-	if (!shaderProgram_ellipse || !vbo_ellipse || !vao_ellipse)
-		throw ShapeException("Shape not initialized.");
-	glUseProgram(shaderProgram_ellipse);
-	glBindVertexArray(vao_ellipse);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_ellipse);
-	for (pair<std::vector<float>, int>& ellipse_vertices : all_ellipse_vertices) {
-		SetGmode(ellipse_vertices.second);
-		glBufferData(GL_ARRAY_BUFFER, ellipse_vertices.first.size() * sizeof(float), ellipse_vertices.first.data(), GL_DYNAMIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, ellipse_vertices.first.size() / 12);
-	}
-	glBindVertexArray(0);
-}
-
-void Shape::Clear() {
-	all_triangle_vertices.clear();
-	all_roundrect_vertices.clear();
-	all_line_vertices.clear();
-	all_ellipse_vertices.clear();
-}
-
-
-void Shape::SetGmode(int gmode) {
-	if (gmode == 0) {
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	} else if (gmode == 2) {
-		// 加算合成
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	} else if (gmode == 4) {
-		// 減算合成
-		glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-	} else if (gmode == 6) {
-		// 乗算合成
-		glBlendFunc(GL_DST_ALPHA, GL_ZERO);
-	}
+	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 12);
 }

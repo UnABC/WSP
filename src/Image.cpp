@@ -41,7 +41,7 @@ void Image::Load(const std::string& file_path, int id, int center_x, int center_
 	images[id].center_y = center_y;
 }
 
-void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode) {
+void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, vector<AllVertexData>& all_vertices) {
 	if (!images.count(id))
 		throw ImageException("Image ID not found: " + to_string(id));
 	if (!shaderProgram || !vbo || !vao)
@@ -70,14 +70,14 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 	float max_x = images[id].width - images[id].center_x;
 	float max_y = images[id].height - images[id].center_y;
 
-	glm::vec3 v1 = transform * glm::vec4(min_x, min_y, depth, 1.0f);
-	glm::vec3 v2 = transform * glm::vec4(max_x, min_y, depth, 1.0f);
-	glm::vec3 v3 = transform * glm::vec4(max_x, max_y, depth, 1.0f);
-	glm::vec3 v4 = transform * glm::vec4(min_x, max_y, depth, 1.0f);
+	glm::vec3 v1 = transform * glm::vec4(min_x, min_y, 0.0, 1.0f);
+	glm::vec3 v2 = transform * glm::vec4(max_x, min_y, 0.0, 1.0f);
+	glm::vec3 v3 = transform * glm::vec4(max_x, max_y, 0.0, 1.0f);
+	glm::vec3 v4 = transform * glm::vec4(min_x, max_y, 0.0, 1.0f);
 
 	// 頂点データの設定
 	float vertices[6][11] = {
-		// 位置 (x, y, depth), テクスチャ座標 (texX, texY), 色 (r, g, b)
+		// 位置 (x, y, 0.0), テクスチャ座標 (texX, texY), 色 (r, g, b)
 		{v1.x , v1.y , v1.z, 0.0f, 0.0f, normalized_color1.r, normalized_color1.g, normalized_color1.b,normalized_color1.a, *(float*)&handle1, *(float*)&handle2},
 		{v2.x , v2.y , v2.z, 1.0f, 0.0f, normalized_color2.r, normalized_color2.g, normalized_color2.b,normalized_color2.a, *(float*)&handle1, *(float*)&handle2},
 		{v4.x , v4.y , v4.z, 0.0f, 1.0f, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, *(float*)&handle1, *(float*)&handle2},
@@ -87,35 +87,17 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 		{v4.x , v4.y , v4.z, 0.0f, 1.0f, normalized_color4.r, normalized_color4.g, normalized_color4.b,normalized_color4.a, *(float*)&handle1, *(float*)&handle2}
 	};
 	int local_gmode = gmode - (gmode % 2);
-	if (all_image_vertices.empty() || (all_image_vertices.back().second != local_gmode))
-		all_image_vertices.push_back({ std::vector<float>(), local_gmode });
-	all_image_vertices.back().first.insert(all_image_vertices.back().first.end(), &vertices[0][0], &vertices[0][0] + 6 * 11);
-}
-
-void Image::Draw() {
-	if (all_image_vertices.empty()) return;
-	if (!shaderProgram || !vbo || !vao)
-		throw ImageException("Image not initialized.");
-	glUseProgram(shaderProgram);
-	glBindVertexArray(vao);
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	for (pair<std::vector<float>, int>& image_vertices : all_image_vertices) {
-		if (image_vertices.second == 0) {
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		} else if (image_vertices.second == 2) {
-			// 加算合成
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		} else if (image_vertices.second == 4) {
-			// 減算合成
-			glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-		} else if (image_vertices.second == 6) {
-			// 乗算合成
-			glBlendFunc(GL_DST_ALPHA, GL_ZERO);
-		}
-		glBufferData(GL_ARRAY_BUFFER, image_vertices.first.size() * sizeof(float), image_vertices.first.data(), GL_DYNAMIC_DRAW);
-		glDrawArrays(GL_TRIANGLES, 0, image_vertices.first.size() / 11);
+	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 1)) {
+		AllVertexData new_data;
+		new_data.all_vertices = std::vector<float>();
+		new_data.gmode = local_gmode;
+		new_data.ID = 1;
+		new_data.division = 11;
+		new_data.projection = projection;
+		new_data.vao = vao;
+		new_data.vbo = vbo;
+		new_data.shaderProgram = shaderProgram;
+		all_vertices.push_back(new_data);
 	}
-	glBindVertexArray(0);
+	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 11);
 }

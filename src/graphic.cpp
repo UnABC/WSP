@@ -24,7 +24,6 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_DEPTH_TEST);
 
 	glViewport(0, 0, width, height);
 	glMatrixMode(GL_PROJECTION);
@@ -69,6 +68,7 @@ Graphic::Graphic(int width, int height, bool is_fullscreen) : width(width), heig
 	if (!displayMode)
 		FailedToInitialize(SDL_GetError());
 	fps = max(displayMode->refresh_rate, 24.0F); // ディスプレイのリフレッシュレートをFPSに設定
+	Clear();
 	//ウィンドウ表示
 	SDL_ShowWindow(window);
 }
@@ -90,8 +90,7 @@ void Graphic::SetFont(unsigned long long size, const string& font_path) {
 }
 
 void Graphic::printText(const string& text) {
-	current_depth += depth_increment; // 深度を更新
-	font.SetTexts(text, pos.x, pos.y, 1.0f, width, colors.at(0), colors.at(1), colors.at(2), colors.at(3), current_depth, gmode);
+	font.SetTexts(text, pos.x, pos.y, 1.0f, width, colors.at(0), colors.at(1), colors.at(2), colors.at(3), gmode, all_vertices);
 	Draw();
 	//下にずらす
 	pos.y += font_size * (count(text.begin(), text.end(), '\n') + 1);
@@ -115,58 +114,49 @@ void Graphic::CallDialog(const string& title, const string& message, int type) c
 }
 
 void Graphic::DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-	current_depth += depth_increment; // 深度を更新
-	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), current_depth, gmode);
+	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), gmode, all_vertices);
 	Draw();
 }
 
 void Graphic::DrawRectangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-	current_depth += depth_increment; // 深度を更新
-	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), current_depth, gmode);
-	shape.draw_triangle(x1, y1, x3, y3, x4, y4, colors.at(0), colors.at(2), colors.at(3), current_depth, gmode);
+	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), gmode, all_vertices);
+	shape.draw_triangle(x1, y1, x3, y3, x4, y4, colors.at(0), colors.at(2), colors.at(3), gmode, all_vertices);
 	Draw();
 }
 
 void Graphic::DrawRoundRect(float x, float y, float width, float height, float radius) {
-	current_depth += depth_increment; // 深度を更新
-	shape.draw_round_rectangle(x, y, width, height, radius, colors.at(0), colors.at(1), colors.at(2), colors.at(3), current_depth, gmode);
+	shape.draw_round_rectangle(x, y, width, height, radius, colors.at(0), colors.at(1), colors.at(2), colors.at(3), gmode, all_vertices);
 	Draw();
 }
 
 void Graphic::DrawLine(float x1, float y1, float x2, float y2) {
-	current_depth += depth_increment; // 深度を更新
-	shape.draw_line(x1, y1, x2, y2, colors.at(0), colors.at(1), current_depth, gmode);
+	shape.draw_line(x1, y1, x2, y2, colors.at(0), colors.at(1), gmode, all_vertices);
 	Draw();
 	pos.x = x1; // 最後の座標を表示位置に設定
 	pos.y = y1; // 最後の座標を表示位置に設定
 }
 
 void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle) {
-	current_depth += depth_increment; // 深度を更新
-	shape.draw_ellipse(center_x, center_y, major_axis, minor_axis, -angle, colors.at(0), colors.at(1), colors.at(2), colors.at(3), current_depth, gmode);
+	shape.draw_ellipse(center_x, center_y, major_axis, minor_axis, -angle, colors.at(0), colors.at(1), colors.at(2), colors.at(3), gmode, all_vertices);
 	Draw();
 }
 
 void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle) {
-	current_depth += depth_increment; // 深度を更新
 	if (gmode & 1) {
-		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, colors.at(0), colors.at(1), colors.at(2), colors.at(3), current_depth, gmode);
+		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, colors.at(0), colors.at(1), colors.at(2), colors.at(3), gmode, all_vertices);
 	} else {
 		SDL_Color image_color = { 255, 255, 255, 255 }; // デフォルトの画像色
-		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, image_color, image_color, image_color, image_color, current_depth, gmode);
+		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, image_color, image_color, image_color, image_color, gmode, all_vertices);
 	}
 	Draw();
 }
 
 void Graphic::Clear(int r, int g, int b) {
+	all_vertices.clear();
 	//テクスチャのクリア
-	font.Clear();
-	shape.Clear();
-	image.Clear();
 	pos = { 0, 0 };	//表示位置を初期化
-	current_depth = 0.0f; //深度を初期化
 	system_color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 }; //システム色を設定
-	color = { 255,255,255, 255 };	//色を初期化
+	color = { 0,0,0, 255 };	//色を初期化
 	fill(colors.begin(), colors.end(), color); //色のリストを現在の色で埋める
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gmode = 0; //描画モードを初期化
@@ -182,15 +172,23 @@ void Graphic::Draw() {
 		system_color.b / 255.0f,
 		system_color.a / 255.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // カラーバッファと深度バッファをクリア
-	//テクスチャの描画
-	font.DrawTexts();
-	//図形の描画
-	shape.draw_shapes();
-	shape.draw_roundrect();
-	shape.draw_lines();
-	shape.draw_ellipses();
-	//画像の描画
-	image.Draw();
+	//各種描画
+	int old_id = -1;
+	for (auto& vertex_data : all_vertices) {
+		if (vertex_data.ID != old_id) {
+			if (!vertex_data.shaderProgram || !vertex_data.vao || !vertex_data.vbo)
+				throw WindowException("Invalid vertex data in all_vertices.");
+			glUseProgram(vertex_data.shaderProgram);
+			glBindVertexArray(vertex_data.vao);
+			glUniformMatrix4fv(glGetUniformLocation(vertex_data.shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(vertex_data.projection));
+			glBindBuffer(GL_ARRAY_BUFFER, vertex_data.vbo);
+		}
+		Set_Gmode(vertex_data.gmode);
+		glBufferData(GL_ARRAY_BUFFER, vertex_data.all_vertices.size() * sizeof(float), vertex_data.all_vertices.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays(vertex_data.graphics_mode, 0, vertex_data.all_vertices.size() / vertex_data.division);
+		old_id = vertex_data.ID; // 最後に描画したIDを保存
+	}
+	glBindVertexArray(0);
 
 	if (!SDL_GL_SwapWindow(window))
 		FailedToInitialize(SDL_GetError());
@@ -218,12 +216,23 @@ void Graphic::Stop() {
 
 void Graphic::End() const {
 	//ウィンドウを閉じる
-	//if (face)FT_Done_Face(face);
-	//if (library)FT_Done_FreeType(library);
 	SDL_GL_DestroyContext(glContext);
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);
 	SDL_Quit();
-	//TTF_Quit();
 }
 
+void Graphic::Set_Gmode(int gmode) {
+	if (gmode == 0) {
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	} else if (gmode == 2) {
+		// 加算合成
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	} else if (gmode == 4) {
+		// 減算合成
+		glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+	} else if (gmode == 6) {
+		// 乗算合成
+		glBlendFunc(GL_DST_ALPHA, GL_ZERO);
+	}
+}

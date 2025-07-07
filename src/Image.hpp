@@ -16,8 +16,8 @@ private:
 	int width, height;
 	glm::mat4 projection;
 
-	std::map<unsigned int, image_data> images; // 画像データのリスト
-	std::vector<std::pair<std::vector<float>, int>> all_image_vertices; // すべての画像の頂点を格納するベクター
+	// 画像データのリスト
+	std::map<unsigned int, image_data> images;
 
 	GLuint vao, vbo;
 	GLuint shaderProgram;
@@ -55,12 +55,7 @@ private:
 public:
 	void Init(int width, int height);
 	void Load(const std::string& file_path, int id, int center_x = 0, int center_y = 0);
-	void DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, float depth, int gmode);
-
-	void Draw();
-	void Clear() {
-		all_image_vertices.clear();
-	};
+	void DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };
 
 #endif

@@ -9,6 +9,19 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+struct AllVertexData {
+    std::vector<float> all_vertices;
+    int gmode;
+    // 0: テキスト,1:画像,2:三角形,3:角丸四角形,4:線分,5:楕円
+    int ID;
+    int division;
+    glm::mat4 projection;
+    GLuint vao, vbo;
+    GLuint shaderProgram;
+    GLenum graphics_mode = GL_TRIANGLES; // 描画モード
+};
+
+
 class ShaderUtil {
 private:
     static GLuint compileShader(GLenum type, const char* source, const std::string& shaderName = "");
