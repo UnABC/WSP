@@ -1,0 +1,42 @@
+// Test case for font size bug (issue #3)
+// This test reproduces the bug where font sizes < 23 cause rendering issues
+
+cls(255, 255, 255)  // Clear screen with white background
+color(0, 0, 0)      // Set text color to black
+
+// Test various small font sizes that should cause the bug
+font(10, "")
+pos(10, 10)
+print("Font size 10: Hello World!")
+
+font(15, "")
+pos(10, 40)
+print("Font size 15: Hello World!")
+
+font(20, "")
+pos(10, 70)
+print("Font size 20: Hello World!")
+
+font(22, "")
+pos(10, 100)
+print("Font size 22: Hello World!")
+
+// This should work fine (size >= 23)
+font(23, "")
+pos(10, 130)
+print("Font size 23: Hello World!")
+
+font(25, "")
+pos(10, 160)
+print("Font size 25: Hello World!")
+
+// Test with special characters that might have larger dimensions
+font(12, "")
+pos(10, 190)
+print("Font size 12: ÄÖÜßàáâãäåæçèéêë")
+
+font(18, "")
+pos(10, 220)
+print("Font size 18: 中文字符测试")
+
+wait(5000)  // Wait 5 seconds to observe the rendering

@@ -1,6 +1,7 @@
 //#define GL_GLEXT_PROTOTYPES
 #include <GL/glew.h>
 #include "font.hpp"
+#include <algorithm>
 using namespace std;
 
 Font::~Font() {
@@ -64,8 +65,22 @@ void Font::SetFont(const char* font_path, int size) {
 	}
 	characters.clear();
 	nextLayerIndex = 0;
-	maxGlyphWidth = size;
-	maxGlyphHeight = size;
+	
+	// First pass: calculate actual maximum glyph dimensions
+	maxGlyphWidth = 0;
+	maxGlyphHeight = 0;
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	for (char16_t c = 32; c < 127; c++) {
+		if (FT_Load_Glyph(face, FT_Get_Char_Index(face, c), FT_LOAD_RENDER))
+			continue; // Skip characters that fail to load
+		maxGlyphWidth = std::max(maxGlyphWidth, (unsigned long long)slot->bitmap.width);
+		maxGlyphHeight = std::max(maxGlyphHeight, (unsigned long long)slot->bitmap.rows);
+	}
+	
+	// Ensure minimum dimensions to avoid zero-size textures
+	maxGlyphWidth = std::max(maxGlyphWidth, (unsigned long long)size);
+	maxGlyphHeight = std::max(maxGlyphHeight, (unsigned long long)size);
+	
 	glGenTextures(1, &textureArrayID);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, textureArrayID);
 
@@ -75,8 +90,7 @@ void Font::SetFont(const char* font_path, int size) {
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	// ASCII文字のキャッシュを作成
+	// Second pass: create character cache with correct texture dimensions
 	for (char16_t c = 32; c < 127;c++) {
 		if (FT_Load_Glyph(face, FT_Get_Char_Index(face, c), FT_LOAD_RENDER))
 			throw FontException("Failed to load character.");
@@ -140,10 +154,16 @@ void Font::SetTexts(string text, float x, float y, float scale, int width, SDL_C
 			glBindTexture(GL_TEXTURE_2D_ARRAY, textureArrayID);
 			if (FT_Load_Glyph(face, FT_Get_Char_Index(face, text16[i]), FT_LOAD_RENDER))
 				throw FontException("Failed to load character.");
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, nextLayerIndex, slot->bitmap.width, slot->bitmap.rows, 1, GL_RED, GL_UNSIGNED_BYTE, slot->bitmap.buffer);
+			
+			// Check if the glyph fits within our texture array dimensions
+			// If not, we'll clip it to prevent OpenGL errors
+			int upload_width = std::min((int)slot->bitmap.width, (int)maxGlyphWidth);
+			int upload_height = std::min((int)slot->bitmap.rows, (int)maxGlyphHeight);
+			
+			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, nextLayerIndex, upload_width, upload_height, 1, GL_RED, GL_UNSIGNED_BYTE, slot->bitmap.buffer);
 			Character character_data;
 			character_data.LayerIndex = nextLayerIndex;
-			character_data.Size = { (float)slot->bitmap.width, (float)slot->bitmap.rows };
+			character_data.Size = { (float)upload_width, (float)upload_height };
 			character_data.Bearing = { (float)slot->bitmap_left, (float)slot->bitmap_top };
 			character_data.Advance = (float)(slot->advance.x >> 6);
 			characters[text16[i]] = character_data;
