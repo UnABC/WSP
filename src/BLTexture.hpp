@@ -17,6 +17,8 @@ public:
 	BLTexture& operator=(BLTexture&& other) noexcept; // ムーブ代入演算子
 
 	std::pair<int, int> load(const char* file_path);
+	void create(size_t width, size_t height, GLenum type = GL_RGBA8, GLenum type2 = GL_RGBA);
+	void update_texture(unsigned int x, unsigned int y, unsigned int width, unsigned int height, const void* data, GLenum type = GL_RGBA);
 	void destroy();
 
 	GLuint getTextureID() const { return textureID; }

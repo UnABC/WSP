@@ -90,7 +90,7 @@ void Graphic::SetFont(unsigned long long size, const string& font_path) {
 }
 
 void Graphic::printText(const string& text) {
-	font.SetTexts(text, pos.x, pos.y, 1.0f, width, colors.at(0), colors.at(1), colors.at(2), colors.at(3), gmode, all_vertices);
+	font.SetTexts(text, pos.x, pos.y, width, colors.at(0), colors.at(1), colors.at(2), colors.at(3), gmode, all_vertices);
 	Draw();
 	//下にずらす
 	pos.y += font_size * (count(text.begin(), text.end(), '\n') + 1);
@@ -210,6 +210,7 @@ void Graphic::Stop() {
 	while (running) {
 		while (SDL_PollEvent(&event)) if (event.type == SDL_EVENT_QUIT) running = false;
 		Draw();
+		SDL_Delay(16);
 	}
 	End();
 }

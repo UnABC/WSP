@@ -3,11 +3,12 @@ void test(string str,int n){
 	if (n >= 0)test(str,n-1)
 }
 
-font(22)
+font(11)
 color(0,0,0)
 pos(1,1)
 console("test")
 color(255,0,0)
+print("Hello world!")
 print("Hello world!")
 color(0,91,148)
 test("Titech",4)

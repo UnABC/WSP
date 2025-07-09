@@ -7,15 +7,17 @@
 #include <SDL3/SDL_opengl_glext.h>
 #include "exception.hpp"
 #include "shader.hpp"
+#include "BLTexture.hpp"
 #include <map>
 #include <boost/locale.hpp>
 #include FT_FREETYPE_H
 
 struct Character {
-    int LayerIndex;
     glm::ivec2 Size;	//グリフのサイズ
     glm::ivec2 Bearing;	//グリフのベアリング
     float Advance;		//グリフのアドバンス
+    glm::vec2 uv_top_left; // UV座標の左上
+    glm::vec2 uv_bottom_right; // UV座標の右下
 };
 
 class Font {
@@ -27,62 +29,59 @@ private:
     GLuint vao, vbo;
 
     // font関連
-    GLuint textureArrayID;
-    int nextLayerIndex; // レイヤーインデックスの管理
-    unsigned long long maxGlyphWidth, maxGlyphHeight; // 最大グリフの大きさ
-    int maxTextureSize = 1024;
     //頂点シェーダー
     const char* vertexShaderSource = R"glsl(
-        #version 330 core
+        #version 450 core
         layout (location = 0) in vec3 position;
         layout (location = 1) in vec2 texCoord;
-        layout (location = 2) in float layerIndex;
+        layout (location = 2) in uvec2 aTexHandle;
         layout (location = 3) in vec4 color;
-        out VS_OUT {
-            vec2 TexCoords;
-            float LayerIndex;
-        } vs_out;
+        out vec2 TexCoords;
         out vec4 outColor;
+        flat out uvec2 TexHandle;
         uniform mat4 projection;
         void main() {
             gl_Position = projection * vec4(position, 1.0);
-            vs_out.TexCoords = texCoord;
-            vs_out.LayerIndex = layerIndex;
+            TexCoords = texCoord;
             outColor = color;
+            TexHandle = uvec2(aTexHandle);
         }
     )glsl";
     //色の計算
     const char* fragmentShaderSource = R"glsl(
-        #version 330 core
+        #version 450 core
+        #extension GL_ARB_bindless_texture : require
         out vec4 FragColor;
-        in VS_OUT {
-            vec2 TexCoords;
-            float LayerIndex;
-        } fs_in;
+        in vec2 TexCoords;
         in vec4 outColor;
-        uniform sampler2DArray textTextureArray;
+        flat in uvec2 TexHandle;
         void main() {
-            float alpha = texture(textTextureArray, vec3(fs_in.TexCoords, fs_in.LayerIndex)).r;
-            if(alpha < 0.1)
+			sampler2D image = sampler2D(TexHandle);
+            float alpha = texture(image, TexCoords).r;
+            if (alpha < 0.01)
                 discard;
-            FragColor = vec4(outColor.rgb, alpha*outColor.a);
+			FragColor = vec4(outColor.rgb, alpha*outColor.a);
         }
     )glsl";
     GLuint shaderProgram;
 
     //フォントのキャッシュ
     std::unordered_map<char16_t, Character> characters;
+    BLTexture glyph_atlas;
+    glm::uvec2 atlas_cursor = { 0, 0 };
+    unsigned int atlas_line_height = 0;
+    const unsigned int atlas_max_size = 2048;
+
     int font_size = 24;
     int old_font_size = 0; // フォントのサイズ
     std::string old_font_path; // フォントのパス
+
+    void MakeCache(char16_t c);
 public:
-    Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0), nextLayerIndex(0), maxGlyphWidth(0), maxGlyphHeight(0), textureArrayID(0) {};
+    Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0) {};
     ~Font();
     void Init(int width, int height);
     void SetFont(const char* font_path, int size);
-    void SetTexts(std::string text, float x, float y, float scale, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
+    void SetTexts(std::string text, float x, float y, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };
-
-
-
 #endif

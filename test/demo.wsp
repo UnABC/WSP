@@ -52,6 +52,7 @@ void scope_test_function(int param) {
 cls(0,0,0)
 color(255, 255, 255) // デフォルトの色を白に設定 (R, G, B)
 pos(0, 0)             // 出力位置を左上に設定 (X, Y)
+font(14)
 
 // 1. ヘッダーと基本情報表示
 print("--- オリジナル言語 デモ開始 ---")
