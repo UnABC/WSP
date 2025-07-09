@@ -55,7 +55,7 @@ private:
 public:
 	void Init(int width, int height);
 	void Load(const std::string& file_path, int id, int center_x = 0, int center_y = 0);
-	void DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
+	void DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, int tex_x, int tex_y, int tex_width, int tex_height, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };
 
 #endif

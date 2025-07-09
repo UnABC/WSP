@@ -141,12 +141,12 @@ void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, floa
 	Draw();
 }
 
-void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle) {
+void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle, int tex_x, int tex_y, int tex_width, int tex_height) {
 	if (gmode & 1) {
-		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, colors.at(0), colors.at(1), colors.at(2), colors.at(3), gmode, all_vertices);
+		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, tex_x, tex_y, tex_width, tex_height, colors.at(0), colors.at(1), colors.at(2), colors.at(3), gmode, all_vertices);
 	} else {
 		SDL_Color image_color = { 255, 255, 255, 255 }; // デフォルトの画像色
-		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, image_color, image_color, image_color, image_color, gmode, all_vertices);
+		image.DrawImage(id, pos.x, pos.y, x_size, y_size, -angle, tex_x, tex_y, tex_width, tex_height, image_color, image_color, image_color, image_color, gmode, all_vertices);
 	}
 	Draw();
 }

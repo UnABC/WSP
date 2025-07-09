@@ -733,6 +733,17 @@ void Evaluator::VoidFunction(AST* ast) {
 				CalcExpr(args.at(2)).GetValue<long double>(),
 				CalcExpr(args.at(3)).GetValue<long double>()
 			);
+		} else if (args.size() == 8) {
+			graphic.DrawImage(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>(),
+				CalcExpr(args.at(7)).GetValue<long double>()
+			);
 		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}

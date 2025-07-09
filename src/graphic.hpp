@@ -57,12 +57,12 @@ public:
 
 	void printText(const std::string& text);
 	void SetPos(float x, float y) { pos.x = x; pos.y = y; };
-	void SetColor(int r, int g, int b,int a = 255) { color = { (Uint8)r, (Uint8)g, (Uint8)b, (Uint8)a };std::fill(colors.begin(), colors.end(), color); };
+	void SetColor(int r, int g, int b, int a = 255) { color = { (Uint8)r, (Uint8)g, (Uint8)b, (Uint8)a };std::fill(colors.begin(), colors.end(), color); };
 	void SetColors(int r, int g, int b, int a, int index);
 	void SetFontSize(unsigned long long size) { font_size = size; };
 	void SetFont(unsigned long long size = 24, const std::string& font_path = "C:/Windows/Fonts/msgothic.ttc");
 	void Load_Image(const std::string& file_path, unsigned int id, int center_x = 0, int center_y = 0);
-	void SetGmode(int mode){gmode = mode;}
+	void SetGmode(int mode) { gmode = mode; }
 
 	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
 	bool Wait(unsigned long long milliseconds = 1);
@@ -73,7 +73,7 @@ public:
 	void DrawLine(float x1, float y1) { DrawLine(x1, y1, pos.x, pos.y); };
 	void DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle = 0.0f);
 
-	void DrawImage(unsigned int id, float x_size = 1.0f, float y_size = 1.0f, float angle = 0.0f);
+	void DrawImage(unsigned int id, float x_size = 1.0f, float y_size = 1.0f, float angle = 0.0f, int tex_x1 = -1, int tex_y1 = -1, int tex_width = -1, int tex_height = -1);
 
 	void Clear(int r = 255, int g = 255, int b = 255);
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }

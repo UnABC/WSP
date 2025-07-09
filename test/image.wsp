@@ -1,5 +1,6 @@
 LoadImage("test/image/tech_chan.png",1,315,372)
 LoadImage("test/image/sakura.png",2,115,216)
+LoadImage("test/image/UTokyo.png",3)
 
 double angle = 0.0
 while(1){
@@ -18,6 +19,9 @@ while(1){
 	gmode(2)
 	color(255,255,100,100)
 	print("Titech")
+	gmode(2)
+	pos(0,0)
+	DrawImage(3,1.0,1.0,0.0,210,210,50,50)
 	redraw(1)
 	wait(10)
 }
