@@ -28,8 +28,6 @@ private:
 public:
 	Parser(Lexer& lexer) : lexer(lexer) {};
 	AST* ParseStatement(TokenPtr token);
-	//DEBUG用関数
-	void show(AST* ast);
 };
 
 #endif

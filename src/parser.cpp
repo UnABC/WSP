@@ -70,7 +70,7 @@ AST* Parser::ExprAdd() {
 AST* Parser::ExprMul() {
 	//乗算式を解析する
 	AST* left = ExprUnary();
-	while ((currentToken->type == TokenType::Operator) && (currentToken->value == "*" || currentToken->value == "/" || currentToken->value =="%")) {
+	while ((currentToken->type == TokenType::Operator) && (currentToken->value == "*" || currentToken->value == "/" || currentToken->value == "%")) {
 		string operatorType = currentToken->value;
 		currentToken = lexer.ExtractNextToken(); //演算子をスキップ
 		AST* right = ExprUnary();
@@ -114,7 +114,7 @@ AST* Parser::ExprPrimary() {
 			}
 		}
 		string variableName;
-		AST* ast = ExprVariable(currentToken,variableName); //変数を解析する
+		AST* ast = ExprVariable(currentToken, variableName); //変数を解析する
 		//代入演算子の処理
 		return ((currentToken->type == TokenType::Operator) && (currentToken->value == "=")) ? ExprAssignment(currentToken, variableName, ast) : ast;
 	} else if (currentToken->type == TokenType::LParentheses) {
@@ -128,13 +128,19 @@ AST* Parser::ExprPrimary() {
 		currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
 		vector<AST*> elements;
 		while (currentToken->type != TokenType::RSquareBracket) {
-			if ((currentToken->type == TokenType::EndOfFile) || (currentToken->type == TokenType::EndOfLine))
+			if (currentToken->type == TokenType::EndOfLine) {
+				currentToken = lexer.ExtractNextToken(); //行末をスキップ
+				continue;
+			}
+			if (currentToken->type == TokenType::EndOfFile)
 				throw ParserException("Not found right square bracket.", currentToken->lineNumber, currentToken->columnNumber);
 			elements.push_back(ExprTernary()); //要素を解析する
 			if (currentToken->type == TokenType::Symbol && currentToken->value == ",") {
 				currentToken = lexer.ExtractNextToken(); //,をスキップ
+			} else if (currentToken->type == TokenType::EndOfLine) {
+				currentToken = lexer.ExtractNextToken(); //行末をスキップ
 			} else if (currentToken->type != TokenType::RSquareBracket) {
-				throw ParserException("Invalid token.\"" + currentToken->value + "\"", currentToken->lineNumber, currentToken->columnNumber);
+				throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpect ] or ,", currentToken->lineNumber, currentToken->columnNumber);
 			}
 		}
 		currentToken = lexer.ExtractNextToken(); //右角括弧をスキップ
@@ -143,7 +149,7 @@ AST* Parser::ExprPrimary() {
 	throw ParserException("Invalid token.\"" + currentToken->value + "\"", currentToken->lineNumber, currentToken->columnNumber);
 }
 
-AST* Parser::ExprVariable(TokenPtr token,string &variableName) {
+AST* Parser::ExprVariable(TokenPtr token, string& variableName) {
 	//変数を解析する
 	unsigned long long tmp_lineNumber = token->lineNumber;
 	unsigned long long tmp_columnNumber = token->columnNumber;
@@ -306,7 +312,7 @@ AST* Parser::Declaration(int type) {
 		//静的変数の初期化
 		string variableName;
 		AST* variable = ExprVariable(currentToken, variableName); //変数を解析する
-		AST* assignment = ExprAssignment(currentToken,variableName,variable); //型の変数を宣言&代入
+		AST* assignment = ExprAssignment(currentToken, variableName, variable); //型の変数を宣言&代入
 		return new StaticVariableNode(assignment, type, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
 	} else if (nextToken->type == TokenType::LParentheses) {
 		//関数の初期化
@@ -354,6 +360,12 @@ AST* Parser::Declaration(int type) {
 				throw ParserException("Not found right square bracket.", currentToken->lineNumber, currentToken->columnNumber);
 			currentToken = lexer.ExtractNextToken(); //右角括弧をスキップ
 		}
+		if (currentToken->type == TokenType::Operator && currentToken->value == "=") {
+			//静的変数の初期化
+			AST* variable = new VariableNode(variableName, arrayIndex, currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
+			AST* assignment = ExprAssignment(currentToken, variableName, variable); //型の変数を宣言&代入
+			return new StaticVariableNode(assignment, type, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
+		}
 		return new StaticVarNodeWithoutAssignment(variableName, type, arrayIndex, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
 	}
 	if (type == 3)
@@ -390,94 +402,3 @@ AST* Parser::Argument(int type) {
 		return new ArgumentNode(ast, type, false, isReference, nullptr, currentToken->lineNumber, currentToken->columnNumber); //引数ノードを作成
 	}
 }
-
-void Parser::show(AST* ast) {
-	//ASTを表示する
-	if (ast == nullptr) return;
-	switch (ast->GetNodeType()) {
-	case Node::Number: {
-		NumberNode* node = static_cast<NumberNode*>(ast);
-		cout << node->GetValue() << " ";
-		break;
-	}
-	case Node::String: {
-		StringNode* node = static_cast<StringNode*>(ast);
-		cout << node->GetValue();
-		break;
-	}
-	case Node::BinaryOperator: {
-		BinaryOperatorNode* node = static_cast<BinaryOperatorNode*>(ast);
-		cout << "( " << node->GetOperatorType();
-		show(node->GetLeft());
-		show(node->GetRight());
-		printf(" )");
-		break;
-	}
-	case Node::Function: {
-		SystemFunctionNode* node = static_cast<SystemFunctionNode*>(ast);
-		cout << node->GetFunctionName() << "(";
-		for (int i = 0; i < node->GetArgument().size(); i++) {
-			if (i != 0) cout << ", ";
-			show(node->GetArgument().at(i));
-		}
-		cout << ")";
-		break;
-	}
-	case Node::Assignment: {
-		AssignmentNode* node = static_cast<AssignmentNode*>(ast);
-		cout << "{" << node->GetVariableName() << " = ";
-		show(node->GetExpression());
-		cout << " }";
-		break;
-	}
-	case Node::StaticVarWithAssignment: {
-		StaticVariableNode* node = static_cast<StaticVariableNode*>(ast);
-		cout << "{" << node->GetAssignment() << " }";
-		break;
-	}
-	case Node::StaticVarWithoutAssignment: {
-		StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
-		cout << "`" << node->GetVariableName() << " `";
-		break;
-	}
-	case Node::Variable: {
-		VariableNode* node = static_cast<VariableNode*>(ast);
-		cout << "`" << node->GetVariableName() << "` ";
-		break;
-	}
-	case Node::IfStatement: {
-		IfStatementNode* node = static_cast<IfStatementNode*>(ast);
-		cout << "if ( ";
-		show(node->GetCondition());
-		cout << " ) { ";
-		show(node->GetTrueExpr());
-		cout << " }";
-		if (node->GetFalseExpr() != nullptr) {
-			cout << " else { ";
-			show(node->GetFalseExpr());
-			cout << " }";
-		}
-		break;
-	}
-	case Node::Statement: {
-		StatementNode* node = static_cast<StatementNode*>(ast);
-		show(node->GetExpression());
-		break;
-	}
-	case Node::BlockStatement: {
-		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
-		cout << "{ ";
-		for (unsigned long long i = 0;AST * statement = node->ReadStatement(i);i++) {
-			show(statement);
-		}
-		cout << " }";
-		break;
-	}
-	default: {
-		cout << "Unknown node type." << endl;
-		break;
-	}
-	}
-}
-
-

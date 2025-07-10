@@ -306,13 +306,13 @@ private:
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	StaticVarNodeWithoutAssignment(std::string variableName, int type,std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variableName(variableName), type(type),arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
+	StaticVarNodeWithoutAssignment(std::string variableName, int type, std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
+		: variableName(variableName), type(type), arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::StaticVarWithoutAssignment; };
 	const std::string GetVariableName() { return variableName; };
 	const int GetType() override { return type; };
-	std::vector<AST*> GetArrayIndex() { return arrayIndex;};
+	std::vector<AST*> GetArrayIndex() { return arrayIndex; };
 };
 
 class ReturnStatementNode : public AST {

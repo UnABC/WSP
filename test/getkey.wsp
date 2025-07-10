@@ -1,0 +1,14 @@
+while (true){
+	cls(0,0,0)
+	redraw(0)
+	color(255,255,255)
+	print("KEY TEST")
+	if (getkey("UP"))print("↑")
+	if (getkey("DOWN"))print("↓")
+	if (getkey("LEFT"))print("←")
+	if (getkey("RIGHT"))print("→")
+	redraw(1)
+	wait(16)
+}
+
+

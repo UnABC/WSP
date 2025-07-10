@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include "Var.hpp"
 #include "graphic.hpp"
+#include <SDL3/SDL_oldnames.h>
 
 class Evaluator {
 private:
@@ -19,6 +20,8 @@ private:
 	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
 	//数学定数
 	std::map<std::string, Var> math_const;
+	//キーコード
+	std::map<std::string, SDL_Scancode> keycode;
 	//各種計算等
 	Var CalcExpr(AST* ast);
 	Var ProcessBinaryOperator(AST* left_node, AST* right, std::string operatorType, BinaryOperatorNode* node);
@@ -36,6 +39,8 @@ private:
 	//スコープ変数の管理
 	inline void EnterScope() { var.emplace_back();static_var.emplace_back();ref_var.emplace_back();ref_static_var.emplace_back(); };
 	inline void ExitScope() { var.pop_back();static_var.pop_back();ref_var.pop_back();ref_static_var.pop_back(); };
+
+	void init_keycode();
 public:
 	Evaluator();
 	~Evaluator();

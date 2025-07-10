@@ -5,6 +5,7 @@ using namespace std;
 std::map<Node, std::string> nodeTypeStr = {
 	{Node::Number, "Number"},
 	{Node::String, "String"},
+	{Node::Array, "Array"},
 	{Node::UnaryOperator, "UnaryOperator"},
 	{Node::BinaryOperator, "BinaryOperator"},
 	{Node::TernaryOperator, "TernaryOperator"},
@@ -19,7 +20,8 @@ std::map<Node, std::string> nodeTypeStr = {
 	{Node::ArgumentNode, "ArgumentNode"},
 	{Node::IfStatement, "IfStatement"},
 	{Node::ReturnStatement, "ReturnStatement"},
-	{Node::WhileStatement, "WhileStatement"}
+	{Node::WhileStatement, "WhileStatement"},
+	{Node::JumpStatement, "JumpStatement"},
 };
 
 
@@ -39,6 +41,8 @@ Evaluator::Evaluator() {
 	math_const["M_SQRT2"] = (long double)1.41421356237309504880;
 	math_const["M_SQRT1_2"] = (long double)0.70710678118654752440;
 	math_const["M_SQRT3"] = (long double)1.73205080756887729352;
+	//キーコードの初期化
+	init_keycode();
 	//グローバル変数作成
 	EnterScope();
 	//システム変数の初期化
@@ -120,7 +124,7 @@ pair<Var, int> Evaluator::evaluate(AST* ast) {
 		return make_pair(Var(), node->GetJumpType());
 	}
 	default:
-		throw EvaluatorException("RuntimeError: Invaild Statement." + nodeTypeStr[ast->GetNodeType()]);
+		throw EvaluatorException("RuntimeError: Invaild Statement.Type:" + nodeTypeStr[ast->GetNodeType()]);
 	}
 }
 
@@ -220,11 +224,19 @@ Var Evaluator::CalcExpr(AST* ast) {
 			} else if (functionName == "string") {
 				return StaticVar(CalcExpr(args.at(0)).GetValue<string>());
 			} else if (functionName == "rnd") {
-				return Var((long long)(rand() % (CalcExpr(args.at(0)).GetValue<long long>() + 1)));
+				return Var((long long)(rand() % (CalcExpr(args.at(0)).GetValue<long long>())));
 			} else if (functionName == "size") {
 				return Var((long long)CalcExpr(args.at(0)).GetValue<vector<Var>>().size());
 			} else if (functionName == "strlen") {
 				return Var((long long)CalcExpr(args.at(0)).GetValue<string>().size());
+			} else if (functionName == "getkey") {
+				string key_name = CalcExpr(args.at(0)).GetValue<string>();
+				if (keycode.count(key_name)) {
+					const bool* state = SDL_GetKeyboardState(nullptr);
+					return Var((long long)state[keycode[key_name]]);
+				} else {
+					throw EvaluatorException("Unknown key name: " + key_name);
+				}
 			}
 		} else if (args.size() == 2) {
 			//引数2つ
@@ -292,6 +304,10 @@ Var Evaluator::CalcExpr(AST* ast) {
 		if (variableName == "dir_cur") {
 			filesystem::path current_path = filesystem::current_path();
 			return Var(current_path.string());
+		} else if (variableName == "true") {
+			return Var(1LL);
+		} else if (variableName == "false") {
+			return Var(0LL);
 		}
 		//変数の存在を確認
 		if (node->GetArrayIndex().empty()) {
@@ -380,13 +396,13 @@ Var Evaluator::CalcExpr(AST* ast) {
 					array.push_back(CalcExpr(element).GetValue<vector<Var>>());
 					break;
 				default:
-					throw RuntimeException("Invalid array element type.", node->lineNumber, node->columnNumber);
+					throw RuntimeException("Invalid array element type." + to_string(type), node->lineNumber, node->columnNumber);
 					break;
 				}
 			}
 
 		}
-		node->SetType(10 + type);
+		node->SetType(10 + type % 10);
 		return Var(array);
 	}
 	case Node::ReturnStatement: {
@@ -1022,4 +1038,50 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 	}
 	ExitScope();
 	return make_pair(Var(), 1);
+}
+
+void Evaluator::init_keycode() {
+	// 数字
+	for (int i = 0; i < 9; i++) 
+		keycode[to_string(i)] = static_cast<SDL_Scancode>(SDL_SCANCODE_1 + i);
+	// アルファベット
+	for (int i = 0; i < 26; i++) {
+		char c = 'A' + i;
+		keycode[string(1, c)] = static_cast<SDL_Scancode>(SDL_SCANCODE_A + i);
+		keycode[string(1, tolower(c))] = static_cast<SDL_Scancode>(SDL_SCANCODE_A + i);
+	}
+	// 特殊キー
+	keycode["ESCAPE"] = SDL_SCANCODE_ESCAPE;
+	keycode["SPACE"] = SDL_SCANCODE_SPACE;
+	keycode["RETURN"] = SDL_SCANCODE_RETURN;
+	keycode["BACKSPACE"] = SDL_SCANCODE_BACKSPACE;
+	keycode["TAB"] = SDL_SCANCODE_TAB;
+	keycode["UP"] = SDL_SCANCODE_UP;
+	keycode["DOWN"] = SDL_SCANCODE_DOWN;
+	keycode["LEFT"] = SDL_SCANCODE_LEFT;
+	keycode["RIGHT"] = SDL_SCANCODE_RIGHT;
+	keycode["PAGEUP"] = SDL_SCANCODE_PAGEUP;
+	keycode["PAGEDOWN"] = SDL_SCANCODE_PAGEDOWN;
+	keycode["HOME"] = SDL_SCANCODE_HOME;
+	keycode["END"] = SDL_SCANCODE_END;
+	keycode["INSERT"] = SDL_SCANCODE_INSERT;
+	keycode["DELETE"] = SDL_SCANCODE_DELETE;
+	// ファンクションキー
+	for (int i = 1; i <= 12; i++)
+		keycode["F" + to_string(i)] = static_cast<SDL_Scancode>(SDL_SCANCODE_F1 + (i - 1));
+	// その他のキー
+	keycode["CAPSLOCK"] = SDL_SCANCODE_CAPSLOCK;
+	keycode["NUMLOCK"] = SDL_SCANCODE_NUMLOCKCLEAR;
+	keycode["SCROLLLOCK"] = SDL_SCANCODE_SCROLLLOCK;
+	keycode["PRINTSCREEN"] = SDL_SCANCODE_PRINTSCREEN;
+	keycode["PAUSE"] = SDL_SCANCODE_PAUSE;
+	keycode["LSHIFT"] = SDL_SCANCODE_LSHIFT;
+	keycode["RSHIFT"] = SDL_SCANCODE_RSHIFT;
+	keycode["LCTRL"] = SDL_SCANCODE_LCTRL;
+	keycode["RCTRL"] = SDL_SCANCODE_RCTRL;
+	keycode["LALT"] = SDL_SCANCODE_LALT;
+	keycode["RALT"] = SDL_SCANCODE_RALT;
+	keycode["LMETA"] = SDL_SCANCODE_LGUI; // Windowsキー
+	keycode["RMETA"] = SDL_SCANCODE_RGUI; // Windowsキー
+	keycode["MENU"] = SDL_SCANCODE_APPLICATION; // アプリケーションキー
 }

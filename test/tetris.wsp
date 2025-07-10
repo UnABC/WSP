@@ -1,0 +1,369 @@
+// ==================================================
+// 定数・グローバル変数定義
+// ==================================================
+
+// --- フィールド関連 ---
+int FIELD_WIDTH = 10
+int FIELD_HEIGHT = 20
+int BLOCK_SIZE = 28
+int BORDER_WIDTH = 4
+
+// --- 画面サイズ ---
+int SCREEN_WIDTH = FIELD_WIDTH * BLOCK_SIZE + 200
+int SCREEN_HEIGHT = FIELD_HEIGHT * BLOCK_SIZE
+
+// --- ゲーム状態 ---
+int field[FIELD_WIDTH][FIELD_HEIGHT]
+int score = 0
+int game_over = false
+
+// --- ミノ関連 ---
+int current_mino_id
+int current_x
+int current_y
+int current_rotation
+int next_mino_id
+
+// ミノの形状データ [ミノID][回転][y][x]
+int minos[7][4][4][4] = [
+    // Iミノ (ID:0)
+    [[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]], [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]],
+    // Lミノ (ID:1)
+    [[[0,1,0,0],[0,1,0,0],[0,1,1,0],[0,0,0,0]], [[0,0,0,0],[1,1,1,0],[1,0,0,0],[0,0,0,0]], [[1,1,0,0],[0,1,0,0],[0,1,0,0],[0,0,0,0]], [[0,0,1,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]]],
+    // Jミノ (ID:2)
+    [[[0,1,0,0],[0,1,0,0],[1,1,0,0],[0,0,0,0]], [[1,0,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,1,0],[0,1,0,0],[0,1,0,0],[0,0,0,0]], [[0,0,0,0],[1,1,1,0],[0,0,1,0],[0,0,0,0]]],
+    // Tミノ (ID:3)
+    [[[0,1,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,1,0],[0,1,0,0],[0,0,0,0]], [[0,0,0,0],[1,1,1,0],[0,1,0,0],[0,0,0,0]], [[0,1,0,0],[1,1,0,0],[0,1,0,0],[0,0,0,0]]],
+    // Sミノ (ID:4)
+    [[[0,1,1,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,1,0],[0,0,1,0],[0,0,0,0]], [[0,1,1,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,1,0],[0,0,1,0],[0,0,0,0]]],
+    // Zミノ (ID:5)
+    [[[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,0,1,0],[0,1,1,0],[0,1,0,0],[0,0,0,0]], [[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,0,1,0],[0,1,1,0],[0,1,0,0],[0,0,0,0]]],
+    // Oミノ (ID:6)
+    [[[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]]]
+]
+
+// ミノの色 (R,G,B)
+int mino_colors[7][3] = [
+    [  0, 255, 255], [  0,   0, 255], [255, 165,   0], [128,   0, 128],
+    [  0, 255,   0], [255,   0,   0], [255, 255,   0]
+]
+
+// --- タイマー ---
+int fall_timer
+
+// --- キー入力状態管理 ---
+// 0:離されている, 1:押された瞬間, 2:押され続けている
+int key_state_left = 0
+int key_state_right = 0
+int key_state_up = 0
+int key_state_down = 0
+int key_state_space = 0
+
+// ==================================================
+// 関数定義
+// ==================================================
+
+// --- キー状態を更新する関数 ---
+void update_key_state(var state, string key_name) {
+    if (getkey(key_name) == 1) {
+        if (state == 0) {
+            state = 1 // 押された瞬間
+        } else {
+            state = 2 // 押され続けている
+        }
+    } else {
+        state = 0 // 離されている
+    }
+}
+
+// --- 描画関連 ---
+void draw_block(int x, int y, int id) {
+    int r = mino_colors[id][0]
+    int g = mino_colors[id][1]
+    int b = mino_colors[id][2]
+    int px = x * BLOCK_SIZE
+    int py = y * BLOCK_SIZE
+    color(r*0.5, g*0.5, b*0.5)
+    quad(px, py, px+BLOCK_SIZE, py, px+BLOCK_SIZE, py+BLOCK_SIZE, px, py+BLOCK_SIZE)
+    color(r, g, b)
+    quad(px+2, py+2, px+BLOCK_SIZE-2, py+2, px+BLOCK_SIZE-2, py+BLOCK_SIZE-2, px+2, py+2)
+}
+
+void draw_field() {
+    int x = 0
+    while(x < FIELD_WIDTH) {
+        int y = 0
+        while(y < FIELD_HEIGHT) {
+            if (field[x][y] > 0) {
+                draw_block(x, y, field[x][y] - 1)
+            }
+            y++
+        }
+        x++
+    }
+}
+
+void draw_current_mino() {
+    int i = 0
+    while(i < 4) {
+        int j = 0
+        while(j < 4) {
+            if (minos[current_mino_id][current_rotation][i][j] == 1) {
+                draw_block(current_x + j, current_y + i, current_mino_id)
+            }
+            j++
+        }
+        i++
+    }
+}
+
+void draw_ui() {
+    pos(SCREEN_WIDTH - 180, 30)
+    color(255, 255, 255)
+    print("SCORE")
+    pos(SCREEN_WIDTH - 180, 60)
+    print(string(score))
+    pos(SCREEN_WIDTH - 180, 120)
+    print("NEXT")
+    int i = 0
+    while(i < 4) {
+        int j = 0
+        while(j < 4) {
+            if (minos[next_mino_id][0][i][j] == 1) {
+                draw_block( (SCREEN_WIDTH - 180)/BLOCK_SIZE + j, 6 + i, next_mino_id)
+            }
+            j++
+        }
+        i++
+    }
+    if (game_over) {
+        pos(FIELD_WIDTH*BLOCK_SIZE/2 - 80, SCREEN_HEIGHT/2 - 20)
+        color(255,0,0)
+        font(40)
+        print("GAME OVER")
+        font(20)
+    }
+}
+
+// --- ゲームロジック関連 ---
+void spawn_mino() {
+    current_mino_id = next_mino_id
+    next_mino_id = rnd(7)
+    current_x = FIELD_WIDTH / 2 - 2
+    current_y = 0
+    current_rotation = 0
+
+    // ★★★★★★★★★★★★★★★★★★★ デバッグコード ★★★★★★★★★★★★★★★★★★★
+    console("--- New Mino Spawn ---")
+    console("Mino ID: " + current_mino_id + ", X: " + current_x + ", Y: " + current_y)
+    int collision_result = check_collision(current_x, current_y, current_rotation)
+    console("Collision Check Result: " + collision_result)
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+    if (collision_result != 0) {
+        game_over = true
+    }
+}
+
+int check_collision(int x, int y, int rot) {
+    int i = 0
+    while(i < 4) {
+        int j = 0
+        while(j < 4) {
+            if (minos[current_mino_id][rot][i][j] == 1) {
+                int check_x = x + j
+                int check_y = y + i
+                if (check_x < 0 || check_x >= FIELD_WIDTH || check_y >= FIELD_HEIGHT) {
+                    return 1
+                }
+                if (check_y >= 0) {
+                    if (field[check_x][check_y] > 0) {
+                         return 1
+                    }
+                }
+            }
+            j++
+        }
+        i++
+    }
+    return 0
+}
+
+void fix_mino() {
+    int i = 0
+    while(i < 4) {
+        int j = 0
+        while(j < 4) {
+            if (minos[current_mino_id][current_rotation][i][j] == 1) {
+                if(current_y + i >= 0) {
+                    field[current_x + j][current_y + i] = current_mino_id + 1
+                }
+            }
+            j++
+        }
+        i++
+    }
+}
+
+void check_lines() {
+    int lines_cleared = 0
+    int y = FIELD_HEIGHT - 1
+    while(y >= 0) {
+        int is_line_full = 1
+        int x = 0
+        while(x < FIELD_WIDTH) {
+            if (field[x][y] == 0) {
+                is_line_full = 0
+                break
+            }
+            x++
+        }
+        if (is_line_full == 1) {
+            lines_cleared = lines_cleared + 1
+            int y2 = y
+            while(y2 > 0) {
+                int x2 = 0
+                while(x2 < FIELD_WIDTH) {
+                    field[x2][y2] = field[x2][y2 - 1]
+                    x2++
+                }
+                y2--
+            }
+            int x2 = 0
+            while(x2 < FIELD_WIDTH) {
+                field[x2][0] = 0
+                x2++
+            }
+            y++
+        }
+        y--
+    }
+
+    if(lines_cleared == 1) { score = score + 100 }
+    if(lines_cleared == 2) { score = score + 300 }
+    if(lines_cleared == 3) { score = score + 500 }
+    if(lines_cleared == 4) { score = score + 800 }
+}
+
+
+// ==================================================
+// メイン処理
+// ==================================================
+
+// --- 初期化 ---
+int ix = 0
+while(ix < FIELD_WIDTH) {
+    int iy = 0
+    while(iy < FIELD_HEIGHT) {
+        field[ix][iy] = 0
+        iy++
+    }
+    ix++
+}
+
+randomize()
+font(20, "C:/Windows/Fonts/meiryo.ttc")
+next_mino_id = rnd(7)
+spawn_mino()
+fall_timer = gettime()
+
+// --- メインループ ---
+while(game_over == false) {
+    
+    // --- 1. 入力状態の更新 ---
+    update_key_state(key_state_left, "LEFT")
+    update_key_state(key_state_right, "RIGHT")
+    update_key_state(key_state_up, "UP")
+    update_key_state(key_state_down, "DOWN")
+    update_key_state(key_state_space, "SPACE")
+
+    // --- 2. 入力内容に応じた処理 ---
+    if (key_state_left > 0) {
+        if (check_collision(current_x - 1, current_y, current_rotation) == 0) {
+            current_x = current_x - 1
+        }
+    }
+    if (key_state_right > 0) {
+        if (check_collision(current_x + 1, current_y, current_rotation) == 0) {
+            current_x = current_x + 1
+        }
+    }
+    if (key_state_up == 1) {
+        int new_rot = (current_rotation + 1) % 4
+        if (check_collision(current_x, current_y, new_rot) == 0) {
+            current_rotation = new_rot
+        }
+    }
+    if (key_state_down > 0) {
+        if (check_collision(current_x, current_y + 1, current_rotation) == 0) {
+            current_y = current_y + 1
+            score = score + 1
+        }
+    }
+    if (key_state_space == 1) {
+        while(check_collision(current_x, current_y + 1, current_rotation) == 0) {
+            current_y = current_y + 1
+            score = score + 2
+        }
+        fix_mino()
+        check_lines()
+        spawn_mino()
+        fall_timer = gettime()
+    }
+    
+    // --- 3. 状態更新 (自然落下) ---
+    if (gettime() - fall_timer > 1000) {
+        if (check_collision(current_x, current_y + 1, current_rotation) == 0) {
+            current_y = current_y + 1
+        } else {
+            fix_mino()
+            check_lines()
+            spawn_mino()
+        }
+        fall_timer = gettime()
+    }
+
+    // --- 4. 描画処理 ---
+    redraw(0)
+    cls(20, 20, 40)
+    draw_field()
+    draw_current_mino()
+    draw_ui()
+    redraw(1)
+
+    // --- 5. 待機 ---
+    wait(16)
+}
+string line_str
+// --- ゲームオーバー後 ---
+while(true) {
+    redraw(0)
+    cls(0,0,0)
+    i = 0
+    while (i < size(minos)){
+		ii = 0
+		line_str += "["
+    	while (ii < size(minos[i])){
+    		iii = 0
+    		line_str += "["
+    		while (iii < size(minos[i][ii])){
+    			iv = 0
+    			line_str += "["
+    			while (iv < size(minos[i][ii][iii])){
+    				line_str += string(minos[i][ii][iii][iv])+","
+		    		iv++
+			    }
+			    line_str += "],"
+    			iii++
+    		}
+    		line_str += "],"
+    		ii++
+    	}
+    	line_str += "],"
+    	i++
+    }
+    break
+    redraw(1)
+    wait(100)
+}
+console(line_str)
