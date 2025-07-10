@@ -100,6 +100,14 @@ void Graphic::Load_Image(const string& file_path, unsigned int id, int center_x,
 	image.Load(file_path, id, center_x, center_y);
 }
 
+void Graphic::SetTexture(int id, float tex_x, float tex_y, float tex_width, float tex_height) {
+	if (id < 0) {
+		shape.SetTexture(0, false); //無効なIDならテクスチャを無効化
+		return;
+	}
+	shape.SetTexture(image.GetImageData(id), true, tex_x, tex_y, tex_width, tex_height);
+}
+
 //ダイアログ表示
 //type: 0=情報, 1=警告, 2=エラー
 void Graphic::CallDialog(const string& title, const string& message, int type) const {
@@ -114,13 +122,13 @@ void Graphic::CallDialog(const string& title, const string& message, int type) c
 }
 
 void Graphic::DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), gmode, all_vertices);
+	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), gmode, all_vertices, 0);
 	Draw();
 }
 
 void Graphic::DrawRectangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), gmode, all_vertices);
-	shape.draw_triangle(x1, y1, x3, y3, x4, y4, colors.at(0), colors.at(2), colors.at(3), gmode, all_vertices);
+	shape.draw_triangle(x1, y1, x2, y2, x3, y3, colors.at(0), colors.at(1), colors.at(2), gmode, all_vertices, 1);
+	shape.draw_triangle(x1, y1, x3, y3, x4, y4, colors.at(0), colors.at(2), colors.at(3), gmode, all_vertices, 2);
 	Draw();
 }
 
@@ -159,6 +167,7 @@ void Graphic::Clear(int r, int g, int b) {
 	color = { 0,0,0, 255 };	//色を初期化
 	fill(colors.begin(), colors.end(), color); //色のリストを現在の色で埋める
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	shape.SetTexture(0, false);
 	gmode = 0; //描画モードを初期化
 }
 

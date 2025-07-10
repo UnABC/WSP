@@ -1,6 +1,11 @@
 #ifndef GRAPHIC_HPP
 #define GRAPHIC_HPP
 
+#include "exception.hpp"
+#include "font.hpp"
+#include "shape.hpp"
+#include "Image.hpp"
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 
@@ -8,10 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "exception.hpp"
-#include "font.hpp"
-#include "shape.hpp"
-#include "Image.hpp"
+
 #include <vector>
 #include <map>
 #include <ranges>
@@ -63,6 +65,7 @@ public:
 	void SetFont(unsigned long long size = 24, const std::string& font_path = "C:/Windows/Fonts/msgothic.ttc");
 	void Load_Image(const std::string& file_path, unsigned int id, int center_x = 0, int center_y = 0);
 	void SetGmode(int mode) { gmode = mode; }
+	void SetTexture(int id, float tex_x = 0.0f, float tex_y = 0.0f, float tex_width = -1.0f, float tex_height = -1.0f);
 
 	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
 	bool Wait(unsigned long long milliseconds = 1);

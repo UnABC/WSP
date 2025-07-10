@@ -1,7 +1,7 @@
 #ifndef BL_TEXTURE_HPP
 #define BL_TEXTURE_HPP
-#include <SDL3/SDL_opengl.h>
 #include "exception.hpp"
+#include <SDL3/SDL_opengl.h>
 
 class BLTexture {
 private:

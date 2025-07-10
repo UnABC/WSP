@@ -1,6 +1,7 @@
 LoadImage("test/image/tech_chan.png",1,315,372)
 LoadImage("test/image/sakura.png",2,115,216)
 LoadImage("test/image/UTokyo.png",3)
+LoadImage("test/image/TSUBAME.png",4)
 
 double angle = 0.0
 while(1){
@@ -11,7 +12,6 @@ while(1){
 	color(255,255,255,abs(sin(angle))*255)
 	DrawImage(1,sin(angle),sin(angle),angle)
 	pos(500,240)
-	color(255,255,255,abs(cos(angle))*255)
 	gmode(2)
 	DrawImage(2,cos(angle),cos(angle),-angle)
 	angle += M_PI/120
@@ -22,6 +22,11 @@ while(1){
 	gmode(2)
 	pos(0,0)
 	DrawImage(3,1.0,1.0,0.0,210,210,50,50)
+	texture(3)
+	triangle(260,124, 380,124, 420,298)
+	texture(4)
+	roundrect(55,55, 270,114, 20)
+	circle(400,100,50)
 	redraw(1)
 	wait(10)
 }

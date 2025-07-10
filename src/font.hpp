@@ -1,16 +1,16 @@
 #ifndef FONT_HPP
 #define FONT_HPP
 
+#include "exception.hpp"
+#include "shader.hpp"
+#include "BLTexture.hpp"
 #include <ft2build.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
-#include "exception.hpp"
-#include "shader.hpp"
-#include "BLTexture.hpp"
-#include <map>
-#include <boost/locale.hpp>
 #include FT_FREETYPE_H
+#include <boost/locale.hpp>
+#include <map>
 
 struct Character {
     glm::ivec2 Size;	//グリフのサイズ

@@ -569,6 +569,22 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.SetGmode(CalcExpr(args.at(0)).GetValue<long long>());
 		return;
+	} else if (functionName == "texture") {
+		if (args.size() == 1) {
+			graphic.SetTexture(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 3) {
+			graphic.SetTexture(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 5) {
+			graphic.SetTexture(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				CalcExpr(args.at(4)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
 	} else if (functionName == "dialog") {
 		if (args.size() > 3)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
@@ -680,7 +696,7 @@ void Evaluator::VoidFunction(AST* ast) {
 	} else if (functionName == "circle") {
 		if (args.size() != 3)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		long double radius = CalcExpr(args.at(2)).GetValue<long double>();
+		long double radius = CalcExpr(args.at(2)).GetValue<long double>() * 2;
 		graphic.DrawEllipse(
 			CalcExpr(args.at(0)).GetValue<long double>(),
 			CalcExpr(args.at(1)).GetValue<long double>(),

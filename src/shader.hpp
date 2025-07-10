@@ -1,13 +1,13 @@
 #ifndef SHADER_HPP
 #define SHADER_HPP
 
+#include "exception.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
-#include "exception.hpp"
-#include <string>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <string>
 
 struct AllVertexData {
     std::vector<float> all_vertices;

@@ -3,7 +3,6 @@
 
 #include "AST.hpp"
 
-
 class Parser {
 private:
 	Lexer& lexer;	//字句解析器
@@ -32,6 +31,5 @@ public:
 	//DEBUG用関数
 	void show(AST* ast);
 };
-
 
 #endif

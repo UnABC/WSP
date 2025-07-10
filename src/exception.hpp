@@ -1,9 +1,9 @@
 #ifndef EXCEPTION_HPP
 #define EXCEPTION_HPP
 
+#include <SDL3/SDL.h>
 #include <exception>
 #include <string>
-#include <SDL3/SDL.h>
 
 class LexerException : public std::exception {
 	std::string msg;
