@@ -54,13 +54,16 @@ private:
 
 	void FailedToInitialize(const std::string& message);
 	void Set_Gmode(int gmode);
+	SDL_Color HSV2RGB(int h, int s, int v) const;
 public:
 	Graphic(int width = 640, int height = 480, bool is_fullscreen = false);
 
 	void printText(const std::string& text);
 	void SetPos(float x, float y) { pos.x = x; pos.y = y; };
 	void SetColor(int r, int g, int b, int a = 255) { color = { (Uint8)r, (Uint8)g, (Uint8)b, (Uint8)a };std::fill(colors.begin(), colors.end(), color); };
+	void SetHSVColor(int h, int s, int v, int a = 255) { color = HSV2RGB(h, s, v); color.a = (Uint8)a; std::fill(colors.begin(), colors.end(), color); };
 	void SetColors(int r, int g, int b, int a, int index);
+	void SetHSVColors(int h, int s, int v, int a, int index);
 	void SetFontSize(unsigned long long size) { font_size = size; };
 	void SetFont(unsigned long long size = 24, const std::string& font_path = "C:/Windows/Fonts/msgothic.ttc");
 	void Load_Image(const std::string& file_path, unsigned int id, int center_x = 0, int center_y = 0);
@@ -80,6 +83,9 @@ public:
 
 	void Clear(int r = 255, int g = 255, int b = 255);
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
+
+	void ResizeWindow(int new_width, int new_height);
+	void SetWindowTitle(const std::string& title) const;
 
 	void Draw();
 	void Stop();

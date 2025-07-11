@@ -124,6 +124,7 @@ AST* Parser::ExprPrimary() {
 			throw ParserException("Not found right parenthesis.", currentToken->lineNumber, currentToken->columnNumber);
 		currentToken = lexer.ExtractNextToken(); //右括弧をスキップ
 		return left;
+	//Array型
 	} else if (currentToken->type == TokenType::LSquareBracket) {
 		currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
 		vector<AST*> elements;

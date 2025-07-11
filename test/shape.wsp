@@ -50,7 +50,10 @@ while (1){
     color(255,0,0,100)
     gmode(2)
     circle(250,300,100)
+    //通常colorテスト
     gmode(0)
+    color(255,0,0)
+    rect(50,50,100,100)
     redraw(1)
     i++
     wait(1)

@@ -1,369 +1,293 @@
-// ==================================================
-// 定数・グローバル変数定義
-// ==================================================
+ResizeScreen(480,800)
+while (i < 7){
+	LoadImage("test/image/block("+i+").png",i+1)
+	i++
+}
 
-// --- フィールド関連 ---
-int FIELD_WIDTH = 10
-int FIELD_HEIGHT = 20
-int BLOCK_SIZE = 28
-int BORDER_WIDTH = 4
-
-// --- 画面サイズ ---
-int SCREEN_WIDTH = FIELD_WIDTH * BLOCK_SIZE + 200
-int SCREEN_HEIGHT = FIELD_HEIGHT * BLOCK_SIZE
-
-// --- ゲーム状態 ---
-int field[FIELD_WIDTH][FIELD_HEIGHT]
+int block_size = 32
+int map_sizeX = 15
+int map_sizeY = 18
+int speed = 8
+int cnt = 0
 int score = 0
-int game_over = false
+int myID
+int mineIDs
+int px
+int py
+int predict[2]
+int myRot
+int block[4][2]
+int ren
+int prm[2]
+int rotate_key = 0
+int down_key = 0
 
-// --- ミノ関連 ---
-int current_mino_id
-int current_x
-int current_y
-int current_rotation
-int next_mino_id
-
-// ミノの形状データ [ミノID][回転][y][x]
-int minos[7][4][4][4] = [
-    // Iミノ (ID:0)
-    [[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]], [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]],
-    // Lミノ (ID:1)
-    [[[0,1,0,0],[0,1,0,0],[0,1,1,0],[0,0,0,0]], [[0,0,0,0],[1,1,1,0],[1,0,0,0],[0,0,0,0]], [[1,1,0,0],[0,1,0,0],[0,1,0,0],[0,0,0,0]], [[0,0,1,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]]],
-    // Jミノ (ID:2)
-    [[[0,1,0,0],[0,1,0,0],[1,1,0,0],[0,0,0,0]], [[1,0,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,1,0],[0,1,0,0],[0,1,0,0],[0,0,0,0]], [[0,0,0,0],[1,1,1,0],[0,0,1,0],[0,0,0,0]]],
-    // Tミノ (ID:3)
-    [[[0,1,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,1,0],[0,1,0,0],[0,0,0,0]], [[0,0,0,0],[1,1,1,0],[0,1,0,0],[0,0,0,0]], [[0,1,0,0],[1,1,0,0],[0,1,0,0],[0,0,0,0]]],
-    // Sミノ (ID:4)
-    [[[0,1,1,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,1,0],[0,0,1,0],[0,0,0,0]], [[0,1,1,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]], [[0,1,0,0],[0,1,1,0],[0,0,1,0],[0,0,0,0]]],
-    // Zミノ (ID:5)
-    [[[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,0,1,0],[0,1,1,0],[0,1,0,0],[0,0,0,0]], [[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,0,1,0],[0,1,1,0],[0,1,0,0],[0,0,0,0]]],
-    // Oミノ (ID:6)
-    [[[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]], [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]]]
+int blocks[7][6] = [
+	[ 0,-1, 0,-2,0, 1],    //縦棒
+	[ 0,-1, 1,-1,1, 0],    //正方形
+	[-1, 0, 1,-1,1, 0],    //右Z
+	[ 1, 0, 1, 1,0,-1],    //左Z
+	[ 0, 1, 1, 1,0,-1],    //L字
+	[ 0, 1,-1, 1,0,-1],    //逆L字
+	[-1, 0, 1, 0,0, 1]     //T字
 ]
 
-// ミノの色 (R,G,B)
-int mino_colors[7][3] = [
-    [  0, 255, 255], [  0,   0, 255], [255, 165,   0], [128,   0, 128],
-    [  0, 255,   0], [255,   0,   0], [255, 255,   0]
+int block_colors[7][3] = [
+	[255,95,95],
+	[255,210,95],
+	[185,255,95],
+	[95,255,120],
+	[95,255,235],
+	[95,160,255],
+	[145,95,255]
 ]
 
-// --- タイマー ---
-int fall_timer
-
-// --- キー入力状態管理 ---
-// 0:離されている, 1:押された瞬間, 2:押され続けている
-int key_state_left = 0
-int key_state_right = 0
-int key_state_up = 0
-int key_state_down = 0
-int key_state_space = 0
-
-// ==================================================
-// 関数定義
-// ==================================================
-
-// --- キー状態を更新する関数 ---
-void update_key_state(var state, string key_name) {
-    if (getkey(key_name) == 1) {
-        if (state == 0) {
-            state = 1 // 押された瞬間
-        } else {
-            state = 2 // 押され続けている
-        }
-    } else {
-        state = 0 // 離されている
-    }
+void blockDraw(int current_x,int current_y){
+	int i = 0
+	while (i < 4){
+		rect(current_x+block[i][0]*block_size,current_y+block[i][1]*block_size,block_size-2,block_size-2)
+		i++
+	}
 }
 
-// --- 描画関連 ---
-void draw_block(int x, int y, int id) {
-    int r = mino_colors[id][0]
-    int g = mino_colors[id][1]
-    int b = mino_colors[id][2]
-    int px = x * BLOCK_SIZE
-    int py = y * BLOCK_SIZE
-    color(r*0.5, g*0.5, b*0.5)
-    quad(px, py, px+BLOCK_SIZE, py, px+BLOCK_SIZE, py+BLOCK_SIZE, px, py+BLOCK_SIZE)
-    color(r, g, b)
-    quad(px+2, py+2, px+BLOCK_SIZE-2, py+2, px+BLOCK_SIZE-2, py+BLOCK_SIZE-2, px+2, py+2)
+int map[map_sizeY][map_sizeX]
+//ブロック呼び出し
+release()
+
+font(30)
+//メインループ
+while (true){
+	int key = getkey("LEFT")*1+getkey("UP")*2+getkey("RIGHT")*4+getkey("DOWN")*8+getkey("SPACE")*16
+	if (key & 5){
+		ren++
+	}else{
+		ren = 0
+	}
+	//左移動
+	if ((key == 1) && ((ren == 1) || (ren > 8))){
+		prm = [px-block_size , py]
+		if (hitChk())px -= block_size
+	}
+	//右移動
+	if ((key == 4) && ((ren == 1) || (ren > 8))){
+		prm = [px+block_size , py]
+		if (hitChk())px += block_size
+	}
+	//下
+	if (key == 8){
+		prm = [px,py+block_size]
+		if (hitChk()){
+			py = prm[1]
+		}else{
+			fixBlockToMap()
+		}
+	}
+	//回天
+	if ((key == 16) && (!rotate_key)){
+		rotate_key = 1
+		myRot = (myRot+1)%4
+		getBlock()
+		prm = [px,py]
+		if (!hitChk()){
+			myRot=(myRot+3)%4
+			getBlock()
+		}
+	}else{
+		rotate_key = 0
+	}
+	//自然落下
+	prm = [px,py+speed]
+	if (hitChk()){
+		py = prm[1]
+	}else{
+		fixBlockToMap()
+	}
+	
+	//落下位置予測
+	int i = py/block_size
+	while (i < map_sizeY){
+		prm = [px,i*block_size]
+		if (!hitChk()){
+			// 衝突した行(i)の一つ手前(i-1)が最終着地点
+			predict = [px, (i - 1) * block_size]
+			break
+		}
+		// もし一番下の行まで衝突しなかった場合
+		if (i == map_sizeY - 1){
+			predict = [px, i * block_size]
+			break
+		}
+		i++
+	}
+	//瞬間落下
+	if ((key == 2) && (!down_key)){
+		down_key = 1
+		if (predict[0] > -1){
+			px = predict[0]
+			py = predict[1]
+			mapWrite()
+		}
+	}else{
+		down_key = 0
+	}
+	
+	//描画処理
+	redraw(0)
+	cls(0,0,0)
+	i = 0
+	while (i < map_sizeX){
+		tx = i
+		int j = 0
+		while (j < map_sizeY){
+			ty = j
+			if (map[ty][tx]){
+				color(block_colors[map[ty][tx]-1][0],block_colors[map[ty][tx]-1][1],block_colors[map[ty][tx]-1][2])
+			}else{
+				color(24,24,24)
+			}
+			rect(tx*block_size,ty*block_size,block_size-2,block_size-2)
+			j++
+		}
+		i++
+	}
+	//操作中のブロックを描画
+	if (1 < cnt){
+		color(block_colors[myID][0],block_colors[myID][1],block_colors[myID][2])
+		blockDraw(px,py)
+		if (predict[0] > -1){
+			gmode(2)
+			color(block_colors[myID][0],block_colors[myID][1],block_colors[myID][2],64)
+			blockDraw(predict[0],predict[1])
+		}
+	}
+	gmode(0)
+	color(100,100,100)
+	rect(360,575,120,123)
+	
+	color(255,255,255)
+	pos(250,578)
+	print("NEXT")
+	pos(362,577)
+	DrawImage(1+mineIDs)
+	pos(30,620)
+	print("現在のスコア："+score)
+	
+	redraw(1)
+	wait(1)
 }
 
-void draw_field() {
-    int x = 0
-    while(x < FIELD_WIDTH) {
-        int y = 0
-        while(y < FIELD_HEIGHT) {
-            if (field[x][y] > 0) {
-                draw_block(x, y, field[x][y] - 1)
-            }
-            y++
-        }
-        x++
-    }
+void fixBlockToMap() {
+	// 1. 現在のブロックの真下で、最初に衝突するY座標を探す
+	int i = py / block_size
+	while (i < map_sizeY) {
+		prm = [px, i * block_size]
+		if (!hitChk()) {
+			// 衝突する行 `i` が見つかったので、その一つ手前の行 `i-1` が最終的な着地点
+			py = (i - 1) * block_size
+			mapWrite()
+			return // マップに書き込んだら関数を終了
+		}
+		i++
+	}
+
+	// 2. もし地面まで全く衝突しなかった場合（空間を落下してきた場合）
+	// 一番下の行に着地させる
+	py = (map_sizeY - 1) * block_size
+	mapWrite()
 }
 
-void draw_current_mino() {
-    int i = 0
-    while(i < 4) {
-        int j = 0
-        while(j < 4) {
-            if (minos[current_mino_id][current_rotation][i][j] == 1) {
-                draw_block(current_x + j, current_y + i, current_mino_id)
-            }
-            j++
-        }
-        i++
-    }
+void mapWrite(){
+	tx = px/block_size
+	ty = py/block_size
+	int i = 0
+	//ブロック書き込み
+	while (i < 4){
+		if (ty + block[i][1] <= 0)GameOver()
+		map[ty+block[i][1]][tx+block[i][0]] = myID+1
+		i++
+	}
+	//消滅チェック
+	i = 0
+	while (i < map_sizeY){
+		ty = i
+		tmp = 0
+		int j = 0
+		while (j < map_sizeX){
+			if (map[ty][j])tmp++
+			j++
+		}
+		//消滅！
+		if (tmp == map_sizeX){
+			int j = 0
+			while (j < ty){
+				k = 0
+				while (k < map_sizeX){
+					map[ty-j][k] = map[ty-j-1][k]
+					k++
+				}
+				
+				j++
+			}
+			j = 0
+			while (j < map_sizeX){
+				map[0][j] = 0
+				j++
+			}
+			score += 100
+		}
+		i++
+	}
+	release()
 }
 
-void draw_ui() {
-    pos(SCREEN_WIDTH - 180, 30)
-    color(255, 255, 255)
-    print("SCORE")
-    pos(SCREEN_WIDTH - 180, 60)
-    print(string(score))
-    pos(SCREEN_WIDTH - 180, 120)
-    print("NEXT")
-    int i = 0
-    while(i < 4) {
-        int j = 0
-        while(j < 4) {
-            if (minos[next_mino_id][0][i][j] == 1) {
-                draw_block( (SCREEN_WIDTH - 180)/BLOCK_SIZE + j, 6 + i, next_mino_id)
-            }
-            j++
-        }
-        i++
-    }
-    if (game_over) {
-        pos(FIELD_WIDTH*BLOCK_SIZE/2 - 80, SCREEN_HEIGHT/2 - 20)
-        color(255,0,0)
-        font(40)
-        print("GAME OVER")
-        font(20)
-    }
-}
-
-// --- ゲームロジック関連 ---
-void spawn_mino() {
-    current_mino_id = next_mino_id
-    next_mino_id = rnd(7)
-    current_x = FIELD_WIDTH / 2 - 2
-    current_y = 0
-    current_rotation = 0
-
-    // ★★★★★★★★★★★★★★★★★★★ デバッグコード ★★★★★★★★★★★★★★★★★★★
-    console("--- New Mino Spawn ---")
-    console("Mino ID: " + current_mino_id + ", X: " + current_x + ", Y: " + current_y)
-    int collision_result = check_collision(current_x, current_y, current_rotation)
-    console("Collision Check Result: " + collision_result)
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-    if (collision_result != 0) {
-        game_over = true
-    }
-}
-
-int check_collision(int x, int y, int rot) {
-    int i = 0
-    while(i < 4) {
-        int j = 0
-        while(j < 4) {
-            if (minos[current_mino_id][rot][i][j] == 1) {
-                int check_x = x + j
-                int check_y = y + i
-                if (check_x < 0 || check_x >= FIELD_WIDTH || check_y >= FIELD_HEIGHT) {
-                    return 1
-                }
-                if (check_y >= 0) {
-                    if (field[check_x][check_y] > 0) {
-                         return 1
-                    }
-                }
-            }
-            j++
-        }
-        i++
-    }
-    return 0
-}
-
-void fix_mino() {
-    int i = 0
-    while(i < 4) {
-        int j = 0
-        while(j < 4) {
-            if (minos[current_mino_id][current_rotation][i][j] == 1) {
-                if(current_y + i >= 0) {
-                    field[current_x + j][current_y + i] = current_mino_id + 1
-                }
-            }
-            j++
-        }
-        i++
-    }
-}
-
-void check_lines() {
-    int lines_cleared = 0
-    int y = FIELD_HEIGHT - 1
-    while(y >= 0) {
-        int is_line_full = 1
-        int x = 0
-        while(x < FIELD_WIDTH) {
-            if (field[x][y] == 0) {
-                is_line_full = 0
-                break
-            }
-            x++
-        }
-        if (is_line_full == 1) {
-            lines_cleared = lines_cleared + 1
-            int y2 = y
-            while(y2 > 0) {
-                int x2 = 0
-                while(x2 < FIELD_WIDTH) {
-                    field[x2][y2] = field[x2][y2 - 1]
-                    x2++
-                }
-                y2--
-            }
-            int x2 = 0
-            while(x2 < FIELD_WIDTH) {
-                field[x2][0] = 0
-                x2++
-            }
-            y++
-        }
-        y--
-    }
-
-    if(lines_cleared == 1) { score = score + 100 }
-    if(lines_cleared == 2) { score = score + 300 }
-    if(lines_cleared == 3) { score = score + 500 }
-    if(lines_cleared == 4) { score = score + 800 }
+int hitChk(){
+	int i = 0
+	while (i < 4){
+		tx = double(block[i][0])+double(prm[0])/block_size
+		ty = double(block[i][1])+double(prm[1])/block_size
+		if ((tx < 0) || (tx >= map_sizeX) || (ty >= map_sizeY))return 0
+		if (ty >= 0)if (map[ty][tx])return 0
+		i++
+	}
+	return 1
 }
 
 
-// ==================================================
-// メイン処理
-// ==================================================
-
-// --- 初期化 ---
-int ix = 0
-while(ix < FIELD_WIDTH) {
-    int iy = 0
-    while(iy < FIELD_HEIGHT) {
-        field[ix][iy] = 0
-        iy++
-    }
-    ix++
+void release(){
+	cnt++
+	int i = 0
+	while (i < 2){
+		mine_ID = rnd(size(blocks))
+		if (cnt != 1){
+			myID = mineIDs
+			mineIDs = mine_ID
+			break
+		}else{
+			cnt++
+			mineIDs = mine_ID
+		}
+		i++
+	}
+	px = map_sizeX/2*block_size
+	py = block_size
+	getBlock()
+	predict = [-1,0]
+	return
 }
 
-randomize()
-font(20, "C:/Windows/Fonts/meiryo.ttc")
-next_mino_id = rnd(7)
-spawn_mino()
-fall_timer = gettime()
-
-// --- メインループ ---
-while(game_over == false) {
-    
-    // --- 1. 入力状態の更新 ---
-    update_key_state(key_state_left, "LEFT")
-    update_key_state(key_state_right, "RIGHT")
-    update_key_state(key_state_up, "UP")
-    update_key_state(key_state_down, "DOWN")
-    update_key_state(key_state_space, "SPACE")
-
-    // --- 2. 入力内容に応じた処理 ---
-    if (key_state_left > 0) {
-        if (check_collision(current_x - 1, current_y, current_rotation) == 0) {
-            current_x = current_x - 1
-        }
-    }
-    if (key_state_right > 0) {
-        if (check_collision(current_x + 1, current_y, current_rotation) == 0) {
-            current_x = current_x + 1
-        }
-    }
-    if (key_state_up == 1) {
-        int new_rot = (current_rotation + 1) % 4
-        if (check_collision(current_x, current_y, new_rot) == 0) {
-            current_rotation = new_rot
-        }
-    }
-    if (key_state_down > 0) {
-        if (check_collision(current_x, current_y + 1, current_rotation) == 0) {
-            current_y = current_y + 1
-            score = score + 1
-        }
-    }
-    if (key_state_space == 1) {
-        while(check_collision(current_x, current_y + 1, current_rotation) == 0) {
-            current_y = current_y + 1
-            score = score + 2
-        }
-        fix_mino()
-        check_lines()
-        spawn_mino()
-        fall_timer = gettime()
-    }
-    
-    // --- 3. 状態更新 (自然落下) ---
-    if (gettime() - fall_timer > 1000) {
-        if (check_collision(current_x, current_y + 1, current_rotation) == 0) {
-            current_y = current_y + 1
-        } else {
-            fix_mino()
-            check_lines()
-            spawn_mino()
-        }
-        fall_timer = gettime()
-    }
-
-    // --- 4. 描画処理 ---
-    redraw(0)
-    cls(20, 20, 40)
-    draw_field()
-    draw_current_mino()
-    draw_ui()
-    redraw(1)
-
-    // --- 5. 待機 ---
-    wait(16)
+void getBlock(){
+	int i = 0
+	while (i < 3){
+		if (myRot == 1){
+			block[i] = [-blocks[myID][i*2+1], blocks[myID][i*2  ]]
+		}else if (myRot == 2){
+			block[i] = [-blocks[myID][i*2  ],-blocks[myID][i*2+1]]
+		}else if (myRot == 3){
+			block[i] = [ blocks[myID][i*2+1],-blocks[myID][i*2  ]]
+		}else{
+			block[i] = [ blocks[myID][i*2  ], blocks[myID][i*2+1]]
+		}
+		i++
+	}
+	block[3] = [0,0]
 }
-string line_str
-// --- ゲームオーバー後 ---
-while(true) {
-    redraw(0)
-    cls(0,0,0)
-    i = 0
-    while (i < size(minos)){
-		ii = 0
-		line_str += "["
-    	while (ii < size(minos[i])){
-    		iii = 0
-    		line_str += "["
-    		while (iii < size(minos[i][ii])){
-    			iv = 0
-    			line_str += "["
-    			while (iv < size(minos[i][ii][iii])){
-    				line_str += string(minos[i][ii][iii][iv])+","
-		    		iv++
-			    }
-			    line_str += "],"
-    			iii++
-    		}
-    		line_str += "],"
-    		ii++
-    	}
-    	line_str += "],"
-    	i++
-    }
-    break
-    redraw(1)
-    wait(100)
-}
-console(line_str)

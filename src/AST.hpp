@@ -1,5 +1,5 @@
 /*仕様(メモ)
-type;0:int,1:double,2:string,3:void,10:int(配列),11:double(配列),12:string(配列),-1:不定,-2:未定義
+type;0:int,1:double,2:string,3:void,10:int(配列),11:double(配列),12:string(配列),-1:不定,-2:未定義,-3:AST不定,-4:Array不定,-5:Unary不定
 */
 #ifndef AST_HPP
 #define AST_HPP
@@ -31,7 +31,7 @@ enum class Node {
 class AST {
 public:
 	const virtual Node GetNodeType() = 0;	//ノードの種類を取得
-	const virtual int GetType() { return -2; };	//式の型を取得
+	const virtual int GetType() { return -3; };	//式の型を取得
 	virtual void SetType(int type) { throw std::runtime_error("Critical Error!(info:CheckType)"); };
 };
 
@@ -96,7 +96,7 @@ public:
 class ArrayNode : public AST {
 private:
 	std::vector<AST*> elements;	//配列の要素
-	int type = -2;
+	int type = -4;
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
@@ -112,7 +112,7 @@ public:
 class UnaryOperatorNode : public AST {
 private:
 	AST* expression;	//式
-	int type = -2;	//式の型(0:int,1:double)
+	int type = -5;	//式の型(0:int,1:double)
 	int operatorType = 0;	//演算子の種類(0:!,1:-)
 public:
 	unsigned long long lineNumber;	//行番号

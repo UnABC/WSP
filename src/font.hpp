@@ -81,6 +81,7 @@ public:
     Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0) {};
     ~Font();
     void Init(int width, int height);
+    void updateProjection(int width, int height) { projection = ShaderUtil::recalcProjection(width, height); }
     void SetFont(const char* font_path, int size);
     void SetTexts(std::string text, float x, float y, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };

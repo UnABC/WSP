@@ -377,7 +377,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 		for (AST* element : node->GetElements()) {
 			if (first_loop) {
 				array.push_back(CalcExpr(element));
-				type = element->GetType();
+				type = array.back().GetType();
 				first_loop = false;
 			} else {
 				switch (type) {
@@ -396,7 +396,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 					array.push_back(CalcExpr(element).GetValue<vector<Var>>());
 					break;
 				default:
-					throw RuntimeException("Invalid array element type." + to_string(type), node->lineNumber, node->columnNumber);
+					throw RuntimeException("Invalid array element type.\nERROR CODE:" + to_string(type), node->lineNumber, node->columnNumber);
 					break;
 				}
 			}
@@ -580,6 +580,26 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
 		return;
+	} else if (functionName == "hsvcolor") {
+		if (args.size() == 3) {
+			graphic.SetHSVColor(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 4) {
+			graphic.SetHSVColor(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>());
+		} else if (args.size() == 5) {
+			graphic.SetHSVColors(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				CalcExpr(args.at(4)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
 	} else if (functionName == "gmode") {
 		if (args.size() != 1)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
@@ -659,6 +679,20 @@ void Evaluator::VoidFunction(AST* ast) {
 			CalcExpr(args.at(5)).GetValue<long double>(),
 			CalcExpr(args.at(6)).GetValue<long double>(),
 			CalcExpr(args.at(7)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "rect") {
+		if (args.size() != 4)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		long long x = CalcExpr(args.at(0)).GetValue<long double>();
+		long long y = CalcExpr(args.at(1)).GetValue<long double>();
+		long long width = CalcExpr(args.at(2)).GetValue<long double>();
+		long long height = CalcExpr(args.at(3)).GetValue<long double>();
+		graphic.DrawRectangle(
+			x, y,
+			x + width, y,
+			x + width, y + height,
+			x, y + height
 		);
 		return;
 	} else if (functionName == "roundrect") {
@@ -780,6 +814,16 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
 		return;
+	} else if (functionName == "ResizeScreen") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.ResizeWindow(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		return;
+	} else if (functionName == "title") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.SetWindowTitle(CalcExpr(args.at(0)).GetValue<string>());
+		return;
 	}
 	if (user_func.count(functionName)) {
 		//関数の中身を実行
@@ -872,60 +916,72 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 	string variableName = node->GetVariableName();
 	AST* expression = node->GetExpression();
 	VariableNode* variable = static_cast<VariableNode*>(node->GetVariable());
-	if (variable->GetArrayIndex().empty()) {
-		//変数の存在を確認
-		for (auto& ref_static : ref_static_var | views::reverse) {
-			if (ref_static.count(variableName))
-				return *ref_static[variableName] = CalcExpr(expression);
-		}
-		for (auto& ref : ref_var | views::reverse) {
-			if (ref.count(variableName))
-				return *ref[variableName] = CalcExpr(expression);
-		}
-		for (auto& scoped_static_var : static_var | views::reverse) {
-			if (scoped_static_var.count(variableName))
-				return scoped_static_var[variableName] = CalcExpr(expression);
-		}
-		for (auto& scoped_var : var | views::reverse) {
-			if (scoped_var.count(variableName))
-				return scoped_var[variableName] = CalcExpr(expression);
-		}
+	//静的変数の場合、同一スコープ内での再定義は不可
+	if (is_static) {
+		if (ref_static_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (ref_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (static_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 	} else {
-		//配列変数の存在を確認
-		for (auto& array : var | views::reverse) {
-			if (array.count(variableName)) {
-				//配列変数
-				Var* retval = &array[variableName];
-				for (AST* index_node : variable->GetArrayIndex()) {
-					long long index = CalcExpr(index_node).GetValue<long long>();
-					//配列のインデックスが範囲外の場合
-					if (index < 0)
-						throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
-							, node->lineNumber, node->columnNumber);
-					if (index >= retval->GetValue<vector<Var>>().size())
-						retval->EditValue<vector<Var>>().resize(index + 1);
-					retval = &(retval->EditValue<vector<Var>>().at(index));
-				}
-				return *retval = CalcExpr(expression);
+		if (variable->GetArrayIndex().empty()) {
+			//変数の存在を確認
+			for (auto& ref_static : ref_static_var | views::reverse) {
+				if (ref_static.count(variableName))
+					return *ref_static[variableName] = CalcExpr(expression);
 			}
-		}
-		for (auto& array : static_var | views::reverse) {
-			if (array.count(variableName)) {
-				//静的配列変数
-				StaticVar* retval = &array[variableName];
-				for (AST* index_node : variable->GetArrayIndex()) {
-					long long index = CalcExpr(index_node).GetValue<long long>();
-					//配列のインデックスが範囲外の場合
-					if (index < 0)
-						throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
-							, node->lineNumber, node->columnNumber);
-					if (index >= retval->GetValue().size())
-						retval->ResizeArray(index + 1);
-					retval = &(retval->EditValue().at(index));
+			for (auto& ref : ref_var | views::reverse) {
+				if (ref.count(variableName))
+					return *ref[variableName] = CalcExpr(expression);
+			}
+			for (auto& scoped_static_var : static_var | views::reverse) {
+				if (scoped_static_var.count(variableName))
+					return scoped_static_var[variableName] = CalcExpr(expression);
+			}
+			for (auto& scoped_var : var | views::reverse) {
+				if (scoped_var.count(variableName))
+					return scoped_var[variableName] = CalcExpr(expression);
+			}
+		} else {
+			//配列変数の存在を確認
+			for (auto& array : var | views::reverse) {
+				if (array.count(variableName)) {
+					//配列変数
+					Var* retval = &array[variableName];
+					for (AST* index_node : variable->GetArrayIndex()) {
+						long long index = CalcExpr(index_node).GetValue<long long>();
+						//配列のインデックスが範囲外の場合
+						if (index < 0)
+							throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
+								, node->lineNumber, node->columnNumber);
+						if (index >= retval->GetValue<vector<Var>>().size())
+							retval->EditValue<vector<Var>>().resize(index + 1);
+						retval = &(retval->EditValue<vector<Var>>().at(index));
+					}
+					return *retval = CalcExpr(expression);
 				}
-				*retval = CalcExpr(expression);
-				array[variableName].update_array();
-				return *retval;
+			}
+			for (auto& array : static_var | views::reverse) {
+				if (array.count(variableName)) {
+					//静的配列変数
+					StaticVar* retval = &array[variableName];
+					for (AST* index_node : variable->GetArrayIndex()) {
+						long long index = CalcExpr(index_node).GetValue<long long>();
+						//配列のインデックスが範囲外の場合
+						if (index < 0)
+							throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
+								, node->lineNumber, node->columnNumber);
+						if (index >= retval->GetValue().size())
+							retval->ResizeArray(index + 1);
+						retval = &(retval->EditValue().at(index));
+					}
+					*retval = CalcExpr(expression);
+					array[variableName].update_array();
+					return *retval;
+				}
 			}
 		}
 	}
@@ -945,22 +1001,14 @@ Var Evaluator::ProcessStaticVar(AST* ast) {
 	StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
 	string variableName = node->GetVariableName();
 	//変数の存在を確認
-	for (auto& ref_static : ref_static_var | views::reverse) {
-		if (ref_static.count(variableName))
+		if (ref_static_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (ref_var.back().count(variableName))
 			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	}
-	for (auto& ref : ref_var | views::reverse) {
-		if (ref.count(variableName))
+		if (static_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (var.back().count(variableName))
 			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	}
-	for (auto& scoped_static_var : static_var | views::reverse) {
-		if (scoped_static_var.count(variableName))
-			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	}
-	for (auto& scoped_var : var | views::reverse) {
-		if (scoped_var.count(variableName))
-			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	}
 	//変数の定義
 	switch (node->GetType())
 	{
@@ -1042,7 +1090,7 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 
 void Evaluator::init_keycode() {
 	// 数字
-	for (int i = 0; i < 9; i++) 
+	for (int i = 0; i < 9; i++)
 		keycode[to_string(i)] = static_cast<SDL_Scancode>(SDL_SCANCODE_1 + i);
 	// アルファベット
 	for (int i = 0; i < 26; i++) {

@@ -84,6 +84,13 @@ void Graphic::SetColors(int r, int g, int b, int a, int index) {
 	if (index == 0) color = colors.at(0); //0番目の色を現在の色に設定
 }
 
+void Graphic::SetHSVColors(int h, int s, int v, int a, int index) {
+	if (index < 0 || index >= colors.size()) return; //範囲外アクセス防止
+	colors.at(index) = HSV2RGB(h, s, v);
+	colors.at(index).a = (Uint8)a;
+	if (index == 0) color = colors.at(0); //0番目の色を現在の色に設定
+}
+
 void Graphic::SetFont(unsigned long long size, const string& font_path) {
 	font.SetFont(font_path.c_str(), size);
 	font_size = size;
@@ -244,5 +251,54 @@ void Graphic::Set_Gmode(int gmode) {
 	} else if (gmode == 6) {
 		// 乗算合成
 		glBlendFunc(GL_DST_ALPHA, GL_ZERO);
+	}
+}
+
+SDL_Color Graphic::HSV2RGB(int h, int s, int v) const {
+	float r, g, b;
+	float f, p, q, t;
+	int i;
+
+	if (s == 0) {
+		r = g = b = v / 255.0f; // グレースケール
+	} else {
+		h /= 60; // 色相を0-5の範囲に変換
+		i = static_cast<int>(h);
+		f = h - i; // 小数部分
+		p = v * (1 - s / 255.0f);
+		q = v * (1 - f * s / 255.0f);
+		t = v * (1 - (1 - f) * s / 255.0f);
+
+		switch (i) {
+			case 0: r = v / 255.0f; g = t / 255.0f; b = p / 255.0f; break;
+			case 1: r = q / 255.0f; g = v / 255.0f; b = p / 255.0f; break;
+			case 2: r = p / 255.0f; g = v / 255.0f; b = t / 255.0f; break;
+			case 3: r = p / 255.0f; g = q / 255.0f; b = v / 255.0f; break;
+			case 4: r = t / 255.0f; g = p / 255.0f; b = v / 255.0f; break;
+			default: r = v / 255.0f; g = p / 255.0f; b = q / 255.0f; break;
+		}
+	}
+
+	return { static_cast<Uint8>(r * 255), static_cast<Uint8>(g * 255), static_cast<Uint8>(b * 255), 255 };
+}
+
+void Graphic::ResizeWindow(int new_width, int new_height) {
+	if (new_width <= 0 || new_height <= 0) return; // 無効なサイズは無視
+	width = new_width;
+	height = new_height;
+	SDL_SetWindowSize(window, width, height);
+	glViewport(0, 0, width, height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, width, height, 0.0, -1.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	shape.updateProjection(width, height);
+	image.updateProjection(width, height);
+	font.updateProjection(width, height);
+}
+void Graphic::SetWindowTitle(const std::string& title) const {
+	if (SDL_SetWindowTitle(window, title.c_str()) < 0) {
+		throw WindowException("Failed to set window title: " + std::string(SDL_GetError()));
 	}
 }
