@@ -212,12 +212,23 @@ void Graphic::Draw() {
 
 bool Graphic::Wait(unsigned long long milliseconds) {
 	unsigned long long start = SDL_GetTicks();
+	while (SDL_GetTicks() - start < milliseconds) {
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_EVENT_QUIT) return false; // ウィンドウが閉じられた場合はfalseを返す
+		}
+		SDL_Delay(1); // CPU使用率を下げるために少し待機
+	} 
+	return true;
+}
+
+bool Graphic::AWait(unsigned long long milliseconds) {
 	do {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) return false; // ウィンドウが閉じられた場合はfalseを返す
 		}
 		SDL_Delay(1); // CPU使用率を下げるために少し待機
-	} while (SDL_GetTicks() - start < milliseconds);
+	} while (SDL_GetTicks() - awaitTime < milliseconds);
+	awaitTime = SDL_GetTicks();
 	return true;
 }
 

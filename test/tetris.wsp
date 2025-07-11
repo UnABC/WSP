@@ -3,6 +3,8 @@ while (i < 7){
 	LoadImage("test/image/block("+i+").png",i+1)
 	i++
 }
+mmload("test/audio/redzone.mp3",1)
+mmplay(1,-1)
 
 int block_size = 32
 int map_sizeX = 15
@@ -182,7 +184,7 @@ while (true){
 	print(getfps())
 	
 	redraw(1)
-	wait(1)
+	await(16)
 }
 
 void fixBlockToMap() {
@@ -303,4 +305,5 @@ void getBlock(){
 
 void GameOver(){
 	dialog("GAMEOVER")
+	end()
 }

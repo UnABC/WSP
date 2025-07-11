@@ -239,6 +239,12 @@ Var Evaluator::CalcExpr(AST* ast) {
 				} else {
 					throw EvaluatorException("Unknown key name: " + key_name);
 				}
+			} else if (functionName == "mmseek") {
+				return Var((long double)audio.GetMusicPosition(CalcExpr(args.at(0)).GetValue<long long>()));
+			} else if (functionName == "mmplaying") {
+				return Var(audio.IsMusicPlaying(CalcExpr(args.at(0)).GetValue<long long>()));
+			} else if (functionName == "mmvolinfo") {
+				return Var((long long)audio.GetVolume(CalcExpr(args.at(0)).GetValue<long long>()));
 			}
 		} else if (args.size() == 2) {
 			//引数2つ
@@ -338,7 +344,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 			for (auto& array : var | views::reverse) {
 				if (array.count(variableName)) {
 					//配列変数
-					Var *retval = &array[variableName];
+					Var* retval = &array[variableName];
 					for (AST* index_node : node->GetArrayIndex()) {
 						long long index = CalcExpr(index_node).GetValue<long long>();
 						//配列のインデックスが範囲外の場合
@@ -642,6 +648,22 @@ void Evaluator::VoidFunction(AST* ast) {
 				exit(0);
 		}
 		return;
+	} else if (functionName == "await") {
+		if (args.size() > 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		if (args.size() == 0) {
+			if (!graphic.AWait())
+				exit(0);
+		} else {
+			if (!graphic.AWait(CalcExpr(args.at(0)).GetValue<long long>()))
+				exit(0);
+		}
+		return;
+	} else if (functionName == "end"){
+		if (args.size() > 0)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.End();
+		exit(0);
 	} else if (functionName == "font") {
 		if (args.size() > 2)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
@@ -826,6 +848,54 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.SetWindowTitle(CalcExpr(args.at(0)).GetValue<string>());
 		return;
+	} else if (functionName == "mmload") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		audio.LoadMusic(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<long long>());
+		return;
+	} else if (functionName == "dmmload") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		audio.LoadSound(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<long long>());
+		return;
+	} else if (functionName == "mmplay") {
+		if (args.size() == 1) {
+			audio.PlayMusic(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			audio.PlayMusic(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "dmmplay") {
+		if (args.size() == 1) {
+			audio.PlaySound(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			audio.PlaySound(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "mmstop") {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		audio.StopMusic();
+		return;
+	} else if (functionName == "mmpause") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		audio.PauseMusic(CalcExpr(args.at(0)).GetValue<long long>());
+		return;
+	} else if (functionName == "mmresume") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		audio.ResumeMusic(CalcExpr(args.at(0)).GetValue<long long>());
+		return;
+	} else if (functionName == "mmvol") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		audio.SetVolume(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		return;
 	}
 	if (user_func.count(functionName)) {
 		//関数の中身を実行
@@ -1003,14 +1073,14 @@ Var Evaluator::ProcessStaticVar(AST* ast) {
 	StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
 	string variableName = node->GetVariableName();
 	//変数の存在を確認
-		if (ref_static_var.back().count(variableName))
-			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-		if (ref_var.back().count(variableName))
-			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-		if (static_var.back().count(variableName))
-			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-		if (var.back().count(variableName))
-			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+	if (ref_static_var.back().count(variableName))
+		throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+	if (ref_var.back().count(variableName))
+		throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+	if (static_var.back().count(variableName))
+		throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+	if (var.back().count(variableName))
+		throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
 	//変数の定義
 	switch (node->GetType())
 	{
@@ -1090,7 +1160,7 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 	return make_pair(Var(), 1);
 }
 
-long double Evaluator::GetFPS(){
+long double Evaluator::GetFPS() {
 	//FPSを取得
 	long long current_time = GetTime();
 	if (current_time - last_fps_time >= 1000) {

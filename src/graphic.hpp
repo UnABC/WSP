@@ -40,6 +40,7 @@ private:
 	//各種内部変数
 	float fps = 60.0;	//フレームレート
 	unsigned long long lastTime = 0;	//タイマー
+	unsigned long long awaitTime = 0;
 
 	SDL_Event event;
 	//キャッシュ
@@ -72,6 +73,7 @@ public:
 
 	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
 	bool Wait(unsigned long long milliseconds = 1);
+	bool AWait(unsigned long long milliseconds = 1);
 	void DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
 	void DrawRectangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 	void DrawRoundRect(float x, float y, float width, float height, float radius);

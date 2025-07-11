@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include "Var.hpp"
 #include "graphic.hpp"
+#include "Audio.hpp"
 #include <SDL3/SDL_oldnames.h>
 
 class Evaluator {
@@ -40,6 +41,7 @@ private:
 	long double GetFPS();
 	//Graphic関数
 	Graphic graphic;
+	Audio audio;
 	//スコープ変数の管理
 	inline void EnterScope() { var.emplace_back();static_var.emplace_back();ref_var.emplace_back();ref_static_var.emplace_back(); };
 	inline void ExitScope() { var.pop_back();static_var.pop_back();ref_var.pop_back();ref_static_var.pop_back(); };
