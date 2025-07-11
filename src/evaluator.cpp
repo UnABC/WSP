@@ -198,6 +198,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 				return Var((long long)time(nullptr));
 			} else if (functionName == "gettime") {
 				return Var(GetTime());
+			} else if (functionName == "getfps") {
+				return Var((long double)GetFPS());
 			}
 		} else if (args.size() == 1) {
 			//引数1つ
@@ -226,7 +228,7 @@ Var Evaluator::CalcExpr(AST* ast) {
 			} else if (functionName == "rnd") {
 				return Var((long long)(rand() % (CalcExpr(args.at(0)).GetValue<long long>())));
 			} else if (functionName == "size") {
-				return Var((long long)CalcExpr(args.at(0)).GetValue<vector<Var>>().size());
+				return Var((long long)CalcExpr(args.at(0)).GetPointer()->size());
 			} else if (functionName == "strlen") {
 				return Var((long long)CalcExpr(args.at(0)).GetValue<string>().size());
 			} else if (functionName == "getkey") {
@@ -336,31 +338,31 @@ Var Evaluator::CalcExpr(AST* ast) {
 			for (auto& array : var | views::reverse) {
 				if (array.count(variableName)) {
 					//配列変数
-					Var retval(array[variableName].GetValue<vector<Var>>());
+					Var *retval = &array[variableName];
 					for (AST* index_node : node->GetArrayIndex()) {
 						long long index = CalcExpr(index_node).GetValue<long long>();
 						//配列のインデックスが範囲外の場合
-						if (index < 0 || index >= retval.GetValue<vector<Var>>().size())
-							throw RuntimeException("Array index out of range.:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval.GetValue<vector<Var>>().size())\
+						if (index < 0 || index >= retval->GetPointer()->size())
+							throw RuntimeException("Array index out of range.:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval->GetPointer()->size())\
 								, node->lineNumber, node->columnNumber);
-						retval = retval.GetValue<vector<Var>>().at(index);
+						retval = &(retval->GetPointer()->at(index));
 					}
-					return retval;
+					return *retval;
 				}
 			}
 			for (auto& array : static_var | views::reverse) {
 				if (array.count(variableName)) {
 					//静的配列変数
-					StaticVar retval(array[variableName]);
+					StaticVar* retval = &array[variableName];
 					for (AST* index_node : node->GetArrayIndex()) {
 						long long index = CalcExpr(index_node).GetValue<long long>();
 						//配列のインデックスが範囲外の場合
-						if (index < 0 || index >= retval.GetValue().size())
-							throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval.GetValue().size())\
+						if (index < 0 || index >= retval->GetPointer()->size())
+							throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") >= " + to_string(retval->GetPointer()->size())\
 								, node->lineNumber, node->columnNumber);
-						retval = retval.GetValue().at(index);
+						retval = &(retval->GetPointer()->at(index));
 					}
-					return retval;
+					return *retval;
 				}
 			}
 			//配列変数が存在しない場合はエラー
@@ -957,7 +959,7 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 						if (index < 0)
 							throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
 								, node->lineNumber, node->columnNumber);
-						if (index >= retval->GetValue<vector<Var>>().size())
+						if (index >= retval->GetPointer()->size())
 							retval->EditValue<vector<Var>>().resize(index + 1);
 						retval = &(retval->EditValue<vector<Var>>().at(index));
 					}
@@ -974,7 +976,7 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 						if (index < 0)
 							throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
 								, node->lineNumber, node->columnNumber);
-						if (index >= retval->GetValue().size())
+						if (index >= retval->GetPointer()->size())
 							retval->ResizeArray(index + 1);
 						retval = &(retval->EditValue().at(index));
 					}
@@ -1088,6 +1090,19 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 	return make_pair(Var(), 1);
 }
 
+long double Evaluator::GetFPS(){
+	//FPSを取得
+	long long current_time = GetTime();
+	if (current_time - last_fps_time >= 1000) {
+		fps = static_cast<long double>(frame_count) / ((current_time - last_fps_time) / 1000.0);
+		fps = (fps > 1000000.0) ? 60.0 : fps; // FPSが異常に大きい場合は60FPSに制限
+		frame_count = 0;
+		last_fps_time = current_time;
+	}
+	frame_count++;
+	return fps;
+}
+
 void Evaluator::init_keycode() {
 	// 数字
 	for (int i = 0; i < 9; i++)
@@ -1103,6 +1118,7 @@ void Evaluator::init_keycode() {
 	keycode["SPACE"] = SDL_SCANCODE_SPACE;
 	keycode["RETURN"] = SDL_SCANCODE_RETURN;
 	keycode["BACKSPACE"] = SDL_SCANCODE_BACKSPACE;
+	keycode["ESC"] = SDL_SCANCODE_ESCAPE;
 	keycode["TAB"] = SDL_SCANCODE_TAB;
 	keycode["UP"] = SDL_SCANCODE_UP;
 	keycode["DOWN"] = SDL_SCANCODE_DOWN;

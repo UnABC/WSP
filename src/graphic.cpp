@@ -212,12 +212,12 @@ void Graphic::Draw() {
 
 bool Graphic::Wait(unsigned long long milliseconds) {
 	unsigned long long start = SDL_GetTicks();
-	while (SDL_GetTicks() - start < milliseconds) {
+	do {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) return false; // ウィンドウが閉じられた場合はfalseを返す
 		}
 		SDL_Delay(1); // CPU使用率を下げるために少し待機
-	}
+	} while (SDL_GetTicks() - start < milliseconds);
 	return true;
 }
 
@@ -270,12 +270,12 @@ SDL_Color Graphic::HSV2RGB(int h, int s, int v) const {
 		t = v * (1 - (1 - f) * s / 255.0f);
 
 		switch (i) {
-			case 0: r = v / 255.0f; g = t / 255.0f; b = p / 255.0f; break;
-			case 1: r = q / 255.0f; g = v / 255.0f; b = p / 255.0f; break;
-			case 2: r = p / 255.0f; g = v / 255.0f; b = t / 255.0f; break;
-			case 3: r = p / 255.0f; g = q / 255.0f; b = v / 255.0f; break;
-			case 4: r = t / 255.0f; g = p / 255.0f; b = v / 255.0f; break;
-			default: r = v / 255.0f; g = p / 255.0f; b = q / 255.0f; break;
+		case 0: r = v / 255.0f; g = t / 255.0f; b = p / 255.0f; break;
+		case 1: r = q / 255.0f; g = v / 255.0f; b = p / 255.0f; break;
+		case 2: r = p / 255.0f; g = v / 255.0f; b = t / 255.0f; break;
+		case 3: r = p / 255.0f; g = q / 255.0f; b = v / 255.0f; break;
+		case 4: r = t / 255.0f; g = p / 255.0f; b = v / 255.0f; break;
+		default: r = v / 255.0f; g = p / 255.0f; b = q / 255.0f; break;
 		}
 	}
 

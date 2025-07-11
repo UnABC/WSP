@@ -7,7 +7,7 @@ while (i < 7){
 int block_size = 32
 int map_sizeX = 15
 int map_sizeY = 18
-int speed = 8
+int speed = 3
 int cnt = 0
 int score = 0
 int myID
@@ -58,6 +58,7 @@ font(30)
 //メインループ
 while (true){
 	int key = getkey("LEFT")*1+getkey("UP")*2+getkey("RIGHT")*4+getkey("DOWN")*8+getkey("SPACE")*16
+	if (getkey("ESC"))dialog("pause")
 	if (key & 5){
 		ren++
 	}else{
@@ -83,14 +84,16 @@ while (true){
 		}
 	}
 	//回天
-	if ((key == 16) && (!rotate_key)){
-		rotate_key = 1
-		myRot = (myRot+1)%4
-		getBlock()
-		prm = [px,py]
-		if (!hitChk()){
-			myRot=(myRot+3)%4
+	if (key == 16){
+		if (rotate_key == 0){
+			rotate_key = 1
+			myRot = (myRot+1)%4
 			getBlock()
+			prm = [px,py]
+			if (!hitChk()){
+				myRot=(myRot+3)%4
+				getBlock()
+			}
 		}
 	}else{
 		rotate_key = 0
@@ -120,12 +123,14 @@ while (true){
 		i++
 	}
 	//瞬間落下
-	if ((key == 2) && (!down_key)){
-		down_key = 1
-		if (predict[0] > -1){
-			px = predict[0]
-			py = predict[1]
-			mapWrite()
+	if (key == 2){
+		if (!down_key){
+			down_key = 1
+			if (predict[0] > -1){
+				px = predict[0]
+				py = predict[1]
+				mapWrite()
+			}
 		}
 	}else{
 		down_key = 0
@@ -171,6 +176,10 @@ while (true){
 	DrawImage(1+mineIDs)
 	pos(30,620)
 	print("現在のスコア："+score)
+	
+	pos(0,0)
+	color(255,255,255)
+	print(getfps())
 	
 	redraw(1)
 	wait(1)
@@ -290,4 +299,8 @@ void getBlock(){
 		i++
 	}
 	block[3] = [0,0]
+}
+
+void GameOver(){
+	dialog("GAMEOVER")
 }

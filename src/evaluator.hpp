@@ -16,6 +16,9 @@ private:
 	std::vector<std::map<std::string, StaticVar*>> ref_static_var;
 	//システム変数
 	long long start_time;	//プログラム開始時間
+	long long last_fps_time = 0;	//前回の時間
+	long long frame_count;
+	long double fps = 60.0;	//フレームレート
 	//ユーザー定義関数
 	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
 	//数学定数
@@ -34,6 +37,7 @@ private:
 	Var ProcessStaticVar(AST* ast);
 	std::pair<Var, int> ProcessFunction(AST* ast);
 	inline long long GetTime();
+	long double GetFPS();
 	//Graphic関数
 	Graphic graphic;
 	//スコープ変数の管理
