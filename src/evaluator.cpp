@@ -200,6 +200,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 				return Var(GetTime());
 			} else if (functionName == "getfps") {
 				return Var((long double)GetFPS());
+			} else if (functionName == "mouseclick") {
+				return Var((long long)SDL_GetMouseState(&mousex, &mousey));
 			}
 		} else if (args.size() == 1) {
 			//引数1つ
@@ -245,6 +247,20 @@ Var Evaluator::CalcExpr(AST* ast) {
 				return Var(audio.IsMusicPlaying(CalcExpr(args.at(0)).GetValue<long long>()));
 			} else if (functionName == "mmvolinfo") {
 				return Var((long long)audio.GetVolume(CalcExpr(args.at(0)).GetValue<long long>()));
+			} else if (functionName == "mousepos") {
+				SDL_GetMouseState(&mousex, &mousey);
+				if (CalcExpr(args.at(0)).GetValue<bool>()) {
+					return Var((long double)mousex);
+				} else {
+					return Var((long double)mousey);
+				}
+			} else if (functionName == "mousegpos") {
+				SDL_GetGlobalMouseState(&mousex, &mousey);
+				if (CalcExpr(args.at(0)).GetValue<bool>()) {
+					return Var((long double)mousex);
+				} else {
+					return Var((long double)mousey);
+				}
 			}
 		} else if (args.size() == 2) {
 			//引数2つ
@@ -659,7 +675,7 @@ void Evaluator::VoidFunction(AST* ast) {
 				exit(0);
 		}
 		return;
-	} else if (functionName == "end"){
+	} else if (functionName == "end") {
 		if (args.size() > 0)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.End();
@@ -895,6 +911,40 @@ void Evaluator::VoidFunction(AST* ast) {
 		if (args.size() != 2)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		audio.SetVolume(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		return;
+	} else if (functionName == "screen") {
+		if (args.size() == 1) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>());
+		} else if (args.size() == 3) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 4) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<long long>());
+		} else if (args.size() == 5) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<long long>(), CalcExpr(args.at(4)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "gsel") {
+		if (args.size() == 1) {
+			graphic.MakeCurrentWindow(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			graphic.MakeCurrentWindow(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "ShowScreen") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.HideWindow(CalcExpr(args.at(0)).GetValue<long long>());
+		return;
+	} else if (functionName == "HideScreen") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.ShowWindow(CalcExpr(args.at(0)).GetValue<long long>());
 		return;
 	}
 	if (user_func.count(functionName)) {

@@ -20,6 +20,7 @@ private:
 	long long last_fps_time = 0;	//前回の時間
 	long long frame_count;
 	long double fps = 60.0;	//フレームレート
+	float mousex, mousey;	//マウス座標
 	//ユーザー定義関数
 	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
 	//数学定数
