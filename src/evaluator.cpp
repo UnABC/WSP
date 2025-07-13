@@ -1197,13 +1197,28 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 	WhileStatementNode* node = static_cast<WhileStatementNode*>(ast);
 	pair<Var, int> retval;
 	EnterScope();
-	while (CalcExpr(node->GetCondition()).GetValue<bool>()) {
-		retval = evaluate(node->GetStatements());
-		if (retval.second == 0) {
-			ExitScope();
-			return retval;
-		} else if (retval.second == 2) {
-			break;
+	if (node->GetMode()) {
+		static_var.back()["cnt"] = StaticVar(0LL);
+		long long count = CalcExpr(node->GetCondition()).GetValue<long long>();
+		for (long long i = 0; i < count; i++) {
+			retval = evaluate(node->GetStatements());
+			if (retval.second == 0) {
+				ExitScope();
+				return retval;
+			} else if (retval.second == 2) {
+				break;
+			}
+			static_var.back()["cnt"].EditValue<long long>()++;
+		}
+	} else {
+		while (CalcExpr(node->GetCondition()).GetValue<bool>()) {
+			retval = evaluate(node->GetStatements());
+			if (retval.second == 0) {
+				ExitScope();
+				return retval;
+			} else if (retval.second == 2) {
+				break;
+			}
 		}
 	}
 	ExitScope();

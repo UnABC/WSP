@@ -332,15 +332,17 @@ class WhileStatementNode : public AST {
 private:
 	AST* condition;	//条件式
 	AST* Statements;	//ブロック文
+	int mode = 0;	//モード(0:while,1:repeat)
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
-	WhileStatementNode(AST* condition, AST* statements, unsigned long long lineNumber, unsigned long long columnNumber)
-		: condition(condition), Statements(statements), lineNumber(lineNumber), columnNumber(columnNumber) {
+	WhileStatementNode(AST* condition, AST* statements, int mode, unsigned long long lineNumber, unsigned long long columnNumber)
+		: condition(condition), Statements(statements), mode(mode), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::WhileStatement; };
 	AST* GetCondition() { return condition; };
 	AST* GetStatements() { return Statements; };
+	const int GetMode() { return mode; };	//モードを取得(0:while,1:repeat)
 };
 
 class JumpStatementNode : public AST {

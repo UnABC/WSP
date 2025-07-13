@@ -1,10 +1,14 @@
+# pragma GCC target("avx2")
+# pragma GCC optimize("O3")
+# pragma GCC optimize("unroll-loops")
+
 #include "evaluator.hpp"
 #include <iostream>
 using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/window.wsp";
+		string file_name = "test/tetris.wsp";
 		if (argc == 2)file_name = argv[1];
 		Lexer lexer(file_name);
 		//Lexer実行
@@ -22,7 +26,7 @@ int main(int argc, char* argv[]) {
 		//Evaluator実行
 		for (AST* ast : statements)
 			evaluator.evaluate(ast); //評価実行
-		
+
 		evaluator.Stop(); //ウィンドウは表示したまま
 		//以下Lexer testの残骸//////////////////////////////////////////////////////////////////
 		// for (AST *ast : statements) {

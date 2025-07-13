@@ -97,6 +97,12 @@ while a < 20 {
     print(a)
     a++
 }
+
+repeat 5 {
+    print("This will repeat 5 times")
+    // 自動的に変数cntが宣言され、0から4まで増加する
+    print("cnt:"+cnt)
+}
 ```
 
 ### 関数の定義と呼び出し

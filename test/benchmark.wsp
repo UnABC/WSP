@@ -7,8 +7,23 @@ void print_test(int n){
 	return
 }
 
+void array_test(){
+	int arr = [[1,1],[2,2],[3,3]]
+	while (cnt++ < 10000){
+		a = arr[2][1]
+	}
+}
+
+void var_test(){
+	int var = 10
+	while (cnt++ < 10000){
+		a = var
+	}
+}
+
 start_time = gettime()
-print_test(0)
+//print_test(0)
+var_test()
 end_time = gettime()
 pos(100,100)
 color(0,0,0)

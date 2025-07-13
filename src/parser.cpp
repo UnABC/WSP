@@ -124,7 +124,7 @@ AST* Parser::ExprPrimary() {
 			throw ParserException("Not found right parenthesis.", currentToken->lineNumber, currentToken->columnNumber);
 		currentToken = lexer.ExtractNextToken(); //右括弧をスキップ
 		return left;
-	//Array型
+		//Array型
 	} else if (currentToken->type == TokenType::LSquareBracket) {
 		currentToken = lexer.ExtractNextToken(); //左角括弧をスキップ
 		vector<AST*> elements;
@@ -221,8 +221,6 @@ AST* Parser::ExprFunction(TokenPtr token) {
 AST* Parser::Statement(TokenPtr token) {
 	//文を解析する
 	if (currentToken->type == TokenType::Identifier) {
-		//TODO:文の処理
-
 		//システムの予約語を処理する
 		//If文
 		if (currentToken->value == "if") {
@@ -257,13 +255,14 @@ AST* Parser::Statement(TokenPtr token) {
 			if (!returnValue.back() && (expression != nullptr))
 				throw ParserException("Void function should not return value.", currentToken->lineNumber, currentToken->columnNumber);
 			return new ReturnStatementNode(expression, currentToken->lineNumber, currentToken->columnNumber); //return文ノードを作成
-		} else if (currentToken->value == "while") {
+		} else if ((currentToken->value == "while") || (currentToken->value == "repeat")) {
+			int mode = (currentToken->value == "repeat"); //モードを設定
 			currentToken = lexer.ExtractNextToken(); //whileをスキップ
 			AST* condition = ExprTernary(); //条件式を解析する
 			while_statement.push_back(true); //while文のスタックに追加
 			AST* block = (currentToken->type == TokenType::LBrace) ? BlockStatement(currentToken) : Statement(currentToken);
 			while_statement.pop_back(); //while文のスタックから削除
-			return new WhileStatementNode(condition, block, currentToken->lineNumber, currentToken->columnNumber); //while文ノードを作成
+			return new WhileStatementNode(condition, block, mode, currentToken->lineNumber, currentToken->columnNumber); //while文ノードを作成
 		} else if ((currentToken->value == "break") || (currentToken->value == "continue")) {
 			//ループ内にあるかどうか
 			if (while_statement.empty())

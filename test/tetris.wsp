@@ -45,10 +45,8 @@ int block_colors[7][3] = [
 ]
 
 void blockDraw(int current_x,int current_y){
-	int i = 0
-	while (i < 4){
-		rect(current_x+block[i][0]*block_size,current_y+block[i][1]*block_size,block_size-2,block_size-2)
-		i++
+	repeat (4){
+		rect(current_x+block[cnt][0]*block_size,current_y+block[cnt][1]*block_size,block_size-2,block_size-2)
 	}
 }
 
@@ -147,8 +145,8 @@ while (true){
 		int j = 0
 		while (j < map_sizeY){
 			ty = j
-			if (map[ty][tx]){
-				color(block_colors[map[ty][tx]-1][0],block_colors[map[ty][tx]-1][1],block_colors[map[ty][tx]-1][2])
+			if (int p = map[ty][tx]){
+				color(block_colors[p-1][0],block_colors[p-1][1],block_colors[p-1][2])
 			}else{
 				color(24,24,24)
 			}
@@ -184,7 +182,8 @@ while (true){
 	print(getfps())
 	
 	redraw(1)
-	await(16)
+	await()
+	//await(16)
 }
 
 void fixBlockToMap() {
