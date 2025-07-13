@@ -17,12 +17,13 @@ Graphic::Graphic(int width, int height, bool is_fullscreen)
 	if (!GLEW_ARB_bindless_texture)
 		throw WindowException("OpenGL does not support bindless textures.");
 	//フォント初期化+読み込み
-	font.Init(width, height);
-	font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
+	windows[WinID].font.Init(width, height, characters, glyph_atlas);
+	glyph_atlas.create(2048, 2048, GL_R8, GL_RED);
+	windows[WinID].font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
 	//各種図形の初期化
-	shape.Init(width, height);
+	windows[WinID].shape.Init(width, height);
 	//画像の初期化
-	image.Init(width, height);
+	windows[WinID].image.Init(width, height, images);
 
 	//開始時刻記録
 	lastTime = SDL_GetTicks();
@@ -64,27 +65,27 @@ void Graphic::SetHSVColors(int h, int s, int v, int a, int index) {
 }
 
 void Graphic::SetFont(unsigned long long size, const string& font_path) {
-	font.SetFont(font_path.c_str(), size);
+	windows[WinID].font.SetFont(font_path.c_str(), size);
 	font_size = size;
 }
 
 void Graphic::printText(const string& text) {
-	font.SetTexts(text, windows[WinID].pos.x, windows[WinID].pos.y, windows[WinID].Width(), windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
+	windows[WinID].font.SetTexts(text, windows[WinID].pos.x, windows[WinID].pos.y, windows[WinID].Width(), windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
 	Draw();
 	//下にずらす
 	windows[WinID].pos.y += font_size * (count(text.begin(), text.end(), '\n') + 1);
 }
 
 void Graphic::Load_Image(const string& file_path, unsigned int id, int center_x, int center_y) {
-	image.Load(file_path, id, center_x, center_y);
+	windows[WinID].image.Load(file_path, id, center_x, center_y);
 }
 
 void Graphic::SetTexture(int id, float tex_x, float tex_y, float tex_width, float tex_height) {
 	if (id < 0) {
-		shape.SetTexture(0, false); //無効なIDならテクスチャを無効化
+		windows[WinID].shape.SetTexture(0, false); //無効なIDならテクスチャを無効化
 		return;
 	}
-	shape.SetTexture(image.GetImageData(id), true, tex_x, tex_y, tex_width, tex_height);
+	windows[WinID].shape.SetTexture(&images[id], true, tex_x, tex_y, tex_width, tex_height);
 }
 
 //ダイアログ表示
@@ -101,39 +102,39 @@ void Graphic::CallDialog(const string& title, const string& message, int type) c
 }
 
 void Graphic::DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-	shape.draw_triangle(x1, y1, x2, y2, x3, y3, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), gmode, windows[WinID].all_vertices, 0);
+	windows[WinID].shape.draw_triangle(x1, y1, x2, y2, x3, y3, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), gmode, windows[WinID].all_vertices, 0);
 	Draw();
 }
 
 void Graphic::DrawRectangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-	shape.draw_triangle(x1, y1, x2, y2, x3, y3, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), gmode, windows[WinID].all_vertices, 1);
-	shape.draw_triangle(x1, y1, x3, y3, x4, y4, windows[WinID].colors.at(0), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices, 2);
+	windows[WinID].shape.draw_triangle(x1, y1, x2, y2, x3, y3, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), gmode, windows[WinID].all_vertices, 1);
+	windows[WinID].shape.draw_triangle(x1, y1, x3, y3, x4, y4, windows[WinID].colors.at(0), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices, 2);
 	Draw();
 }
 
 void Graphic::DrawRoundRect(float x, float y, float width, float height, float radius) {
-	shape.draw_round_rectangle(x, y, width, height, radius, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
+	windows[WinID].shape.draw_round_rectangle(x, y, width, height, radius, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
 	Draw();
 }
 
 void Graphic::DrawLine(float x1, float y1, float x2, float y2) {
-	shape.draw_line(x1, y1, x2, y2, windows[WinID].colors.at(0), windows[WinID].colors.at(1), gmode, windows[WinID].all_vertices);
+	windows[WinID].shape.draw_line(x1, y1, x2, y2, windows[WinID].colors.at(0), windows[WinID].colors.at(1), gmode, windows[WinID].all_vertices);
 	Draw();
 	windows[WinID].pos.x = x1; // 最後の座標を表示位置に設定
 	windows[WinID].pos.y = y1; // 最後の座標を表示位置に設定
 }
 
 void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle) {
-	shape.draw_ellipse(center_x, center_y, major_axis, minor_axis, -angle, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
+	windows[WinID].shape.draw_ellipse(center_x, center_y, major_axis, minor_axis, -angle, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
 	Draw();
 }
 
 void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle, int tex_x, int tex_y, int tex_width, int tex_height) {
 	if (gmode & 1) {
-		image.DrawImage(id, windows[WinID].pos.x, windows[WinID].pos.y, x_size, y_size, -angle, tex_x, tex_y, tex_width, tex_height, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
+		windows[WinID].image.DrawImage(id, windows[WinID].pos.x, windows[WinID].pos.y, x_size, y_size, -angle, tex_x, tex_y, tex_width, tex_height, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
 	} else {
 		SDL_Color image_color = { 255, 255, 255, 255 }; // デフォルトの画像色
-		image.DrawImage(id, windows[WinID].pos.x, windows[WinID].pos.y, x_size, y_size, -angle, tex_x, tex_y, tex_width, tex_height, image_color, image_color, image_color, image_color, gmode, windows[WinID].all_vertices);
+		windows[WinID].image.DrawImage(id, windows[WinID].pos.x, windows[WinID].pos.y, x_size, y_size, -angle, tex_x, tex_y, tex_width, tex_height, image_color, image_color, image_color, image_color, gmode, windows[WinID].all_vertices);
 	}
 	Draw();
 }
@@ -146,13 +147,13 @@ void Graphic::Clear(int r, int g, int b) {
 	windows[WinID].color = { 0,0,0, 255 };	//色を初期化
 	fill(windows[WinID].colors.begin(), windows[WinID].colors.end(), windows[WinID].color); //色のリストを現在の色で埋める
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	shape.SetTexture(0, false);
+	windows[WinID].shape.SetTexture(0, false);
 	gmode = 0; //描画モードを初期化
 }
 
-void Graphic::Draw() {
+void Graphic::Draw(bool force) {
 	if (!redraw) return; //描画フラグがfalseなら何もしない
-	if (lastTime + 1000 / fps > SDL_GetTicks()) return; //フレームレート制限
+	if (!force && (lastTime + 1000 / fps > SDL_GetTicks())) return; //フレームレート制限
 	lastTime = SDL_GetTicks();
 
 	glClearColor(windows[WinID].system_color.r / 255.0f,
@@ -285,13 +286,14 @@ void Graphic::CreateScreen(int id, const string& title, int width, int height, i
 	windows[id].Create(false, title, width, height, mode);
 	WinID = id; // 新しいウィンドウを作成したので、現在のウィンドウIDを更新
 
-	font.Init(width, height);
-	font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size-1);
-	shape.Init(width, height);
-	image.Init(width, height);
+	windows[WinID].font.Init(width, height, characters, glyph_atlas);
+	windows[WinID].font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
+	windows[WinID].shape.Init(width, height);
+	windows[WinID].image.Init(width, height, images);
 }
 
 void Graphic::MakeCurrentWindow(int id, int mode) {
+	Draw(true); // 強制的に描画を更新
 	if (windows.count(id)) {
 		WinID = id; // 現在のウィンドウIDを更新
 		windows[WinID].MakeCurrent();
@@ -331,9 +333,9 @@ void Graphic::DestroyWindow(int id) {
 void Graphic::ResizeWindow(int new_width, int new_height) {
 	if (new_width <= 0 || new_height <= 0) return; // 無効なサイズは無視
 	windows[WinID].Resize(new_width, new_height);
-	shape.updateProjection(new_width, new_height);
-	image.updateProjection(new_width, new_height);
-	font.updateProjection(new_width, new_height);
+	windows[WinID].shape.updateProjection(new_width, new_height);
+	windows[WinID].image.updateProjection(new_width, new_height);
+	windows[WinID].font.updateProjection(new_width, new_height);
 }
 void Graphic::SetWindowTitle(const std::string& title) const {
 	windows.at(WinID).SetTitle(title);

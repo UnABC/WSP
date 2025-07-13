@@ -3,7 +3,6 @@
 
 #include "exception.hpp"
 #include "font.hpp"
-#include "shape.hpp"
 #include "Image.hpp"
 #include "window.hpp"
 
@@ -34,9 +33,11 @@ private:
 	unsigned long long awaitTime = 0;
 
 	SDL_Event event;
-	Font font;
-	Shape shape;
-	Image image;
+	// 画像データのリスト
+	std::map<unsigned int, image_data> images;
+	// fontキャッシュ
+	std::unordered_map<char16_t, Character> characters;
+	BLTexture glyph_atlas;
 
 	void FailedToInitialize(const std::string& message);
 	void Set_Gmode(int gmode);
@@ -71,15 +72,15 @@ public:
 	void Clear(int r = 255, int g = 255, int b = 255);
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 
-	void CreateScreen(int id,const std::string& title = "WSP", int width = 640, int height = 480, int mode = 0);
-	void MakeCurrentWindow(int id,int mode = 0);
+	void CreateScreen(int id, const std::string& title = "WSP", int width = 640, int height = 480, int mode = 0);
+	void MakeCurrentWindow(int id, int mode = 0);
 	void HideWindow(int id);
 	void ShowWindow(int id);
 	void DestroyWindow(int id);
 	void ResizeWindow(int new_width, int new_height);
 	void SetWindowTitle(const std::string& title) const;
 
-	void Draw();
+	void Draw(bool force = false);
 	void Stop();
 	void End() const;
 };

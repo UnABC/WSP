@@ -3,6 +3,9 @@
 
 #include "exception.hpp"
 #include "shader.hpp"
+#include "shape.hpp"
+#include "Image.hpp"
+#include "font.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <vector>
@@ -25,6 +28,10 @@ public:
 	std::vector<SDL_Color> colors;	//色のリスト
 	//キャッシュ
 	std::vector<AllVertexData> all_vertices;	//全ての頂点データを保持するベクター
+
+	Shape shape;
+	Image image;
+	Font font;
 
 	Window() : colors(4, { 0, 0, 0, 255 }) {} // 初期化時に白色を設定
 	~Window();

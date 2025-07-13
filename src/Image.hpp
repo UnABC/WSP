@@ -17,7 +17,7 @@ private:
 	glm::mat4 projection;
 
 	// 画像データのリスト
-	std::map<unsigned int, image_data> images;
+	std::map<unsigned int, image_data> *images;
 
 	GLuint vao, vbo;
 	GLuint shaderProgram;
@@ -53,9 +53,8 @@ private:
 		}
 	)glsl";
 public:
-	void Init(int width, int height);
+	void Init(int width, int height,std::map<unsigned int, image_data> &global_images);
 	void updateProjection(int width, int height) { projection = ShaderUtil::recalcProjection(width, height); }
-	image_data* GetImageData(unsigned int id) { return images.count(id) ? &images[id] : nullptr; }
 	void Load(const std::string& file_path, int id, int center_x = 0, int center_y = 0);
 	void DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, int tex_x, int tex_y, int tex_width, int tex_height, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };

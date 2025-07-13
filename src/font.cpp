@@ -11,7 +11,7 @@ Font::~Font() {
 	if (library)FT_Done_FreeType(library);
 }
 
-void Font::Init(int width, int height) {
+void Font::Init(int width, int height, unordered_map<char16_t, Character>& global_char, BLTexture &global_texture) {
 	if (FT_Init_FreeType(&library))
 		throw FontException("Failed to initialize FreeType library.");
 	glGenVertexArrays(1, &vao);
@@ -36,13 +36,15 @@ void Font::Init(int width, int height) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	glyph_atlas.create(atlas_max_size, atlas_max_size, GL_R8, GL_RED);
 	//shaderProgram = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
 	projection = ShaderUtil::recalcProjection(width, height);
+
+	characters = &global_char;
+	glyph_atlas = &global_texture;
 }
 
 void Font::MakeCache(char16_t c) {
-	if (characters.count(c)) return; // 既にキャッシュが存在する場合は何もしない
+	if (characters->count(c)) return; // 既にキャッシュが存在する場合は何もしない
 
 	if (FT_Load_Char(face, c, FT_LOAD_RENDER))
 		throw FontException("Failed to load character.");
@@ -57,12 +59,12 @@ void Font::MakeCache(char16_t c) {
 	}
 	// オーバーしたら初期化
 	if (atlas_cursor.y + glyph->bitmap.rows + pedding > atlas_max_size) {
-		glyph_atlas.create(atlas_max_size, atlas_max_size, GL_R8, GL_RED);
+		glyph_atlas->create(atlas_max_size, atlas_max_size, GL_R8, GL_RED);
 		atlas_cursor = { 0, 0 };
 		atlas_line_height = 0;
-		characters.clear();
+		characters->clear();
 	}
-	glyph_atlas.update_texture(atlas_cursor.x, atlas_cursor.y, glyph->bitmap.width, glyph->bitmap.rows, slot->bitmap.buffer, GL_RED);
+	glyph_atlas->update_texture(atlas_cursor.x, atlas_cursor.y, glyph->bitmap.width, glyph->bitmap.rows, slot->bitmap.buffer, GL_RED);
 
 	Character character_data;
 	character_data.Size = { (float)slot->bitmap.width, (float)slot->bitmap.rows };
@@ -70,7 +72,7 @@ void Font::MakeCache(char16_t c) {
 	character_data.Advance = (float)(slot->advance.x >> 6);
 	character_data.uv_top_left = { (float)atlas_cursor.x / atlas_max_size, (float)atlas_cursor.y / atlas_max_size };
 	character_data.uv_bottom_right = { (float)(atlas_cursor.x + slot->bitmap.width) / atlas_max_size, (float)(atlas_cursor.y + slot->bitmap.rows) / atlas_max_size };
-	characters[c] = character_data;
+	(*characters)[c] = character_data;
 
 	atlas_cursor.x += glyph->bitmap.width + pedding;
 	atlas_line_height = max(atlas_line_height, (unsigned int)glyph->bitmap.rows + pedding);
@@ -94,7 +96,7 @@ void Font::SetFont(const char* font_path, int size) {
 	font_size = size;
 
 	//よく使われる文字のキャッシュを作成
-	characters.clear();
+	characters->clear();
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	// ASCII文字のキャッシュを作成
 	for (char16_t c = 32; c < 127;c++)
@@ -135,11 +137,11 @@ void Font::SetTexts(string text, float x, float y, int width, SDL_Color color1, 
 			continue;
 		}
 		//キャッシュ作成
-		if (!characters.count(text16[i]))
+		if (!characters->count(text16[i]))
 			MakeCache(text16[i]);
-		Character ch = characters[text16[i]];
+		Character ch = (*characters)[text16[i]];
 
-		GLuint64 handle = glyph_atlas.getBindlessTextureHandle();
+		GLuint64 handle = glyph_atlas->getBindlessTextureHandle();
 		GLuint handle1 = static_cast<GLuint>(handle & 0xFFFFFFFF);
 		GLuint handle2 = static_cast<GLuint>(handle >> 32);
 

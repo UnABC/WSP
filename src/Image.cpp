@@ -2,7 +2,7 @@
 #include "Image.hpp"
 using namespace std;
 
-void Image::Init(int width, int height) {
+void Image::Init(int width, int height, map<unsigned int, image_data> &global_images) {
 	this->width = width;
 	this->height = height;
 
@@ -31,18 +31,19 @@ void Image::Init(int width, int height) {
 	if (!shaderProgram)
 		throw ImageException("Failed to create image shader program.");
 	projection = ShaderUtil::recalcProjection(width, height);
+	images = &global_images;
 }
 
 void Image::Load(const std::string& file_path, int id, int center_x, int center_y) {
-	pair<int, int> size = images[id].texture.load(file_path.c_str());
-	images[id].width = size.first;
-	images[id].height = size.second;
-	images[id].center_x = center_x;
-	images[id].center_y = center_y;
+	pair<int, int> size = (*images)[id].texture.load(file_path.c_str());
+	(*images)[id].width = size.first;
+	(*images)[id].height = size.second;
+	(*images)[id].center_x = center_x;
+	(*images)[id].center_y = center_y;
 }
 
 void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, int tex_x, int tex_y, int tex_width, int tex_height, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, vector<AllVertexData>& all_vertices) {
-	if (!images.count(id))
+	if (!images->count(id))
 		throw ImageException("Image ID not found: " + to_string(id));
 	if (!shaderProgram || !vbo || !vao)
 		throw ImageException("Image not initialized.");
@@ -53,7 +54,7 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 	transform = glm::rotate(transform, angle, glm::vec3(0.0f, 0.0f, 1.0f));
 	transform = glm::scale(transform, glm::vec3(x_size, y_size, 1.0f));
 
-	GLuint64 handle = images[id].texture.getBindlessTextureHandle();
+	GLuint64 handle = (*images)[id].texture.getBindlessTextureHandle();
 	GLuint handle1 = static_cast<GLuint>(handle & 0xFFFFFFFF);
 	GLuint handle2 = static_cast<GLuint>(handle >> 32);
 
@@ -66,17 +67,17 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 	struct normalized_color normalized_color4 = { color4.r / 255.0f, color4.g / 255.0f, color4.b / 255.0f, color4.a / 255.0f };
 
 	// テクスチャ座標の計算
-	float tex_min_x = (tex_x < 0) ? 0.0f : static_cast<float>(tex_x) / images[id].width;
-	float tex_min_y = (tex_y < 0) ? 0.0f : static_cast<float>(tex_y) / images[id].height;
-	float tex_max_x = (tex_x < 0) ? 1.0f : static_cast<float>(tex_x + tex_width) / images[id].width;
-	float tex_max_y = (tex_y < 0) ? 1.0f : static_cast<float>(tex_y + tex_height) / images[id].height;
+	float tex_min_x = (tex_x < 0) ? 0.0f : static_cast<float>(tex_x) / (*images)[id].width;
+	float tex_min_y = (tex_y < 0) ? 0.0f : static_cast<float>(tex_y) / (*images)[id].height;
+	float tex_max_x = (tex_x < 0) ? 1.0f : static_cast<float>(tex_x + tex_width) / (*images)[id].width;
+	float tex_max_y = (tex_y < 0) ? 1.0f : static_cast<float>(tex_y + tex_height) / (*images)[id].height;
 	float tex_width_size = tex_max_x - tex_min_x;
 	float tex_height_size = tex_max_y - tex_min_y;
 	//位置
-	float min_x = -images[id].center_x;
-	float min_y = -images[id].center_y;
-	float max_x = tex_width_size * images[id].width - images[id].center_x;
-	float max_y = tex_height_size * images[id].height - images[id].center_y;
+	float min_x = -(*images)[id].center_x;
+	float min_y = -(*images)[id].center_y;
+	float max_x = tex_width_size * (*images)[id].width - (*images)[id].center_x;
+	float max_y = tex_height_size * (*images)[id].height - (*images)[id].center_y;
 
 	glm::vec3 v1 = transform * glm::vec4(min_x, min_y, 0.0, 1.0f);
 	glm::vec3 v2 = transform * glm::vec4(max_x, min_y, 0.0, 1.0f);

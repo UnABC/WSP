@@ -8,6 +8,6 @@ print("SCREEN 1")
 
 pos(50,50)
 DrawImage(1,0.5,0.5)
-/*
+
 gsel(0)
 print("screen 0")

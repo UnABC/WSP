@@ -95,6 +95,7 @@ void Window::SetPosition(int x, int y) {
 void Window::MakeCurrent() {
 	if (SDL_GL_MakeCurrent(window, glContext) < 0)
 		throw WindowException("Failed to make OpenGL context current: " + string(SDL_GetError()));
+	glViewport(0, 0, width, height);
 }
 
 void Window::Destroy() const {
