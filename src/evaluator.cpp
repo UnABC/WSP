@@ -261,6 +261,16 @@ Var Evaluator::CalcExpr(AST* ast) {
 				} else {
 					return Var((long double)mousey);
 				}
+			} else if (functionName == "noteload") {
+				string filename = CalcExpr(args.at(0)).GetValue<string>();
+				ifstream ifs(filename);
+				if (!ifs)
+					throw EvaluatorException("Failed to open file: " + filename);
+				string content((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
+				ifs.close();
+				return Var(content);
+			} else if (functionName == "exist") {
+				return Var(filesystem::exists(CalcExpr(args.at(0)).GetValue<string>()) ? 1LL : 0LL);
 			}
 		} else if (args.size() == 2) {
 			//引数2つ
@@ -945,6 +955,53 @@ void Evaluator::VoidFunction(AST* ast) {
 		if (args.size() != 1)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.ShowWindow(CalcExpr(args.at(0)).GetValue<long long>());
+		return;
+	} else if (functionName == "notesave") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		ofstream ofs(CalcExpr(args.at(0)).GetValue<string>());
+		if (!ofs)
+			throw RuntimeException("Failed to open file for writing.", node->lineNumber, node->columnNumber);
+		ofs << CalcExpr(args.at(1)).GetValue<string>();
+		ofs.close();
+		return;
+	} else if (functionName == "makedir") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		if (!filesystem::create_directory(CalcExpr(args.at(0)).GetValue<string>()))
+			throw RuntimeException("Failed to create directory.", node->lineNumber, node->columnNumber);
+		return;
+	} else if (functionName == "rmfile") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		if (!filesystem::remove(CalcExpr(args.at(0)).GetValue<string>()))
+			throw RuntimeException("Failed to delete file.", node->lineNumber, node->columnNumber);
+		return;
+	} else if (functionName == "rmdir") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		if (!filesystem::remove_all(CalcExpr(args.at(0)).GetValue<string>()))
+			throw RuntimeException("Failed to remove directory.", node->lineNumber, node->columnNumber);
+		return;
+	} else if (functionName == "rename") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		filesystem::rename(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>());
+		return;
+	} else if (functionName == "cpfile") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		filesystem::copy_file(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>(), filesystem::copy_options::overwrite_existing);
+		return;
+	} else if (functionName == "cpdir") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		filesystem::copy(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>(), filesystem::copy_options::recursive | filesystem::copy_options::overwrite_existing);
+		return;
+	} else if (functionName == "system") {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		system(CalcExpr(args.at(0)).GetValue<string>().c_str());
 		return;
 	}
 	if (user_func.count(functionName)) {

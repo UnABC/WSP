@@ -1,0 +1,9 @@
+if (!exist("test/test.txt"))print("Not found test.txt")
+
+int a = 123
+notesave("test/test.txt",a)
+a = 0
+print(a)
+a = noteload("test/test.txt")
+print(a)
+

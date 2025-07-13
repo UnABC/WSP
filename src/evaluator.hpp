@@ -6,6 +6,8 @@
 #include "graphic.hpp"
 #include "Audio.hpp"
 #include <SDL3/SDL_oldnames.h>
+#include <fstream>
+#include <filesystem>
 
 class Evaluator {
 private:
