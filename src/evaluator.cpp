@@ -937,7 +937,17 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
 		return;
-	} else if (functionName == "gsel") {
+	} else if (functionName == "ScreenPos"){
+		if (args.size() != 3)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.SetWindowPosition(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long long>(),
+			CalcExpr(args.at(2)).GetValue<long long>()
+		);
+		return;
+	}
+	else if (functionName == "gsel") {
 		if (args.size() == 1) {
 			graphic.MakeCurrentWindow(CalcExpr(args.at(0)).GetValue<long long>());
 		} else if (args.size() == 2) {
@@ -955,6 +965,69 @@ void Evaluator::VoidFunction(AST* ast) {
 		if (args.size() != 1)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.ShowWindow(CalcExpr(args.at(0)).GetValue<long long>());
+		return;
+	} else if (functionName == "gcopy") {
+		if (args.size() == 1) {
+			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		} else if (args.size() == 3) {
+			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 4) {
+			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long double>(), CalcExpr(args.at(2)).GetValue<long double>(), CalcExpr(args.at(3)).GetValue<long double>());
+		} else if (args.size() == 5) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>()
+			);
+		} else if (args.size() == 6) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>()
+			);
+		} else if (args.size() == 7) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>()
+			);
+		} else if (args.size() == 8) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>(),
+				CalcExpr(args.at(7)).GetValue<long double>()
+			);
+		} else if (args.size() == 9) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>(),
+				CalcExpr(args.at(7)).GetValue<long double>(),
+				CalcExpr(args.at(8)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
 		return;
 	} else if (functionName == "notesave") {
 		if (args.size() != 2)

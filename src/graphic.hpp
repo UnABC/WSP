@@ -16,6 +16,7 @@
 #include <vector>
 #include <map>
 #include <ranges>
+#include <iostream>
 
 class Graphic {
 private:
@@ -79,6 +80,9 @@ public:
 	void DestroyWindow(int id);
 	void ResizeWindow(int new_width, int new_height);
 	void SetWindowTitle(const std::string& title) const;
+	void SetWindowPosition(int id, int x, int y);
+
+	void Gcopy(int id, int src_x = 0, int src_y = 0, int src_width = -1, int src_height = -1, int dst_x = 0, int dst_y = 0, int dst_width = -1, int dst_height = -1);
 
 	void Draw(bool force = false);
 	void Stop();

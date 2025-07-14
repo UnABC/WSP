@@ -13,9 +13,10 @@ Shape::~Shape() {
 	if (shaderProgram_roundrect) glDeleteProgram(shaderProgram_roundrect);
 }
 
-void Shape::Init(int w, int h) {
+void Shape::Init(int w, int h, glm::mat4* proj) {
 	width = w;
 	height = h;
+	projection = proj;
 	// 三角形の頂点配列オブジェクトとバッファオブジェクトを生成
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
@@ -136,7 +137,6 @@ void Shape::Init(int w, int h) {
 	shaderProgram_ellipse = ShaderUtil::createShaderProgram(vertexShaderSource_ellipse, fragmentShaderSource_ellipse);
 	if (!shaderProgram_ellipse)
 		throw ShapeException("Failed to create ellipse shader program.");
-	projection = ShaderUtil::recalcProjection(width, height);
 }
 
 void Shape::SetTexture(image_data* image, bool enable, float tex_x, float tex_y, float tex_width, float tex_height) {
@@ -231,7 +231,7 @@ void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, floa
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
 		new_data.ID = 2; // 2: 三角形
-		new_data.projection = projection;
+		new_data.projection = *projection;
 		new_data.vao = vao;
 		new_data.vbo = vbo;
 		new_data.shaderProgram = shaderProgram_triangle;
@@ -293,7 +293,7 @@ void Shape::draw_round_rectangle(float x, float y, float width, float height, fl
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
 		new_data.ID = 3; // 3: 角丸四角形
-		new_data.projection = projection;
+		new_data.projection = *projection;
 		new_data.vao = vao_roundrect;
 		new_data.vbo = vbo_roundrect;
 		new_data.shaderProgram = shaderProgram_roundrect;
@@ -324,7 +324,7 @@ void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, 
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
 		new_data.ID = 4; // 4: 線分
-		new_data.projection = projection;
+		new_data.projection = *projection;
 		new_data.vao = vao_line;
 		new_data.vbo = vbo_line;
 		new_data.shaderProgram = shaderProgram_triangle;
@@ -390,7 +390,7 @@ void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
 		new_data.ID = 5; // 5: 楕円
-		new_data.projection = projection;
+		new_data.projection = *projection;
 		new_data.vao = vao_ellipse;
 		new_data.vbo = vbo_ellipse;
 		new_data.shaderProgram = shaderProgram_ellipse;

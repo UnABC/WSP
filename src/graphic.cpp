@@ -9,21 +9,14 @@ Graphic::Graphic(int width, int height, bool is_fullscreen)
 		throw WindowException("Failed to initialize SDL.");
 	//ウィンドウ作成
 	windows[WinID].Create(true, "WSP", width, height, is_fullscreen);
-
-	glewExperimental = GL_TRUE;
-	GLenum err = glewInit();
-	if (err != GLEW_OK)
-		throw WindowException(reinterpret_cast<const char*>(glewGetErrorString(err)));
-	if (!GLEW_ARB_bindless_texture)
-		throw WindowException("OpenGL does not support bindless textures.");
 	//フォント初期化+読み込み
-	windows[WinID].font.Init(width, height, characters, glyph_atlas);
+	windows[WinID].font.Init(characters, glyph_atlas, &windows[WinID].projection);
 	glyph_atlas.create(2048, 2048, GL_R8, GL_RED);
 	windows[WinID].font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
 	//各種図形の初期化
-	windows[WinID].shape.Init(width, height);
+	windows[WinID].shape.Init(width, height, &windows[WinID].projection);
 	//画像の初期化
-	windows[WinID].image.Init(width, height, images);
+	windows[WinID].image.Init(images, &windows[WinID].projection);
 
 	//開始時刻記録
 	lastTime = SDL_GetTicks();
@@ -156,6 +149,9 @@ void Graphic::Draw(bool force) {
 	if (!force && (lastTime + 1000 / fps > SDL_GetTicks())) return; //フレームレート制限
 	lastTime = SDL_GetTicks();
 
+	glBindFramebuffer(GL_FRAMEBUFFER, windows[WinID].GetFBO()); // FBOに描画
+	glViewport(0, 0, windows[WinID].Width(), windows[WinID].Height()); // ビューポートをウィンドウサイズに設定
+	// 背景色を設定
 	glClearColor(windows[WinID].system_color.r / 255.0f,
 		windows[WinID].system_color.g / 255.0f,
 		windows[WinID].system_color.b / 255.0f,
@@ -164,6 +160,19 @@ void Graphic::Draw(bool force) {
 	//各種描画
 	int old_id = -1;
 	for (auto& vertex_data : windows[WinID].all_vertices) {
+		if (vertex_data.ID == 6) {
+			old_id = 6; // FBOの描画は特別扱い
+			int id = vertex_data.division; // FBOのIDを取得
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, windows[id].GetFBO());
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, windows[WinID].GetFBO());
+			glBlitFramebuffer(vertex_data.all_vertices[0], vertex_data.all_vertices[1],
+				vertex_data.all_vertices[2], vertex_data.all_vertices[3],
+				vertex_data.all_vertices[4], vertex_data.all_vertices[5],
+				vertex_data.all_vertices[6], vertex_data.all_vertices[7],
+				GL_COLOR_BUFFER_BIT, GL_LINEAR);
+			glBindFramebuffer(GL_FRAMEBUFFER, windows[WinID].GetFBO());
+			continue; // FBOの描画はここで終了
+		}
 		if (vertex_data.ID != old_id) {
 			if (!vertex_data.shaderProgram || !vertex_data.vao || !vertex_data.vbo)
 				throw WindowException("Invalid vertex data in all_vertices.");
@@ -178,6 +187,8 @@ void Graphic::Draw(bool force) {
 		old_id = vertex_data.ID; // 最後に描画したIDを保存
 	}
 	glBindVertexArray(0);
+
+	windows[WinID].DrawToDefault(); // スクリーン全体を描画
 
 	if (!windows[WinID].GLSwap())
 		FailedToInitialize(SDL_GetError());
@@ -286,10 +297,10 @@ void Graphic::CreateScreen(int id, const string& title, int width, int height, i
 	windows[id].Create(false, title, width, height, mode);
 	WinID = id; // 新しいウィンドウを作成したので、現在のウィンドウIDを更新
 
-	windows[WinID].font.Init(width, height, characters, glyph_atlas);
+	windows[WinID].font.Init(characters, glyph_atlas, &windows[WinID].projection);
 	windows[WinID].font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
-	windows[WinID].shape.Init(width, height);
-	windows[WinID].image.Init(width, height, images);
+	windows[WinID].shape.Init(width, height, &windows[WinID].projection);
+	windows[WinID].image.Init(images, &windows[WinID].projection);
 }
 
 void Graphic::MakeCurrentWindow(int id, int mode) {
@@ -333,10 +344,43 @@ void Graphic::DestroyWindow(int id) {
 void Graphic::ResizeWindow(int new_width, int new_height) {
 	if (new_width <= 0 || new_height <= 0) return; // 無効なサイズは無視
 	windows[WinID].Resize(new_width, new_height);
-	windows[WinID].shape.updateProjection(new_width, new_height);
-	windows[WinID].image.updateProjection(new_width, new_height);
-	windows[WinID].font.updateProjection(new_width, new_height);
 }
+
 void Graphic::SetWindowTitle(const std::string& title) const {
 	windows.at(WinID).SetTitle(title);
+}
+
+void Graphic::SetWindowPosition(int id, int x, int y) {
+	if (windows.count(id)) {
+		windows[id].SetPosition(x, y);
+	} else {
+		throw WindowException("Window ID does not exist.");
+	}
+}
+
+void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y, int dst_width, int dst_height) {
+	if (windows.count(id)) {
+		if (id == WinID)return;
+		if (src_width < 0)src_width = windows[id].Width(); // デフォルトはウィンドウの幅
+		if (src_height < 0)src_height = windows[id].Height(); // デフォルトはウィンドウの高さ
+		if (dst_width < 0) dst_width = windows[WinID].Width(); // デフォルトは現在のウィンドウの幅
+		if (dst_height < 0) dst_height = windows[WinID].Height(); // デフォルトは現在のウィンドウの高さ
+		src_y = windows[id].Height() - src_y - src_height; // SDLの座標系に合わせてY座標を調整
+		dst_y = windows[WinID].Height() - dst_y - dst_height;
+		AllVertexData new_data;
+		new_data.all_vertices.push_back((float)src_x);
+		new_data.all_vertices.push_back((float)src_y + src_height);
+		new_data.all_vertices.push_back((float)src_x + src_width);
+		new_data.all_vertices.push_back((float)src_y);
+		new_data.all_vertices.push_back((float)dst_x);
+		new_data.all_vertices.push_back((float)dst_y + dst_height);
+		new_data.all_vertices.push_back((float)dst_x + dst_width);
+		new_data.all_vertices.push_back((float)dst_y);
+		new_data.division = id;
+		new_data.gmode = 0; // 通常の描画モード
+		new_data.ID = 6;
+		windows[WinID].all_vertices.push_back(new_data);
+	} else {
+		throw WindowException("Window ID does not exist.");
+	}
 }

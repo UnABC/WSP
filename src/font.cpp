@@ -11,7 +11,9 @@ Font::~Font() {
 	if (library)FT_Done_FreeType(library);
 }
 
-void Font::Init(int width, int height, unordered_map<char16_t, Character>& global_char, BLTexture &global_texture) {
+void Font::Init(unordered_map<char16_t, Character>& global_char, BLTexture &global_texture, glm::mat4 *proj) {
+	projection = proj;
+	
 	if (FT_Init_FreeType(&library))
 		throw FontException("Failed to initialize FreeType library.");
 	glGenVertexArrays(1, &vao);
@@ -37,7 +39,6 @@ void Font::Init(int width, int height, unordered_map<char16_t, Character>& globa
 	glBindVertexArray(0);
 
 	//shaderProgram = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
-	projection = ShaderUtil::recalcProjection(width, height);
 
 	characters = &global_char;
 	glyph_atlas = &global_texture;
@@ -180,7 +181,7 @@ void Font::SetTexts(string text, float x, float y, int width, SDL_Color color1, 
 			new_data.all_vertices = vector<float>();
 			new_data.gmode = local_gmode;
 			new_data.ID = 0; // 0: テキスト
-			new_data.projection = projection;
+			new_data.projection = *projection;
 			new_data.vao = vao;
 			new_data.vbo = vbo;
 			new_data.shaderProgram = shaderProgram;

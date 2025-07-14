@@ -25,7 +25,7 @@ class Shape {
 	GLuint shaderProgram_ellipse;
 
 	Texture_color texture;
-	glm::mat4 projection;
+	glm::mat4 *projection;
 	//三角形のシェーダー
 	const char* vertexShaderSource = R"glsl(
 		#version 450 core
@@ -233,8 +233,7 @@ class Shape {
 public:
 	Shape() : width(640), height(480), vao(0), vbo(0), shaderProgram_triangle(0) {};
 	~Shape();
-	void Init(int w, int h);
-	void updateProjection(int width, int height) { projection = ShaderUtil::recalcProjection(width, height); }
+	void Init(int w, int h,glm::mat4* proj);
 	void SetTexture(image_data* image, bool enable = true, float tex_x = 0.0f, float tex_y = 0.0f, float tex_width = -1.0f, float tex_height = -1.0f);
 	void draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, std::vector<AllVertexData>& all_vertices, int isRect = 0);
 	void draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);

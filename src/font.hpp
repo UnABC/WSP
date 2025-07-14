@@ -25,7 +25,7 @@ private:
     FT_Library library;
     FT_Face face;
     FT_GlyphSlot slot;
-    glm::mat4 projection;
+    glm::mat4 *projection;
     GLuint vao, vbo;
 
     // font関連
@@ -80,8 +80,7 @@ private:
 public:
     Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0) {};
     ~Font();
-    void Init(int width, int height,std::unordered_map<char16_t, Character>& global_char,BLTexture &global_texture);
-    void updateProjection(int width, int height) { projection = ShaderUtil::recalcProjection(width, height); }
+    void Init(std::unordered_map<char16_t, Character>& global_char,BLTexture &global_texture, glm::mat4 *proj);
     void SetFont(const char* font_path, int size);
     void SetTexts(std::string text, float x, float y, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };

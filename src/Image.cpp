@@ -2,9 +2,8 @@
 #include "Image.hpp"
 using namespace std;
 
-void Image::Init(int width, int height, map<unsigned int, image_data> &global_images) {
-	this->width = width;
-	this->height = height;
+void Image::Init(map<unsigned int, image_data> &global_images, glm::mat4 *proj) {
+	projection = proj;
 
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
@@ -30,7 +29,6 @@ void Image::Init(int width, int height, map<unsigned int, image_data> &global_im
 	shaderProgram = ShaderUtil::createShaderProgram(vertexShaderSource, fragmentShaderSource);
 	if (!shaderProgram)
 		throw ImageException("Failed to create image shader program.");
-	projection = ShaderUtil::recalcProjection(width, height);
 	images = &global_images;
 }
 
@@ -102,7 +100,7 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 		new_data.gmode = local_gmode;
 		new_data.ID = 1;
 		new_data.division = 11;
-		new_data.projection = projection;
+		new_data.projection = *projection;
 		new_data.vao = vao;
 		new_data.vbo = vbo;
 		new_data.shaderProgram = shaderProgram;

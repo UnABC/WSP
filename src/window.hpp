@@ -19,8 +19,38 @@ class Window {
 private:
 	SDL_Window* window = nullptr;
 	SDL_GLContext glContext = nullptr;
+	GLuint fbo, texture, rbo;
+	GLuint vao, vbo, shaderProgram;
 	int width, height;
 	bool is_fullscreen;
+
+	const char* vertexShaderSource = R"glsl(
+		#version 330 core
+		layout (location = 0) in vec3 position;
+		out vec2 TexCoords;
+		void main() {
+			gl_Position = vec4(position, 1.0);
+			TexCoords = position.xy * 0.5 + 0.5; // [-1, 1] to [0, 1]
+		}
+	)glsl";
+	const char* fragmentShaderSource = R"glsl(
+		#version 330 core
+		out vec4 FragColor;
+		in vec2 TexCoords;
+		uniform sampler2D image;
+		void main() {
+			FragColor = texture(image, TexCoords);
+		}
+	)glsl";
+
+	const float vertex[6][3] = {
+		{-1.0f, -1.0f, 0.0f},
+		{ 1.0f, -1.0f, 0.0f},
+		{ 1.0f,  1.0f, 0.0f},
+		{-1.0f, -1.0f, 0.0f},
+		{ 1.0f,  1.0f, 0.0f},
+		{-1.0f,  1.0f, 0.0f}
+	};
 public:
 	Position pos = { 0, 0 };	//表示位置
 	SDL_Color color = { 0, 0, 0, 255 };	//黒色
@@ -32,6 +62,7 @@ public:
 	Shape shape;
 	Image image;
 	Font font;
+	glm::mat4 projection;
 
 	Window() : colors(4, { 0, 0, 0, 255 }) {} // 初期化時に白色を設定
 	~Window();
@@ -52,6 +83,9 @@ public:
 	int Height() const { return height; }
 	bool IsFullscreen() const { return is_fullscreen; }
 	void Destroy() const;
+	const GLuint& GetFBO() const { return fbo; }
+
+	void DrawToDefault();
 };
 
 #endif
