@@ -25,7 +25,8 @@ private:
     FT_Library library;
     FT_Face face;
     FT_GlyphSlot slot;
-    glm::mat4 *projection;
+    glm::mat4* projection;
+    glm::mat4* view;
     GLuint vao, vbo;
 
     // font関連
@@ -40,8 +41,10 @@ private:
         out vec4 outColor;
         flat out uvec2 TexHandle;
         uniform mat4 projection;
+        uniform mat4 view;
+
         void main() {
-            gl_Position = projection * vec4(position, 1.0);
+            gl_Position = projection * view * vec4(position, 1.0);
             TexCoords = texCoord;
             outColor = color;
             TexHandle = uvec2(aTexHandle);
@@ -66,8 +69,8 @@ private:
     GLuint shaderProgram;
 
     //フォントのキャッシュ
-    std::unordered_map<char16_t, Character> *characters;
-    BLTexture *glyph_atlas;
+    std::unordered_map<char16_t, Character>* characters;
+    BLTexture* glyph_atlas;
     glm::uvec2 atlas_cursor = { 0, 0 };
     unsigned int atlas_line_height = 0;
     const unsigned int atlas_max_size = 2048;
@@ -80,7 +83,7 @@ private:
 public:
     Font() : library(nullptr), face(nullptr), slot(nullptr), vao(0), vbo(0), shaderProgram(0) {};
     ~Font();
-    void Init(std::unordered_map<char16_t, Character>& global_char,BLTexture &global_texture, glm::mat4 *proj);
+    void Init(std::unordered_map<char16_t, Character>& global_char, BLTexture& global_texture, glm::mat4* proj, glm::mat4* global_view);
     void SetFont(const char* font_path, int size);
     void SetTexts(std::string text, float x, float y, int width, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };

@@ -63,6 +63,7 @@ public:
 	Image image;
 	Font font;
 	glm::mat4 projection;
+	glm::mat4 view;
 
 	Window() : colors(4, { 0, 0, 0, 255 }) {} // 初期化時に白色を設定
 	~Window();
@@ -72,6 +73,7 @@ public:
 	void Resize(int new_width, int new_height);
 	void SetTitle(const std::string& title) const;
 	void SetPosition(int x, int y);
+	void SetCameraPos(float x = 0.0f,float y = 0.0f,float z = 0.0f,float target_x = 0.0f, float target_y = 0.0f, float target_z = 0.0f);
 	void MakeCurrent();
 	void MakeTop() { SDL_RaiseWindow(window); }
 	void Hide() { SDL_HideWindow(window); }
@@ -84,6 +86,7 @@ public:
 	bool IsFullscreen() const { return is_fullscreen; }
 	void Destroy() const;
 	const GLuint& GetFBO() const { return fbo; }
+	void Clear(SDL_Color sys_col);
 
 	void DrawToDefault();
 };

@@ -354,6 +354,7 @@ iは整数型、dは浮動小数点型、sは文字列型を表します。引�
 | cpfile       | void  | s src, s dest                                                                                                                                          | ファイルをコピーする。srcはコピー元のファイルのパス、destはコピー先のファイルのパス。存在しない場合は何もしない。                                                                                                                                        |
 | cpdir        | void  | s src, s dest                                                                                                                                          | ディレクトリをコピーする。srcはコピー元のディレクトリのパス、destはコピー先のディレクトリのパス。存在しない場合は何もしない。                                                                                                                            |
 | system       | void  | s command                                                                                                                                              | システムコマンドを実行する。commandは実行するコマンドの文字列。                                                                                                                                                                                          |
+| Set3DCamera  | void  | i/d x(=0.0), i/d y(=0.0), i/d z(=0.0), i/d target_x(=0.0), i/d target_y(=0.0), i/d target_z(=0.0)                                                      | 3Dカメラの位置とターゲットを設定する。x, y, zはカメラの位置、target_x, target_y, target_zはカメラが向くターゲットの座標。この関数が呼び出された時点でそのウィンドウは3D描画モードになります。これはcls関数で解除可能です。                               |
 
 ### 各種定数
 

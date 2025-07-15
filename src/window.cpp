@@ -58,6 +58,7 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_DEPTH_TEST);
 
 	// フレームバッファオブジェクトの生成
 	glGenFramebuffers(1, &fbo);
@@ -99,6 +100,7 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 		throw WindowException("Failed to create window shader program: " + string(SDL_GetError()));
 	// プロジェクション行列の初期化
 	projection = ShaderUtil::recalcProjection(width, height);
+	view = glm::mat4(1.0f); // 初期ビュー行列は単位行列
 
 	//画面の初期化
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -123,7 +125,11 @@ void Window::Resize(int new_width, int new_height) {
 	if (new_width <= 0 || new_height <= 0) return; // 無効なサイズは無視
 	width = new_width;
 	height = new_height;
-	projection = ShaderUtil::recalcProjection(new_width, new_height);
+	if (view != glm::mat4(1.0f)) {
+		projection = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
+	} else {
+		projection = ShaderUtil::recalcProjection(new_width, new_height);
+	}
 	SDL_SetWindowSize(window, width, height);
 
 	// FBOのテクスチャとレンダーバッファをリサイズ
@@ -153,6 +159,15 @@ void Window::SetPosition(int x, int y) {
 	SDL_SetWindowPosition(window, x, y);
 }
 
+void Window::SetCameraPos(float x, float y, float z, float target_x, float target_y, float target_z) {
+	glm::vec3 UPvec(0.0f, 0.0f, 1.0f); // 上方向はZ軸
+	const glm::vec3 ViewVec = glm::normalize(glm::vec3(target_x - x, target_y - y, target_z - z));
+	if (abs(glm::dot(ViewVec, UPvec)) > 0.999f)
+		UPvec = glm::vec3(0.0f, 1.0f, 0.0f); // Z軸と平行な場合はY軸を上方向に設定
+	view = glm::lookAt(glm::vec3(x, y, z), glm::vec3(target_x, target_y, target_z), UPvec);
+	projection = glm::infinitePerspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f);
+}
+
 void Window::MakeCurrent() {
 	if (SDL_GL_MakeCurrent(window, glContext) < 0)
 		throw WindowException("Failed to make OpenGL context current: " + string(SDL_GetError()));
@@ -164,6 +179,20 @@ void Window::Destroy() const {
 		SDL_DestroyWindow(window);
 	if (glContext)
 		SDL_GL_DestroyContext(glContext);
+}
+
+void Window::Clear(SDL_Color sys_col) {
+	all_vertices.clear(); // 全ての頂点データをクリア
+	pos = { 0, 0 }; // 表示位置を初期化
+	color = { 0, 0, 0, 255 };
+	system_color = move(sys_col); // システム色を設定
+	fill(colors.begin(), colors.end(), color); // 色のリストを初期化
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	shape.SetTexture(0, false);
+	if (view != glm::mat4(1.0f)) {
+		view = glm::mat4(1.0f); // ビュー行列を初期化
+		projection = ShaderUtil::recalcProjection(width, height); // プロジェクション行列を再計算
+	}
 }
 
 void Window::DrawToDefault() {

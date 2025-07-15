@@ -16,6 +16,7 @@ struct AllVertexData {
     int ID;
     int division;
     glm::mat4 projection;
+    glm::mat4 view;
     GLuint vao, vbo;
     GLuint shaderProgram;
     GLenum graphics_mode = GL_TRIANGLES; // 描画モード
@@ -29,7 +30,9 @@ public:
     ShaderUtil() = delete;
     static GLuint createShaderProgram(const char* vsSource, const char* fsSource);
     static glm::mat4 recalcProjection(int width, int height) {
-        glm::mat4 projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);glViewport(0, 0, width, height); return projection;
+        glm::mat4 projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);
+        glViewport(0, 0, width, height);
+        return projection;
     };
 };
 

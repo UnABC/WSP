@@ -14,6 +14,7 @@ struct image_data {
 class Image {
 private:
 	glm::mat4 *projection;
+	glm::mat4 *view;
 
 	// 画像データのリスト
 	std::map<unsigned int, image_data> *images;
@@ -32,8 +33,9 @@ private:
 		flat out uvec2 TexHandle;
 
 		uniform mat4 projection;
+		uniform mat4 view;
 		void main() {
-			gl_Position = projection * vec4(position, 1.0);
+			gl_Position = projection * view * vec4(position, 1.0);
 			outColor = color;
 			TexCoords = texCoord;
 			TexHandle = uvec2(aTexHandle);
@@ -52,7 +54,7 @@ private:
 		}
 	)glsl";
 public:
-	void Init(std::map<unsigned int, image_data> &global_images, glm::mat4 *proj);
+	void Init(std::map<unsigned int, image_data> &global_images, glm::mat4 *proj,glm::mat4 *global_view);
 	void Load(const std::string& file_path, int id, int center_x = 0, int center_y = 0);
 	void DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, int tex_x, int tex_y, int tex_width, int tex_height, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };

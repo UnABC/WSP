@@ -81,6 +81,7 @@ public:
 	void ResizeWindow(int new_width, int new_height);
 	void SetWindowTitle(const std::string& title) const;
 	void SetWindowPosition(int id, int x, int y);
+	void SetCameraPos(float x = 0.0f, float y = 0.0f, float z = 0.0f, float target_x = 0.0f, float target_y = 0.0f, float target_z = 0.0f);
 
 	void Gcopy(int id, int src_x = 0, int src_y = 0, int src_width = -1, int src_height = -1, int dst_x = 0, int dst_y = 0, int dst_width = -1, int dst_height = -1);
 

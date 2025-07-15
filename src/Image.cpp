@@ -2,8 +2,9 @@
 #include "Image.hpp"
 using namespace std;
 
-void Image::Init(map<unsigned int, image_data> &global_images, glm::mat4 *proj) {
+void Image::Init(map<unsigned int, image_data>& global_images, glm::mat4* proj, glm::mat4* global_view) {
 	projection = proj;
+	view = global_view;
 
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
@@ -101,6 +102,7 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 		new_data.ID = 1;
 		new_data.division = 11;
 		new_data.projection = *projection;
+		new_data.view = *view;
 		new_data.vao = vao;
 		new_data.vbo = vbo;
 		new_data.shaderProgram = shaderProgram;

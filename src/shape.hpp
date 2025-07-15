@@ -26,6 +26,7 @@ class Shape {
 
 	Texture_color texture;
 	glm::mat4 *projection;
+	glm::mat4 *view;
 	//三角形のシェーダー
 	const char* vertexShaderSource = R"glsl(
 		#version 450 core
@@ -39,8 +40,10 @@ class Shape {
 		out vec2 TexCoords;
 		flat out uvec2 TexHandle;
 		uniform mat4 projection;
+		uniform mat4 view;
+
 		void main() {
-			gl_Position = projection * vec4(position, 1.0);
+			gl_Position = projection * view * vec4(position, 1.0);
 			outColor = color;
 			outIsTexture = isTexture;
 			TexCoords = texCoord;
@@ -83,8 +86,10 @@ class Shape {
 		out float v_radius;
 		out vec4 u_box;
 		uniform mat4 projection;
+		uniform mat4 view;
+
 		void main() {
-			gl_Position = projection * vec4(position, 1.0);
+			gl_Position = projection * view * vec4(position, 1.0);
 			outColor = color;
 			v_pixelPos = position.xy;
 			v_radius = radius;
@@ -169,9 +174,10 @@ class Shape {
 		out float MinorAxis;
 		out float Angle;
 		uniform mat4 projection;
+		uniform mat4 view;
 
 		void main() {
-			gl_Position = projection * vec4(position, 1.0);
+			gl_Position = projection * view * vec4(position, 1.0);
 			outColor = color;
 			PixelPos = position.xy;
 			Center = center_pos;
@@ -233,7 +239,7 @@ class Shape {
 public:
 	Shape() : width(640), height(480), vao(0), vbo(0), shaderProgram_triangle(0) {};
 	~Shape();
-	void Init(int w, int h,glm::mat4* proj);
+	void Init(int w, int h,glm::mat4* proj, glm::mat4* global_view);
 	void SetTexture(image_data* image, bool enable = true, float tex_x = 0.0f, float tex_y = 0.0f, float tex_width = -1.0f, float tex_height = -1.0f);
 	void draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, std::vector<AllVertexData>& all_vertices, int isRect = 0);
 	void draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);

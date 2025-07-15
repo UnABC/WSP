@@ -10,13 +10,13 @@ Graphic::Graphic(int width, int height, bool is_fullscreen)
 	//ウィンドウ作成
 	windows[WinID].Create(true, "WSP", width, height, is_fullscreen);
 	//フォント初期化+読み込み
-	windows[WinID].font.Init(characters, glyph_atlas, &windows[WinID].projection);
+	windows[WinID].font.Init(characters, glyph_atlas, &windows[WinID].projection, &windows[WinID].view);
 	glyph_atlas.create(2048, 2048, GL_R8, GL_RED);
 	windows[WinID].font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
 	//各種図形の初期化
-	windows[WinID].shape.Init(width, height, &windows[WinID].projection);
+	windows[WinID].shape.Init(width, height, &windows[WinID].projection, &windows[WinID].view);
 	//画像の初期化
-	windows[WinID].image.Init(images, &windows[WinID].projection);
+	windows[WinID].image.Init(images, &windows[WinID].projection, &windows[WinID].view);
 
 	//開始時刻記録
 	lastTime = SDL_GetTicks();
@@ -133,14 +133,7 @@ void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle
 }
 
 void Graphic::Clear(int r, int g, int b) {
-	windows[WinID].all_vertices.clear();
-	//テクスチャのクリア
-	windows[WinID].pos = { 0, 0 };	//表示位置を初期化
-	windows[WinID].system_color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 }; //システム色を設定
-	windows[WinID].color = { 0,0,0, 255 };	//色を初期化
-	fill(windows[WinID].colors.begin(), windows[WinID].colors.end(), windows[WinID].color); //色のリストを現在の色で埋める
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	windows[WinID].shape.SetTexture(0, false);
+	windows[WinID].Clear({ (Uint8)r, (Uint8)g, (Uint8)b, 255 });
 	gmode = 0; //描画モードを初期化
 }
 
@@ -179,6 +172,7 @@ void Graphic::Draw(bool force) {
 			glUseProgram(vertex_data.shaderProgram);
 			glBindVertexArray(vertex_data.vao);
 			glUniformMatrix4fv(glGetUniformLocation(vertex_data.shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(vertex_data.projection));
+			glUniformMatrix4fv(glGetUniformLocation(vertex_data.shaderProgram, "view"      ), 1, GL_FALSE, glm::value_ptr(vertex_data.view      ));
 			glBindBuffer(GL_ARRAY_BUFFER, vertex_data.vbo);
 		}
 		Set_Gmode(vertex_data.gmode);
@@ -297,10 +291,10 @@ void Graphic::CreateScreen(int id, const string& title, int width, int height, i
 	windows[id].Create(false, title, width, height, mode);
 	WinID = id; // 新しいウィンドウを作成したので、現在のウィンドウIDを更新
 
-	windows[WinID].font.Init(characters, glyph_atlas, &windows[WinID].projection);
+	windows[WinID].font.Init(characters, glyph_atlas, &windows[WinID].projection, &windows[WinID].view);
 	windows[WinID].font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
-	windows[WinID].shape.Init(width, height, &windows[WinID].projection);
-	windows[WinID].image.Init(images, &windows[WinID].projection);
+	windows[WinID].shape.Init(width, height, &windows[WinID].projection, &windows[WinID].view);
+	windows[WinID].image.Init(images, &windows[WinID].projection, &windows[WinID].view);
 }
 
 void Graphic::MakeCurrentWindow(int id, int mode) {
@@ -356,6 +350,10 @@ void Graphic::SetWindowPosition(int id, int x, int y) {
 	} else {
 		throw WindowException("Window ID does not exist.");
 	}
+}
+
+void Graphic::SetCameraPos(float x, float y, float z, float target_x, float target_y, float target_z) {
+	windows[WinID].SetCameraPos(x, y, z, target_x, target_y, target_z);
 }
 
 void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y, int dst_width, int dst_height) {

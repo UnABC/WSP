@@ -11,9 +11,10 @@ Font::~Font() {
 	if (library)FT_Done_FreeType(library);
 }
 
-void Font::Init(unordered_map<char16_t, Character>& global_char, BLTexture &global_texture, glm::mat4 *proj) {
+void Font::Init(unordered_map<char16_t, Character>& global_char, BLTexture& global_texture, glm::mat4* proj, glm::mat4* global_view) {
 	projection = proj;
-	
+	view = global_view;
+
 	if (FT_Init_FreeType(&library))
 		throw FontException("Failed to initialize FreeType library.");
 	glGenVertexArrays(1, &vao);
@@ -182,6 +183,7 @@ void Font::SetTexts(string text, float x, float y, int width, SDL_Color color1, 
 			new_data.gmode = local_gmode;
 			new_data.ID = 0; // 0: テキスト
 			new_data.projection = *projection;
+			new_data.view = *view;
 			new_data.vao = vao;
 			new_data.vbo = vbo;
 			new_data.shaderProgram = shaderProgram;

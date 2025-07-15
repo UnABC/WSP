@@ -1,0 +1,14 @@
+LoadImage("test/image/tech_chan.png",1,315,372)
+
+while(cnt++){
+	redraw(0)
+	cls(0,0,0)
+	pos(0,0)
+	double x = cos(0.01*cnt)*100.0
+	double y = sin(0.01*cnt)*100.0
+	double z = cos(0.01*cnt)*100.0
+	Set3DCamera(x,y,z)
+	DrawImage(1,0.5,0.5)
+	redraw(1)
+	await(16)
+}

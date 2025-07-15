@@ -946,8 +946,7 @@ void Evaluator::VoidFunction(AST* ast) {
 			CalcExpr(args.at(2)).GetValue<long long>()
 		);
 		return;
-	}
-	else if (functionName == "gsel") {
+	} else if (functionName == "gsel") {
 		if (args.size() == 1) {
 			graphic.MakeCurrentWindow(CalcExpr(args.at(0)).GetValue<long long>());
 		} else if (args.size() == 2) {
@@ -1075,6 +1074,50 @@ void Evaluator::VoidFunction(AST* ast) {
 		if (args.size() != 1)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		system(CalcExpr(args.at(0)).GetValue<string>().c_str());
+		return;
+	} else if (functionName == "Set3DCamera") {
+		if (args.size() == 0) {
+			graphic.SetCameraPos(CalcExpr(args.at(0)).GetValue<long double>());
+		} else if (args.size() == 1) {
+			graphic.SetCameraPos(CalcExpr(args.at(0)).GetValue<long double>());
+		} else if (args.size() == 2) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>()
+			);
+		} else if (args.size() == 3) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>()
+			);
+		} else if (args.size() == 4) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else if (args.size() == 5) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>()
+			);
+		} else if (args.size() == 6) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
 		return;
 	}
 	if (user_func.count(functionName)) {
@@ -1382,6 +1425,7 @@ void Evaluator::init_keycode() {
 	keycode["ESCAPE"] = SDL_SCANCODE_ESCAPE;
 	keycode["SPACE"] = SDL_SCANCODE_SPACE;
 	keycode["RETURN"] = SDL_SCANCODE_RETURN;
+	keycode["ENTER"] = SDL_SCANCODE_RETURN; // Enterキー
 	keycode["BACKSPACE"] = SDL_SCANCODE_BACKSPACE;
 	keycode["ESC"] = SDL_SCANCODE_ESCAPE;
 	keycode["TAB"] = SDL_SCANCODE_TAB;
