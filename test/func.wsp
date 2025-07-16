@@ -1,20 +1,20 @@
 //通常void関数のテスト
 void test1(){
-	print("This is void test.")
+	console("This is void test.")
 	return
 }
 //引数あり、returnなしのテスト
 void test2(string foo){
-	print("This is void and print test.This function accepted follow message:"+foo)
+	console("This is void and print test.This function accepted follow message:"+foo)
 }
 //引数省略、再帰void関数のテスト
 void test3(int n,string str = "Titech"){
-	print(str)
+	console(str)
 	if (n != 0)test3(n-1,str)
 	return}
 //通常、引数有のテスト
 void test4(string str,int n){
-	print(str)
+	console(str)
 	if (n >= 0)test4(str,n-1)
 }
 //int関数のテスト
@@ -51,13 +51,13 @@ void ref(var tmp){
 }
 double omittion_test(var a,int b = 3,double c){
 	a = b+c
-	print(a)
+	console(a)
 	return c*b
 }
 //エラー関数
 /*
 int bug(){
-	print("ERROR!")
+	console("ERROR!")
 	return
 }*/
 
@@ -66,20 +66,20 @@ test2("Success!")	//This is void and print test.This function accepted follow me
 test3(1)	//Titech*2
 test3(4,"Science Tokyo")	//Science Tokyo*5
 test4("Kyoto University",5)	//Kyoto University*5
-print(add(3,7))		//10
-print(sub(M_PI,M_E))	//0.423311
-print(SciKyo("Tokyo Tech"))	//Science Tokyo
-print(SciKyo(SciKyo("Tokyo Tech")))	//Scikyo!
-print(SciKyo("UTokyo"))	//UTokyo
-print(my_abs(-123))	//123
-print(add2(3,7))	//20
-print(recursion(20))	//19
+console(add(3,7))		//10
+console(sub(M_PI,M_E))	//0.423311
+console(SciKyo("Tokyo Tech"))	//Science Tokyo
+console(SciKyo(SciKyo("Tokyo Tech")))	//Scikyo!
+console(SciKyo("UTokyo"))	//UTokyo
+console(my_abs(-123))	//123
+console(add2(3,7))	//20
+console(recursion(20))	//19
 
 hoge = 1
 ref(hoge)
-print(hoge)	//2
+console(hoge)	//2
 
-print(omittion_test(hoge,,M_PI))	//6,2,9.42...
+console(omittion_test(hoge,,M_PI))	//6,2,9.42...
 
 //関数の定義が後出の場合のテスト
 int my_abs(int a){

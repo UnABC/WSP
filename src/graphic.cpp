@@ -367,7 +367,7 @@ void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height,
 		dst_y = windows[WinID].Height() - dst_y - dst_height;
 
 		if (windows[WinID].Is3D()) {
-			windows[WinID].image.DrawBLtex(windows[id].GetTextureHandle(), dst_x, dst_y, dst_width, dst_height, src_x, src_y, src_width, src_height, windows[id].Width(), windows[id].Height(), 0, windows[WinID].all_vertices);
+			windows[WinID].image.DrawBLtex(windows[id].GetTextureHandle(), dst_x, dst_y, dst_width, dst_height, src_x, src_y, src_width, src_height, windows[id].Width(), windows[id].Height(), gmode, windows[WinID].all_vertices);
 			return; // 3Dモードではテクスチャを使用して描画
 		}
 
@@ -383,7 +383,7 @@ void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height,
 		new_data.division = id;
 		new_data.projection = windows[WinID].projection;
 		new_data.view = windows[WinID].view;
-		new_data.gmode = 0; // 通常の描画モード
+		new_data.gmode = gmode;
 		new_data.ID = 6;
 		windows[WinID].all_vertices.push_back(new_data);
 	} else {

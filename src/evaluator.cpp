@@ -1303,49 +1303,65 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 Var Evaluator::ProcessStaticVar(AST* ast) {
 	//静的変数の処理
 	StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
-	string variableName = node->GetVariableName();
-	//変数の存在を確認
-	if (ref_static_var.back().count(variableName))
-		throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	if (ref_var.back().count(variableName))
-		throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	if (static_var.back().count(variableName))
-		throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	if (var.back().count(variableName))
-		throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	//変数の定義
-	switch (node->GetType())
-	{
-	case 0:return ((static_var.back()[variableName] = StaticVar(0LL)));
-	case 1:return ((static_var.back()[variableName] = StaticVar(0.0L)));
-	case 2:return ((static_var.back()[variableName] = StaticVar(string())));
-	case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
-	case 10:
-	case 11:
-	case 12:
-	{
-		Var init_value;
-		if (node->GetType() == 10) {
-			init_value = Var(0LL);
-		} else if (node->GetType() == 11) {
-			init_value = Var(0.0L);
-		} else if (node->GetType() == 12) {
-			init_value = Var(string());
+	Var retval;
+	for (auto variableName : node->GetVariableNames()) {
+		//変数の存在を確認
+		if (ref_static_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (ref_var.back().count(variableName))
+			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (static_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (var.back().count(variableName))
+			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		//変数の定義
+		switch (node->GetType())
+		{
+		case 0: {
+			static_var.back()[variableName] = StaticVar(0LL);
+			retval = StaticVar(0LL);
+			break;
 		}
+		case 1: {
+			static_var.back()[variableName] = StaticVar(0.0L);
+			retval = StaticVar(0.0L);
+			break;
+		}
+		case 2: {
+			static_var.back()[variableName] = StaticVar(string());
+			retval = StaticVar(string());
+			break;
+		}
+		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
+		case 10:
+		case 11:
+		case 12:
+		{
+			Var init_value;
+			if (node->GetType() == 10) {
+				init_value = Var(0LL);
+			} else if (node->GetType() == 11) {
+				init_value = Var(0.0L);
+			} else if (node->GetType() == 12) {
+				init_value = Var(string());
+			}
 
-		//配列の初期化
-		Var init_array(init_value);
-		for (AST* index_node : node->GetArrayIndex() | views::reverse) {
-			long long index = CalcExpr(index_node).GetValue<long long>();
-			if (index < 0)
-				throw RuntimeException("Array index cannot be negative.", node->lineNumber, node->columnNumber);
-			init_array = vector<Var>(index, init_array);
+			//配列の初期化
+			Var init_array(init_value);
+			for (AST* index_node : node->GetArrayIndex() | views::reverse) {
+				long long index = CalcExpr(index_node).GetValue<long long>();
+				if (index < 0)
+					throw RuntimeException("Array index cannot be negative.", node->lineNumber, node->columnNumber);
+				init_array = vector<Var>(index, init_array);
+			}
+			static_var.back()[variableName] = move(init_array);
+			return static_var.back()[variableName];
+			break;
 		}
-		static_var.back()[variableName] = move(init_array);
-		return static_var.back()[variableName];
+		default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
+		}
 	}
-	default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
-	}
+	return retval;
 }
 
 inline long long Evaluator::GetTime() {

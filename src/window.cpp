@@ -58,7 +58,7 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 
 	// フレームバッファオブジェクトの生成
 	glGenFramebuffers(1, &fbo);
@@ -71,8 +71,6 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	texture_handle = glGetTextureHandleARB(texture);
-	glMakeTextureHandleResidentARB(texture_handle);
 	// レンダーバッファオブジェクトの生成
 	glGenRenderbuffers(1, &rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -85,6 +83,8 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	// ビューポートの設定
 	glViewport(0, 0, width, height);
+	texture_handle = glGetTextureHandleARB(texture);
+	glMakeTextureHandleResidentARB(texture_handle);
 
 	//スクリーンクワッド用
 	glGenVertexArrays(1, &vao);
@@ -129,14 +129,15 @@ void Window::Resize(int new_width, int new_height) {
 	if (new_width <= 0 || new_height <= 0) return; // 無効なサイズは無視
 	width = new_width;
 	height = new_height;
-	if (view != glm::mat4(1.0f)) {
+	if (is3D) {
 		projection = glm::perspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
 	} else {
-		projection = ShaderUtil::recalcProjection(new_width, new_height);
+		projection = ShaderUtil::recalcProjection(width, height);
 	}
 	SDL_SetWindowSize(window, width, height);
 
 	// FBOのテクスチャとレンダーバッファをリサイズ
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -148,15 +149,14 @@ void Window::Resize(int new_width, int new_height) {
 	glViewport(0, 0, width, height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0.0, new_width, new_height, 0.0, -1.0, 1.0);
+	glOrtho(0.0, width, height, 0.0, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
 
 void Window::SetTitle(const std::string& title) const {
-	if (SDL_SetWindowTitle(window, title.c_str()) < 0) {
+	if (SDL_SetWindowTitle(window, title.c_str()) < 0)
 		throw WindowException("Failed to set window title: " + string(SDL_GetError()));
-	}
 }
 
 void Window::SetCameraPos(float x, float y, float z, float target_x, float target_y, float target_z) {

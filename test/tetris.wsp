@@ -12,10 +12,8 @@ int map_sizeY = 18
 int speed = 3
 int cnt = 0
 int score = 0
-int myID
-int mineIDs
-int px
-int py
+int myID,mineIDs
+int px,py
 int predict[2]
 int myRot
 int block[4][2]
