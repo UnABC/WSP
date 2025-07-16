@@ -136,14 +136,27 @@ void Window::Resize(int new_width, int new_height) {
 	}
 	SDL_SetWindowSize(window, width, height);
 
-	// FBOのテクスチャとレンダーバッファをリサイズ
+	// 古いテクスチャハンドルを非居住化
+	glMakeTextureHandleNonResidentARB(texture_handle);
+	glDeleteTextures(1, &texture);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	// 新しいテクスチャの生成
+	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// レンダーバッファの再設定
+	texture_handle = glGetTextureHandleARB(texture);
+	glMakeTextureHandleResidentARB(texture_handle);
 
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	glViewport(0, 0, width, height);
