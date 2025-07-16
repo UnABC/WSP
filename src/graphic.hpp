@@ -47,7 +47,7 @@ public:
 	Graphic(int width = 640, int height = 480, bool is_fullscreen = false);
 
 	void printText(const std::string& text);
-	void SetPos(float x, float y) { windows[WinID].pos.x = x; windows[WinID].pos.y = y; };
+	void SetPos(float x, float y, float z = 0.0f) { windows[WinID].pos.x = x; windows[WinID].pos.y = y;windows[WinID].pos.z = z; };
 	void SetColor(int r, int g, int b, int a = 255) { windows[WinID].color = { (Uint8)r, (Uint8)g, (Uint8)b, (Uint8)a };std::fill(windows[WinID].colors.begin(), windows[WinID].colors.end(), windows[WinID].color); };
 	void SetHSVColor(int h, int s, int v, int a = 255) { windows[WinID].color = HSV2RGB(h, s, v); windows[WinID].color.a = (Uint8)a; std::fill(windows[WinID].colors.begin(), windows[WinID].colors.end(), windows[WinID].color); };
 	void SetColors(int r, int g, int b, int a, int index);
@@ -71,6 +71,7 @@ public:
 	void DrawImage(unsigned int id, float x_size = 1.0f, float y_size = 1.0f, float angle = 0.0f, int tex_x1 = -1, int tex_y1 = -1, int tex_width = -1, int tex_height = -1);
 
 	void Clear(int r = 255, int g = 255, int b = 255);
+	void Reset3D(){ windows[WinID].Reset3D(); }
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 
 	void CreateScreen(int id, const std::string& title = "WSP", int width = 640, int height = 480, int mode = 0);

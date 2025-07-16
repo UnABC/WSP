@@ -11,8 +11,8 @@
 #include <vector>
 
 struct Position {
-	float x, y;
-	Position(float x, float y) : x(x), y(y) {};
+	float x, y, z;
+	Position(float x, float y, float z = 0.0f) : x(x), y(y), z(z) {};
 };
 
 class Window {
@@ -21,11 +21,13 @@ private:
 	SDL_GLContext glContext = nullptr;
 	GLuint fbo, texture, rbo;
 	GLuint vao, vbo, shaderProgram;
+	GLuint64 texture_handle;
 	int width, height;
 	bool is_fullscreen;
+	bool is3D = false; // 3Dモードかどうか
 
 	const char* vertexShaderSource = R"glsl(
-		#version 330 core
+		#version 450 core
 		layout (location = 0) in vec3 position;
 		out vec2 TexCoords;
 		void main() {
@@ -34,7 +36,8 @@ private:
 		}
 	)glsl";
 	const char* fragmentShaderSource = R"glsl(
-		#version 330 core
+		#version 450 core
+		#extension GL_ARB_bindless_texture : require
 		out vec4 FragColor;
 		in vec2 TexCoords;
 		uniform sampler2D image;
@@ -52,7 +55,7 @@ private:
 		{-1.0f,  1.0f, 0.0f}
 	};
 public:
-	Position pos = { 0, 0 };	//表示位置
+	Position pos = { 0, 0, 0 };	//表示位置
 	SDL_Color color = { 0, 0, 0, 255 };	//黒色
 	SDL_Color system_color = { 255, 255, 255, 255 };	//システム色（白色）
 	std::vector<SDL_Color> colors;	//色のリスト
@@ -72,8 +75,8 @@ public:
 	void SetFullscreen(bool fullscreen);
 	void Resize(int new_width, int new_height);
 	void SetTitle(const std::string& title) const;
-	void SetPosition(int x, int y);
-	void SetCameraPos(float x = 0.0f,float y = 0.0f,float z = 0.0f,float target_x = 0.0f, float target_y = 0.0f, float target_z = 0.0f);
+	void SetPosition(int x, int y) { SDL_SetWindowPosition(window, x, y); };
+	void SetCameraPos(float x = 0.0f, float y = 0.0f, float z = 0.0f, float target_x = 0.0f, float target_y = 0.0f, float target_z = 0.0f);
 	void MakeCurrent();
 	void MakeTop() { SDL_RaiseWindow(window); }
 	void Hide() { SDL_HideWindow(window); }
@@ -84,9 +87,12 @@ public:
 	int Width() const { return width; }
 	int Height() const { return height; }
 	bool IsFullscreen() const { return is_fullscreen; }
+	bool Is3D() const { return is3D; }
 	void Destroy() const;
 	const GLuint& GetFBO() const { return fbo; }
+	GLuint64 GetTextureHandle() const { return texture_handle; }
 	void Clear(SDL_Color sys_col);
+	void Reset3D();
 
 	void DrawToDefault();
 };

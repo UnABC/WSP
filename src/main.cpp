@@ -8,7 +8,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/3D.wsp";
+		string file_name = "test/window.wsp";
 		if (argc == 2)file_name = argv[1];
 		Lexer lexer(file_name);
 		//Lexer実行

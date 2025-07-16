@@ -581,9 +581,13 @@ void Evaluator::VoidFunction(AST* ast) {
 		graphic.printText(CalcExpr(args.at(0)).GetValue<string>());
 		return;
 	} else if (functionName == "pos") {
-		if (args.size() != 2)
+		if (args.size() == 2) {
+			graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>());
+		} else if (args.size() == 3) {
+			graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>(), CalcExpr(args.at(2)).GetValue<long double>());
+		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>());
+		}
 		return;
 	} else if (functionName == "cls") {
 		if (args.size() == 0) {
@@ -593,6 +597,11 @@ void Evaluator::VoidFunction(AST* ast) {
 		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
+		return;
+	} else if (functionName == "Reset3D") {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.Reset3D();
 		return;
 	} else if (functionName == "color") {
 		if (args.size() == 3) {
@@ -937,7 +946,7 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
 		return;
-	} else if (functionName == "ScreenPos"){
+	} else if (functionName == "ScreenPos") {
 		if (args.size() != 3)
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		graphic.SetWindowPosition(

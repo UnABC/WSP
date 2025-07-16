@@ -110,3 +110,47 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 	}
 	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 11);
 }
+
+void Image::DrawBLtex(GLuint64 handle, float x, float y, float x_size, float y_size, int tex_x, int tex_y, int tex_width, int tex_height, float tex_def_width, float tex_def_height, int gmode, vector<AllVertexData>& all_vertices) {
+	if (!shaderProgram || !vbo || !vao)
+		throw ImageException("Image not initialized.");
+
+	GLuint handle1 = static_cast<GLuint>(handle & 0xFFFFFFFF);
+	GLuint handle2 = static_cast<GLuint>(handle >> 32);
+
+	struct normalized_color {
+		float r, g, b, a;
+	} normalized_color1 = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	float tex_min_x = (tex_x < 0) ? 0.0f : static_cast<float>(tex_x) / tex_def_width;
+	float tex_min_y = (tex_y < 0) ? 0.0f : static_cast<float>(tex_y) / tex_def_height;
+	float tex_max_x = (tex_x < 0) ? 1.0f : static_cast<float>(tex_x + tex_width) / tex_def_width;
+	float tex_max_y = (tex_y < 0) ? 1.0f : static_cast<float>(tex_y + tex_height) / tex_def_height;
+
+	float vertices[6][11] = {
+		// 位置 (x, y, 0.0), テクスチャ座標 (texX, texY), 色 (r, g, b)
+		{x         , y         , 0.0f, tex_min_x, tex_min_y, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, *(float*)&handle1, *(float*)&handle2},
+		{x + x_size, y         , 0.0f, tex_max_x, tex_min_y, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, *(float*)&handle1, *(float*)&handle2},
+		{x + x_size, y + y_size, 0.0f, tex_max_x, tex_max_y, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, *(float*)&handle1, *(float*)&handle2},
+
+		{x + x_size, y + y_size, 0.0f, tex_max_x, tex_max_y, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, *(float*)&handle1, *(float*)&handle2},
+		{x         , y + y_size, 0.0f, tex_min_x, tex_max_y, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, *(float*)&handle1, *(float*)&handle2},
+		{x         , y         , 0.0f, tex_min_x, tex_min_y, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, *(float*)&handle1, *(float*)&handle2}
+	};
+	int local_gmode = gmode - (gmode % 2);
+	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 1)) {
+		AllVertexData new_data;
+		new_data.all_vertices = std::vector<float>();
+		new_data.gmode = local_gmode;
+		new_data.ID = 1; // 1: 画像
+		new_data.division = 11;
+		new_data.projection = *projection;
+		new_data.view = *view;
+		new_data.vao = vao;
+		new_data.vbo = vbo;
+		new_data.shaderProgram = shaderProgram;
+		all_vertices.push_back(new_data);
+	}
+	// 既存の頂点データに新しい頂点を追加
+	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 11);
+}

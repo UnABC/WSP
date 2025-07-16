@@ -67,8 +67,12 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	texture_handle = glGetTextureHandleARB(texture);
+	glMakeTextureHandleResidentARB(texture_handle);
 	// レンダーバッファオブジェクトの生成
 	glGenRenderbuffers(1, &rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -155,10 +159,6 @@ void Window::SetTitle(const std::string& title) const {
 	}
 }
 
-void Window::SetPosition(int x, int y) {
-	SDL_SetWindowPosition(window, x, y);
-}
-
 void Window::SetCameraPos(float x, float y, float z, float target_x, float target_y, float target_z) {
 	glm::vec3 UPvec(0.0f, 0.0f, 1.0f); // 上方向はZ軸
 	const glm::vec3 ViewVec = glm::normalize(glm::vec3(target_x - x, target_y - y, target_z - z));
@@ -166,6 +166,7 @@ void Window::SetCameraPos(float x, float y, float z, float target_x, float targe
 		UPvec = glm::vec3(0.0f, 1.0f, 0.0f); // Z軸と平行な場合はY軸を上方向に設定
 	view = glm::lookAt(glm::vec3(x, y, z), glm::vec3(target_x, target_y, target_z), UPvec);
 	projection = glm::infinitePerspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f);
+	is3D = true; // 3Dモードに設定
 }
 
 void Window::MakeCurrent() {
@@ -183,16 +184,18 @@ void Window::Destroy() const {
 
 void Window::Clear(SDL_Color sys_col) {
 	all_vertices.clear(); // 全ての頂点データをクリア
-	pos = { 0, 0 }; // 表示位置を初期化
+	pos = { 0, 0, 0 }; // 表示位置を初期化
 	color = { 0, 0, 0, 255 };
 	system_color = move(sys_col); // システム色を設定
 	fill(colors.begin(), colors.end(), color); // 色のリストを初期化
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	shape.SetTexture(0, false);
-	if (view != glm::mat4(1.0f)) {
-		view = glm::mat4(1.0f); // ビュー行列を初期化
-		projection = ShaderUtil::recalcProjection(width, height); // プロジェクション行列を再計算
-	}
+}
+
+void Window::Reset3D() {
+	view = glm::mat4(1.0f);
+	projection = ShaderUtil::recalcProjection(width, height);
+	is3D = false; // 3Dモードを解除
 }
 
 void Window::DrawToDefault() {
@@ -203,9 +206,8 @@ void Window::DrawToDefault() {
 
 	glUseProgram(shaderProgram);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glUniform1i(glGetUniformLocation(shaderProgram, "image"), 0);
+	GLint location = glGetUniformLocation(shaderProgram, "image");
+	glUniformHandleui64ARB(location, texture_handle);
 
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);

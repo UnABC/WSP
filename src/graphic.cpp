@@ -172,7 +172,7 @@ void Graphic::Draw(bool force) {
 			glUseProgram(vertex_data.shaderProgram);
 			glBindVertexArray(vertex_data.vao);
 			glUniformMatrix4fv(glGetUniformLocation(vertex_data.shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(vertex_data.projection));
-			glUniformMatrix4fv(glGetUniformLocation(vertex_data.shaderProgram, "view"      ), 1, GL_FALSE, glm::value_ptr(vertex_data.view      ));
+			glUniformMatrix4fv(glGetUniformLocation(vertex_data.shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(vertex_data.view));
 			glBindBuffer(GL_ARRAY_BUFFER, vertex_data.vbo);
 		}
 		Set_Gmode(vertex_data.gmode);
@@ -365,16 +365,24 @@ void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height,
 		if (dst_height < 0) dst_height = windows[WinID].Height(); // デフォルトは現在のウィンドウの高さ
 		src_y = windows[id].Height() - src_y - src_height; // SDLの座標系に合わせてY座標を調整
 		dst_y = windows[WinID].Height() - dst_y - dst_height;
+
+		if (windows[WinID].Is3D()) {
+			windows[WinID].image.DrawBLtex(windows[id].GetTextureHandle(), dst_x, dst_y, dst_width, dst_height, src_x, src_y, src_width, src_height, windows[id].Width(), windows[id].Height(), 0, windows[WinID].all_vertices);
+			return; // 3Dモードではテクスチャを使用して描画
+		}
+
 		AllVertexData new_data;
 		new_data.all_vertices.push_back((float)src_x);
-		new_data.all_vertices.push_back((float)src_y + src_height);
-		new_data.all_vertices.push_back((float)src_x + src_width);
+		new_data.all_vertices.push_back((float)(src_y + src_height));
+		new_data.all_vertices.push_back((float)(src_x + src_width));
 		new_data.all_vertices.push_back((float)src_y);
 		new_data.all_vertices.push_back((float)dst_x);
-		new_data.all_vertices.push_back((float)dst_y + dst_height);
-		new_data.all_vertices.push_back((float)dst_x + dst_width);
+		new_data.all_vertices.push_back((float)(dst_y + dst_height));
+		new_data.all_vertices.push_back((float)(dst_x + dst_width));
 		new_data.all_vertices.push_back((float)dst_y);
 		new_data.division = id;
+		new_data.projection = windows[WinID].projection;
+		new_data.view = windows[WinID].view;
 		new_data.gmode = 0; // 通常の描画モード
 		new_data.ID = 6;
 		windows[WinID].all_vertices.push_back(new_data);

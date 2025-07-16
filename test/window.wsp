@@ -1,4 +1,4 @@
-LoadImage("test/image/tech_chan.png",1)
+LoadImage("test/image/tech_chan.png",1,315,372)
 cls(0,0,0)
 color(255,255,255)
 print("SCREEN 0")
@@ -9,10 +9,12 @@ ScreenPos(1,0,0)
 color(255,0,0)
 print("SCREEN 1")
 
-pos(50,50)
+pos(207,236)
 DrawImage(1,0.5,0.5)
 
 gsel(0)
 print("screen 0")
+gcopy(1,100,100,200,200,200,200,200,200)
+Set3DCamera(50,50,50,125,125)
 gcopy(1,100,100,200,200,100,100,200,200)
 
