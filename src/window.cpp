@@ -58,7 +58,6 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
-	//glEnable(GL_DEPTH_TEST);
 
 	// フレームバッファオブジェクトの生成
 	glGenFramebuffers(1, &fbo);
@@ -180,6 +179,7 @@ void Window::SetCameraPos(float x, float y, float z, float target_x, float targe
 	view = glm::lookAt(glm::vec3(x, y, z), glm::vec3(target_x, target_y, target_z), UPvec);
 	projection = glm::infinitePerspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f);
 	is3D = true; // 3Dモードに設定
+	glEnable(GL_DEPTH_TEST);
 }
 
 void Window::MakeCurrent() {
@@ -209,6 +209,7 @@ void Window::Reset3D() {
 	view = glm::mat4(1.0f);
 	projection = ShaderUtil::recalcProjection(width, height);
 	is3D = false; // 3Dモードを解除
+	glDisable(GL_DEPTH_TEST);
 }
 
 void Window::DrawToDefault() {
