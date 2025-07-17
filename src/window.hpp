@@ -6,6 +6,7 @@
 #include "shape.hpp"
 #include "Image.hpp"
 #include "font.hpp"
+#include "particle.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <vector>
@@ -65,6 +66,7 @@ public:
 	Shape shape;
 	Image image;
 	Font font;
+	Particle particle;
 	glm::mat4 projection;
 	glm::mat4 view;
 

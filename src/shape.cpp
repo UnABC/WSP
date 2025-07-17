@@ -307,7 +307,7 @@ void Shape::draw_round_rectangle(float x, float y, float width, float height, fl
 	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 17);
 }
 
-void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, vector<AllVertexData>& all_vertices) {
+void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, vector<AllVertexData>& all_vertices,float z1, float z2) {
 	if (!shaderProgram_triangle || !vbo_line || !vao_line)
 		throw ShapeException("Shape not initialized.");
 	// 色の設定
@@ -317,8 +317,8 @@ void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, 
 	struct normalized_color normalized_color2 = { color2.r / 255.0f, color2.g / 255.0f, color2.b / 255.0f, color2.a / 255.0f };
 	// 頂点データの設定
 	float vertices[2][7] = {
-		{x1, y1, 0.0, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a},
-		{x2, y2, 0.0, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a}
+		{x1, y1, z1, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a},
+		{x2, y2, z2, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a}
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);

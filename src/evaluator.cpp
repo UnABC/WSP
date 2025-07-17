@@ -1084,6 +1084,16 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		system(CalcExpr(args.at(0)).GetValue<string>().c_str());
 		return;
+	} else if (functionName == "HideMouse") {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		SDL_HideCursor();
+		return;
+	} else if (functionName == "ShowMouse") {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		SDL_ShowCursor();
+		return;
 	} else if (functionName == "Set3DCamera") {
 		if (args.size() == 0) {
 			graphic.SetCameraPos(CalcExpr(args.at(0)).GetValue<long double>());
@@ -1127,6 +1137,101 @@ void Evaluator::VoidFunction(AST* ast) {
 		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
+		return;
+	} else if (functionName == "mkparticle") {
+		if (args.size() == 4) {
+			graphic.mkparticle(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>()
+			);
+		} else if (args.size() == 5) {
+			vector<long long> particle_args;
+			for (auto& arg : CalcExpr(args.at(0)).GetValue<vector<Var>>())
+				particle_args.push_back(arg.GetValue<long long>());
+			graphic.mkparticle(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				particle_args
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "particle") {
+		if (args.size() != 5)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.drawparticle(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "particler") {
+		if (args.size() != 6)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.drawparticler(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "particlem") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.drawparticlem(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "particlemr") {
+		if (args.size() != 3)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.drawparticlemr(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "line3D") {
+		if (args.size() == 3) {
+			graphic.Draw3DLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>()
+			);
+		} else if (args.size() == 6) {
+			graphic.Draw3DLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "cube") {
+		if (args.size() != 6)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.Draw3DBox(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>()
+		);
 		return;
 	}
 	if (user_func.count(functionName)) {

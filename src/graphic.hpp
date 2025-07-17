@@ -1,9 +1,6 @@
 #ifndef GRAPHIC_HPP
 #define GRAPHIC_HPP
 
-#include "exception.hpp"
-#include "font.hpp"
-#include "Image.hpp"
 #include "window.hpp"
 
 #include <SDL3/SDL.h>
@@ -36,6 +33,8 @@ private:
 	SDL_Event event;
 	// 画像データのリスト
 	std::map<unsigned int, image_data> images;
+	// パーティクルのリスト
+	std::map<unsigned int, particle_data> particles;
 	// fontキャッシュ
 	std::unordered_map<char16_t, Character> characters;
 	BLTexture glyph_atlas;
@@ -66,12 +65,15 @@ public:
 	void DrawRoundRect(float x, float y, float width, float height, float radius);
 	void DrawLine(float x1, float y1, float x2, float y2);
 	void DrawLine(float x1, float y1) { DrawLine(x1, y1, windows[WinID].pos.x, windows[WinID].pos.y); };
+	void Draw3DLine(float x1, float y1, float z1, float x2, float y2, float z2);
+	void Draw3DLine(float x1, float y1, float z1) { Draw3DLine(windows[WinID].pos.x, windows[WinID].pos.y, windows[WinID].pos.z, x1, y1, z1); };
+	void Draw3DBox(float x1, float y1, float z1, float x2, float y2, float z2);
 	void DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle = 0.0f);
 
 	void DrawImage(unsigned int id, float x_size = 1.0f, float y_size = 1.0f, float angle = 0.0f, int tex_x1 = -1, int tex_y1 = -1, int tex_width = -1, int tex_height = -1);
 
 	void Clear(int r = 255, int g = 255, int b = 255);
-	void Reset3D(){ windows[WinID].Reset3D(); }
+	void Reset3D() { windows[WinID].Reset3D(); }
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 
 	void CreateScreen(int id, const std::string& title = "WSP", int width = 640, int height = 480, int mode = 0);
@@ -82,7 +84,13 @@ public:
 	void ResizeWindow(int new_width, int new_height);
 	void SetWindowTitle(const std::string& title) const;
 	void SetWindowPosition(int id, int x, int y);
+
 	void SetCameraPos(float x = 0.0f, float y = 0.0f, float z = 0.0f, float target_x = 0.0f, float target_y = 0.0f, float target_z = 0.0f);
+	void mkparticle(int id, int r, int g, int b, std::vector<long long> array = { 20,1,100 });
+	void drawparticler(int id, float x, float y, float z, float r, float angle);
+	void drawparticle(int id, float x, float y, float z, float r);
+	void drawparticlemr(int id, float r, float angle);
+	void drawparticlem(int id, float r);
 
 	void Gcopy(int id, int src_x = 0, int src_y = 0, int src_width = -1, int src_height = -1, int dst_x = 0, int dst_y = 0, int dst_width = -1, int dst_height = -1);
 

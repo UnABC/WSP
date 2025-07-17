@@ -154,4 +154,16 @@ public:
 	}
 };
 
+class ParticleException : public std::exception {
+	std::string msg;
+public:
+	explicit ParticleException(const std::string& message)
+		: msg(message) {
+	};
+	virtual const char* what() const noexcept override {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Particle Error", msg.c_str(), nullptr);
+		return msg.c_str();
+	}
+};
+
 #endif // EXCEPTION_HPP

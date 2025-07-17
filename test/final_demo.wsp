@@ -4,7 +4,7 @@ int SCR_BLUR = 12
 
 screen(0,"WSP demo",1600,900)
 ScreenPos(0,0,30)
-//TODO:mouse消去
+HideMouse()
 cls(0,0,0)
 
 mmload("test/audio/vijore.mp3",1)
@@ -209,13 +209,5 @@ void galaxy(){
 	color(0,0,0)
 	rect(0,0,1600,112.5)
 	rect(0,787.5,1600,112.5)
-}
-
-void mkparticle(int pid,int part_r,int part_g,int part_b){
-	
-}
-
-void mkparticleX(int pid,int part_r,int part_g,int part_b,var arr){
-	
 }
 

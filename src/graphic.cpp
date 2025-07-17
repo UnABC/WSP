@@ -17,6 +17,8 @@ Graphic::Graphic(int width, int height, bool is_fullscreen)
 	windows[WinID].shape.Init(width, height, &windows[WinID].projection, &windows[WinID].view);
 	//画像の初期化
 	windows[WinID].image.Init(images, &windows[WinID].projection, &windows[WinID].view);
+	//パーティクルの初期化
+	windows[WinID].particle.Init(&particles, &windows[WinID].projection, &windows[WinID].view);
 
 	//開始時刻記録
 	lastTime = SDL_GetTicks();
@@ -117,6 +119,31 @@ void Graphic::DrawLine(float x1, float y1, float x2, float y2) {
 	windows[WinID].pos.y = y1; // 最後の座標を表示位置に設定
 }
 
+void Graphic::Draw3DLine(float x1, float y1, float z1, float x2, float y2, float z2) {
+	windows[WinID].shape.draw_line(x1, y1, x2, y2, windows[WinID].colors.at(0), windows[WinID].colors.at(1), gmode, windows[WinID].all_vertices, z1, z2);
+	Draw();
+	windows[WinID].pos.x = x2; // 最後の座標を表示位置に設定
+	windows[WinID].pos.y = y2; // 最後の座標を表示位置に設定
+	windows[WinID].pos.z = z2; // 最後の座標を表示位置に設定
+}
+
+void Graphic::Draw3DBox(float x1, float y1, float z1, float x2, float y2, float z2) {
+	Draw3DLine(x1, y1, z1, x1, y1, z2);
+	Draw3DLine(x1, y2, z2);
+	Draw3DLine(x1, y2, z1);
+	Draw3DLine(x1, y1, z1);
+
+	Draw3DLine(x2, y1, z1, x2, y2, z1);
+	Draw3DLine(x2, y2, z2);
+	Draw3DLine(x2, y1, z2);
+	Draw3DLine(x2, y1, z1);
+
+	Draw3DLine(x1, y1, z1, x2, y1, z1);
+	Draw3DLine(x1, y1, z2, x2, y1, z2);
+	Draw3DLine(x1, y2, z2, x2, y2, z2);
+	Draw3DLine(x1, y2, z1, x2, y2, z1);
+}
+
 void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle) {
 	windows[WinID].shape.draw_ellipse(center_x, center_y, major_axis, minor_axis, -angle, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
 	Draw();
@@ -180,6 +207,8 @@ void Graphic::Draw(bool force) {
 		glDrawArrays(vertex_data.graphics_mode, 0, vertex_data.all_vertices.size() / vertex_data.division);
 		old_id = vertex_data.ID; // 最後に描画したIDを保存
 	}
+	// 描画モードをリセット
+	Set_Gmode(0);
 	glBindVertexArray(0);
 
 	windows[WinID].DrawToDefault(); // スクリーン全体を描画
@@ -354,6 +383,39 @@ void Graphic::SetWindowPosition(int id, int x, int y) {
 
 void Graphic::SetCameraPos(float x, float y, float z, float target_x, float target_y, float target_z) {
 	windows[WinID].SetCameraPos(x, y, z, target_x, target_y, target_z);
+}
+
+void Graphic::mkparticle(int id, int r, int g, int b, std::vector<long long> array) {
+	if (windows[WinID].Is3D())
+		glDisable(GL_DEPTH_TEST); // 3Dモードでは深度テストを一時無効化
+	SDL_Color particle_color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 };
+	windows[WinID].particle.mkParticle(id, particle_color, array);
+	if (windows[WinID].Is3D())
+		glEnable(GL_DEPTH_TEST);
+}
+
+void Graphic::drawparticler(int id, float x, float y, float z, float r, float angle) {
+	if (!particles.count(id))
+		throw WindowException("Particle ID does not exist.");
+	windows[WinID].particle.drawParticler(id, x, y, z, r, angle, windows[WinID].color, gmode, windows[WinID].all_vertices);
+}
+
+void Graphic::drawparticle(int id, float x, float y, float z, float r) {
+	if (!particles.count(id))
+		throw WindowException("Particle ID does not exist.");
+	windows[WinID].particle.drawParticle(id, x, y, z, r, windows[WinID].color, gmode, windows[WinID].all_vertices);
+}
+
+void Graphic::drawparticlemr(int id, float r, float angle) {
+	if (!particles.count(id))
+		throw WindowException("Particle ID does not exist.");
+	windows[WinID].particle.drawParticlemr(id, r, angle, windows[WinID].color, gmode, windows[WinID].all_vertices);
+}
+
+void Graphic::drawparticlem(int id, float r) {
+	if (!particles.count(id))
+		throw WindowException("Particle ID does not exist.");
+	windows[WinID].particle.drawParticlem(id, r, windows[WinID].color, gmode, windows[WinID].all_vertices);
 }
 
 void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y, int dst_width, int dst_height) {
