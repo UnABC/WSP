@@ -48,6 +48,8 @@ Evaluator::Evaluator() {
 	//システム変数の初期化
 	start_time = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
 	srand((unsigned int)time(nullptr));
+	//システム関数の初期化
+	init_system_functions();
 	return;
 }
 
@@ -551,698 +553,10 @@ void Evaluator::VoidFunction(AST* ast) {
 	string functionName = node->GetFunctionName();
 	vector<AST*> args = node->GetArgument();
 	//組み込み関数
-	if (functionName == "console") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		Var result = CalcExpr(args.at(0));
-		switch (result.GetType()) {
-		case 0: {
-			cout << result.GetValue<long long>() << endl;
-			break;
-		}
-		case 1: {
-			cout << result.GetValue<long double>() << endl;
-			break;
-		}
-		case 2: {
-			cout << result.GetValue<string>() << endl;
-			break;
-		}
-		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
-		default:throw RuntimeException("Unknown argument type.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "randomize") {
-		if (args.size() > 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		srand((unsigned int)((args.size() == 0) ? time(NULL) : CalcExpr(args.at(0)).GetValue<long long>()));
-		return;
-	} else if (functionName == "print") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		//グラフィック関数
-		graphic.printText(CalcExpr(args.at(0)).GetValue<string>());
-		return;
-	} else if (functionName == "pos") {
-		if (args.size() == 2) {
-			graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>());
-		} else if (args.size() == 3) {
-			graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>(), CalcExpr(args.at(2)).GetValue<long double>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "cls") {
-		if (args.size() == 0) {
-			graphic.Clear();
-		} else if (args.size() == 3) {
-			graphic.Clear(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "Reset3D") {
-		if (args.size() != 0)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.Reset3D();
-		return;
-	} else if (functionName == "color") {
-		if (args.size() == 3) {
-			graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>());
-		} else if (args.size() == 4) {
-			graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>(),
-				CalcExpr(args.at(3)).GetValue<long long>());
-		} else if (args.size() == 5) {
-			graphic.SetColors(CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>(),
-				CalcExpr(args.at(3)).GetValue<long long>(),
-				CalcExpr(args.at(4)).GetValue<long long>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "hsvcolor") {
-		if (args.size() == 3) {
-			graphic.SetHSVColor(CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>());
-		} else if (args.size() == 4) {
-			graphic.SetHSVColor(CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>(),
-				CalcExpr(args.at(3)).GetValue<long long>());
-		} else if (args.size() == 5) {
-			graphic.SetHSVColors(CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>(),
-				CalcExpr(args.at(3)).GetValue<long long>(),
-				CalcExpr(args.at(4)).GetValue<long long>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "gmode") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.SetGmode(CalcExpr(args.at(0)).GetValue<long long>());
-		return;
-	} else if (functionName == "texture") {
-		if (args.size() == 1) {
-			graphic.SetTexture(CalcExpr(args.at(0)).GetValue<long long>());
-		} else if (args.size() == 3) {
-			graphic.SetTexture(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
-		} else if (args.size() == 5) {
-			graphic.SetTexture(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>(),
-				CalcExpr(args.at(3)).GetValue<long long>(),
-				CalcExpr(args.at(4)).GetValue<long long>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "dialog") {
-		if (args.size() > 3)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		Var message = (args.size() < 1) ? "" : CalcExpr(args.at(0));
-		Var title = (args.size() < 2) ? "" : CalcExpr(args.at(1));
-		Var type = (args.size() < 3) ? 0LL : CalcExpr(args.at(2));
-		graphic.CallDialog(title.GetValue<string>(), message.GetValue<string>(), type.GetValue<long long>());
-		return;
-	} else if (functionName == "wait") {
-		if (args.size() > 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		if (args.size() == 0) {
-			if (!graphic.Wait())
-				exit(0);
-		} else {
-			if (!graphic.Wait(CalcExpr(args.at(0)).GetValue<long long>()))
-				exit(0);
-		}
-		return;
-	} else if (functionName == "await") {
-		if (args.size() > 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		if (args.size() == 0) {
-			if (!graphic.AWait())
-				exit(0);
-		} else {
-			if (!graphic.AWait(CalcExpr(args.at(0)).GetValue<long long>()))
-				exit(0);
-		}
-		return;
-	} else if (functionName == "end") {
-		if (args.size() > 0)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.End();
-		exit(0);
-	} else if (functionName == "font") {
-		if (args.size() > 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		if (args.size() == 0)
-			graphic.SetFont();
-		else if (args.size() == 1)
-			graphic.SetFont(CalcExpr(args.at(0)).GetValue<long long>());
-		else if (args.size() == 2)
-			graphic.SetFont(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>());
-		return;
-	} else if (functionName == "redraw") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.SetRedraw(CalcExpr(args.at(0)).GetValue<bool>());
-		return;
-	} else if (functionName == "triangle") {
-		if (args.size() != 6)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.DrawTriangle(
-			CalcExpr(args.at(0)).GetValue<long double>(),
-			CalcExpr(args.at(1)).GetValue<long double>(),
-			CalcExpr(args.at(2)).GetValue<long double>(),
-			CalcExpr(args.at(3)).GetValue<long double>(),
-			CalcExpr(args.at(4)).GetValue<long double>(),
-			CalcExpr(args.at(5)).GetValue<long double>()
-		);
-		return;
-	} else if (functionName == "quad") {
-		if (args.size() != 8)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.DrawRectangle(
-			CalcExpr(args.at(0)).GetValue<long double>(),
-			CalcExpr(args.at(1)).GetValue<long double>(),
-			CalcExpr(args.at(2)).GetValue<long double>(),
-			CalcExpr(args.at(3)).GetValue<long double>(),
-			CalcExpr(args.at(4)).GetValue<long double>(),
-			CalcExpr(args.at(5)).GetValue<long double>(),
-			CalcExpr(args.at(6)).GetValue<long double>(),
-			CalcExpr(args.at(7)).GetValue<long double>()
-		);
-		return;
-	} else if (functionName == "rect") {
-		if (args.size() != 4)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		long long x = CalcExpr(args.at(0)).GetValue<long double>();
-		long long y = CalcExpr(args.at(1)).GetValue<long double>();
-		long long width = CalcExpr(args.at(2)).GetValue<long double>();
-		long long height = CalcExpr(args.at(3)).GetValue<long double>();
-		graphic.DrawRectangle(
-			x, y,
-			x + width, y,
-			x + width, y + height,
-			x, y + height
-		);
-		return;
-	} else if (functionName == "roundrect") {
-		if (args.size() != 5)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.DrawRoundRect(
-			CalcExpr(args.at(0)).GetValue<long double>(),
-			CalcExpr(args.at(1)).GetValue<long double>(),
-			CalcExpr(args.at(2)).GetValue<long double>(),
-			CalcExpr(args.at(3)).GetValue<long double>(),
-			CalcExpr(args.at(4)).GetValue<long double>()
-		);
-		return;
-	} else if (functionName == "line") {
-		if (args.size() == 2) {
-			graphic.DrawLine(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>()
-			);
-		} else if (args.size() == 4) {
-			graphic.DrawLine(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>()
-			);
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "ellipse") {
-		if (args.size() == 4) {
-			graphic.DrawEllipse(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>()
-			);
-		} else if (args.size() == 5) {
-			graphic.DrawEllipse(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>()
-			);
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "circle") {
-		if (args.size() != 3)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		long double radius = CalcExpr(args.at(2)).GetValue<long double>() * 2;
-		graphic.DrawEllipse(
-			CalcExpr(args.at(0)).GetValue<long double>(),
-			CalcExpr(args.at(1)).GetValue<long double>(),
-			radius, radius
-		);
-		return;
-	} else if (functionName == "LoadImage") {
-		if (args.size() == 2) {
-			//画像を読み込む
-			graphic.Load_Image(
-				CalcExpr(args.at(0)).GetValue<string>(),
-				CalcExpr(args.at(1)).GetValue<long long>()
-			);
-		} else if (args.size() == 3) {
-			graphic.Load_Image(
-				CalcExpr(args.at(0)).GetValue<string>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>()
-			);
-		} else if (args.size() == 4) {
-			graphic.Load_Image(
-				CalcExpr(args.at(0)).GetValue<string>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>(),
-				CalcExpr(args.at(3)).GetValue<long long>()
-			);
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "DrawImage") {
-		if (args.size() == 1) {
-			graphic.DrawImage(CalcExpr(args.at(0)).GetValue<long long>());
-		} else if (args.size() == 2) {
-			long double scaled_size = CalcExpr(args.at(1)).GetValue<long double>();
-			graphic.DrawImage(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				scaled_size, scaled_size
-			);
-		} else if (args.size() == 3) {
-			graphic.DrawImage(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>()
-			);
-		} else if (args.size() == 4) {
-			graphic.DrawImage(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>()
-			);
-		} else if (args.size() == 8) {
-			graphic.DrawImage(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>(),
-				CalcExpr(args.at(5)).GetValue<long double>(),
-				CalcExpr(args.at(6)).GetValue<long double>(),
-				CalcExpr(args.at(7)).GetValue<long double>()
-			);
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "ResizeScreen") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.ResizeWindow(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
-		return;
-	} else if (functionName == "title") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.SetWindowTitle(CalcExpr(args.at(0)).GetValue<string>());
-		return;
-	} else if (functionName == "mmload") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		audio.LoadMusic(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<long long>());
-		return;
-	} else if (functionName == "dmmload") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		audio.LoadSound(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<long long>());
-		return;
-	} else if (functionName == "mmplay") {
-		if (args.size() == 1) {
-			audio.PlayMusic(CalcExpr(args.at(0)).GetValue<long long>());
-		} else if (args.size() == 2) {
-			audio.PlayMusic(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "dmmplay") {
-		if (args.size() == 1) {
-			audio.PlaySound(CalcExpr(args.at(0)).GetValue<long long>());
-		} else if (args.size() == 2) {
-			audio.PlaySound(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "mmstop") {
-		if (args.size() != 0)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		audio.StopMusic();
-		return;
-	} else if (functionName == "mmpause") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		audio.PauseMusic(CalcExpr(args.at(0)).GetValue<long long>());
-		return;
-	} else if (functionName == "mmresume") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		audio.ResumeMusic(CalcExpr(args.at(0)).GetValue<long long>());
-		return;
-	} else if (functionName == "mmvol") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		audio.SetVolume(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
-		return;
-	} else if (functionName == "screen") {
-		if (args.size() == 1) {
-			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>());
-		} else if (args.size() == 2) {
-			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>());
-		} else if (args.size() == 3) {
-			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>());
-		} else if (args.size() == 4) {
-			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<long long>());
-		} else if (args.size() == 5) {
-			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<long long>(), CalcExpr(args.at(4)).GetValue<long long>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "ScreenPos") {
-		if (args.size() != 3)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.SetWindowPosition(
-			CalcExpr(args.at(0)).GetValue<long long>(),
-			CalcExpr(args.at(1)).GetValue<long long>(),
-			CalcExpr(args.at(2)).GetValue<long long>()
-		);
-		return;
-	} else if (functionName == "gsel") {
-		if (args.size() == 1) {
-			graphic.MakeCurrentWindow(CalcExpr(args.at(0)).GetValue<long long>());
-		} else if (args.size() == 2) {
-			graphic.MakeCurrentWindow(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "ShowScreen") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.HideWindow(CalcExpr(args.at(0)).GetValue<long long>());
-		return;
-	} else if (functionName == "HideScreen") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.ShowWindow(CalcExpr(args.at(0)).GetValue<long long>());
-		return;
-	} else if (functionName == "gcopy") {
-		if (args.size() == 1) {
-			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>());
-		} else if (args.size() == 2) {
-			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
-		} else if (args.size() == 3) {
-			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
-		} else if (args.size() == 4) {
-			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long double>(), CalcExpr(args.at(2)).GetValue<long double>(), CalcExpr(args.at(3)).GetValue<long double>());
-		} else if (args.size() == 5) {
-			graphic.Gcopy(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>()
-			);
-		} else if (args.size() == 6) {
-			graphic.Gcopy(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>(),
-				CalcExpr(args.at(5)).GetValue<long double>()
-			);
-		} else if (args.size() == 7) {
-			graphic.Gcopy(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>(),
-				CalcExpr(args.at(5)).GetValue<long double>(),
-				CalcExpr(args.at(6)).GetValue<long double>()
-			);
-		} else if (args.size() == 8) {
-			graphic.Gcopy(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>(),
-				CalcExpr(args.at(5)).GetValue<long double>(),
-				CalcExpr(args.at(6)).GetValue<long double>(),
-				CalcExpr(args.at(7)).GetValue<long double>()
-			);
-		} else if (args.size() == 9) {
-			graphic.Gcopy(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>(),
-				CalcExpr(args.at(5)).GetValue<long double>(),
-				CalcExpr(args.at(6)).GetValue<long double>(),
-				CalcExpr(args.at(7)).GetValue<long double>(),
-				CalcExpr(args.at(8)).GetValue<long double>()
-			);
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "notesave") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		ofstream ofs(CalcExpr(args.at(0)).GetValue<string>());
-		if (!ofs)
-			throw RuntimeException("Failed to open file for writing.", node->lineNumber, node->columnNumber);
-		ofs << CalcExpr(args.at(1)).GetValue<string>();
-		ofs.close();
-		return;
-	} else if (functionName == "makedir") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		if (!filesystem::create_directory(CalcExpr(args.at(0)).GetValue<string>()))
-			throw RuntimeException("Failed to create directory.", node->lineNumber, node->columnNumber);
-		return;
-	} else if (functionName == "rmfile") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		if (!filesystem::remove(CalcExpr(args.at(0)).GetValue<string>()))
-			throw RuntimeException("Failed to delete file.", node->lineNumber, node->columnNumber);
-		return;
-	} else if (functionName == "rmdir") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		if (!filesystem::remove_all(CalcExpr(args.at(0)).GetValue<string>()))
-			throw RuntimeException("Failed to remove directory.", node->lineNumber, node->columnNumber);
-		return;
-	} else if (functionName == "rename") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		filesystem::rename(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>());
-		return;
-	} else if (functionName == "cpfile") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		filesystem::copy_file(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>(), filesystem::copy_options::overwrite_existing);
-		return;
-	} else if (functionName == "cpdir") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		filesystem::copy(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>(), filesystem::copy_options::recursive | filesystem::copy_options::overwrite_existing);
-		return;
-	} else if (functionName == "system") {
-		if (args.size() != 1)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		system(CalcExpr(args.at(0)).GetValue<string>().c_str());
-		return;
-	} else if (functionName == "HideMouse") {
-		if (args.size() != 0)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		SDL_HideCursor();
-		return;
-	} else if (functionName == "ShowMouse") {
-		if (args.size() != 0)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		SDL_ShowCursor();
-		return;
-	} else if (functionName == "Set3DCamera") {
-		if (args.size() == 0) {
-			graphic.SetCameraPos(CalcExpr(args.at(0)).GetValue<long double>());
-		} else if (args.size() == 1) {
-			graphic.SetCameraPos(CalcExpr(args.at(0)).GetValue<long double>());
-		} else if (args.size() == 2) {
-			graphic.SetCameraPos(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>()
-			);
-		} else if (args.size() == 3) {
-			graphic.SetCameraPos(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>()
-			);
-		} else if (args.size() == 4) {
-			graphic.SetCameraPos(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>()
-			);
-		} else if (args.size() == 5) {
-			graphic.SetCameraPos(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>()
-			);
-		} else if (args.size() == 6) {
-			graphic.SetCameraPos(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>(),
-				CalcExpr(args.at(5)).GetValue<long double>()
-			);
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "mkparticle") {
-		if (args.size() == 4) {
-			graphic.mkparticle(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>(),
-				CalcExpr(args.at(3)).GetValue<long long>()
-			);
-		} else if (args.size() == 5) {
-			vector<long long> particle_args;
-			for (auto& arg : CalcExpr(args.at(4)).GetValue<vector<Var>>())
-				particle_args.push_back(arg.GetValue<long long>());
-			graphic.mkparticle(
-				CalcExpr(args.at(0)).GetValue<long long>(),
-				CalcExpr(args.at(1)).GetValue<long long>(),
-				CalcExpr(args.at(2)).GetValue<long long>(),
-				CalcExpr(args.at(3)).GetValue<long long>(),
-				particle_args
-			);
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "ldparticle") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.ldparticle(
-			CalcExpr(args.at(0)).GetValue<long long>(),
-			CalcExpr(args.at(1)).GetValue<long long>()
-		);
-		return;
-	} else if (functionName == "particle") {
-		if (args.size() != 5)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.drawparticle(
-			CalcExpr(args.at(0)).GetValue<long long>(),
-			CalcExpr(args.at(1)).GetValue<long double>(),
-			CalcExpr(args.at(2)).GetValue<long double>(),
-			CalcExpr(args.at(3)).GetValue<long double>(),
-			CalcExpr(args.at(4)).GetValue<long double>()
-		);
-		return;
-	} else if (functionName == "particler") {
-		if (args.size() != 6)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.drawparticler(
-			CalcExpr(args.at(0)).GetValue<long long>(),
-			CalcExpr(args.at(1)).GetValue<long double>(),
-			CalcExpr(args.at(2)).GetValue<long double>(),
-			CalcExpr(args.at(3)).GetValue<long double>(),
-			CalcExpr(args.at(4)).GetValue<long double>(),
-			CalcExpr(args.at(5)).GetValue<long double>()
-		);
-		return;
-	} else if (functionName == "particlem") {
-		if (args.size() != 2)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.drawparticlem(
-			CalcExpr(args.at(0)).GetValue<long long>(),
-			CalcExpr(args.at(1)).GetValue<long double>()
-		);
-		return;
-	} else if (functionName == "particlemr") {
-		if (args.size() != 3)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.drawparticlemr(
-			CalcExpr(args.at(0)).GetValue<long long>(),
-			CalcExpr(args.at(1)).GetValue<long double>(),
-			CalcExpr(args.at(2)).GetValue<long double>()
-		);
-		return;
-	} else if (functionName == "line3D") {
-		if (args.size() == 3) {
-			graphic.Draw3DLine(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>()
-			);
-		} else if (args.size() == 6) {
-			graphic.Draw3DLine(
-				CalcExpr(args.at(0)).GetValue<long double>(),
-				CalcExpr(args.at(1)).GetValue<long double>(),
-				CalcExpr(args.at(2)).GetValue<long double>(),
-				CalcExpr(args.at(3)).GetValue<long double>(),
-				CalcExpr(args.at(4)).GetValue<long double>(),
-				CalcExpr(args.at(5)).GetValue<long double>()
-			);
-		} else {
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		}
-		return;
-	} else if (functionName == "cube") {
-		if (args.size() != 6)
-			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
-		graphic.Draw3DBox(
-			CalcExpr(args.at(0)).GetValue<long double>(),
-			CalcExpr(args.at(1)).GetValue<long double>(),
-			CalcExpr(args.at(2)).GetValue<long double>(),
-			CalcExpr(args.at(3)).GetValue<long double>(),
-			CalcExpr(args.at(4)).GetValue<long double>(),
-			CalcExpr(args.at(5)).GetValue<long double>()
-		);
+	auto system_func_it = system_functions.find(functionName);
+	if (system_func_it != system_functions.end()) {
+		//組み込み関数の処理
+		system_func_it->second(args, node->lineNumber, node->columnNumber);
 		return;
 	}
 	if (user_func.count(functionName)) {
@@ -1600,3 +914,712 @@ void Evaluator::init_keycode() {
 	keycode["RMETA"] = SDL_SCANCODE_RGUI; // Windowsキー
 	keycode["MENU"] = SDL_SCANCODE_APPLICATION; // アプリケーションキー
 }
+
+#define FUNCTION(NAME) system_functions[#NAME] = [this](vector<AST*> args, unsigned long long lineNumber, unsigned long long columnNumber)
+void Evaluator::init_system_functions() {
+	FUNCTION(console) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		Var result = CalcExpr(args.at(0));
+		switch (result.GetType()) {
+		case 0: {
+			cout << result.GetValue<long long>() << endl;
+			break;
+		}
+		case 1: {
+			cout << result.GetValue<long double>() << endl;
+			break;
+		}
+		case 2: {
+			cout << result.GetValue<string>() << endl;
+			break;
+		}
+		case 3:throw RuntimeException("Void function should not return value.", lineNumber, columnNumber);
+		default:throw RuntimeException("Unknown argument type.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(randomize) {
+		if (args.size() > 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		srand((unsigned int)((args.size() == 0) ? time(NULL) : CalcExpr(args.at(0)).GetValue<long long>()));
+	};
+	FUNCTION(print) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		//グラフィック関数
+		graphic.printText(CalcExpr(args.at(0)).GetValue<string>());
+	};
+	FUNCTION(pos) {
+		if (args.size() == 2) {
+			graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>());
+		} else if (args.size() == 3) {
+			graphic.SetPos(CalcExpr(args.at(0)).GetValue<long double>(), CalcExpr(args.at(1)).GetValue<long double>(), CalcExpr(args.at(2)).GetValue<long double>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(cls) {
+		if (args.size() == 0) {
+			graphic.Clear();
+		} else if (args.size() == 3) {
+			graphic.Clear(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(Reset3D) {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.Reset3D();
+	};
+	FUNCTION(color) {
+		if (args.size() == 3) {
+			graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 4) {
+			graphic.SetColor(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>());
+		} else if (args.size() == 5) {
+			graphic.SetColors(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				CalcExpr(args.at(4)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(hsvcolor) {
+		if (args.size() == 3) {
+			graphic.SetHSVColor(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 4) {
+			graphic.SetHSVColor(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>());
+		} else if (args.size() == 5) {
+			graphic.SetHSVColors(CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				CalcExpr(args.at(4)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(gmode) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.SetGmode(CalcExpr(args.at(0)).GetValue<long long>());
+	};
+	FUNCTION(texture) {
+		if (args.size() == 1) {
+			graphic.SetTexture(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 3) {
+			graphic.SetTexture(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 5) {
+			graphic.SetTexture(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				CalcExpr(args.at(4)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(dialog) {
+		if (args.size() > 3)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		Var message = (args.size() < 1) ? "" : CalcExpr(args.at(0));
+		Var title = (args.size() < 2) ? "" : CalcExpr(args.at(1));
+		Var type = (args.size() < 3) ? 0LL : CalcExpr(args.at(2));
+		graphic.CallDialog(title.GetValue<string>(), message.GetValue<string>(), type.GetValue<long long>());
+	};
+	FUNCTION(wait) {
+		if (args.size() > 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		if (args.size() == 0) {
+			if (!graphic.Wait())
+				exit(0);
+		} else {
+			if (!graphic.Wait(CalcExpr(args.at(0)).GetValue<long long>()))
+				exit(0);
+		}
+	};
+	FUNCTION(await) {
+		if (args.size() > 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		if (args.size() == 0) {
+			if (!graphic.AWait())
+				exit(0);
+		} else {
+			if (!graphic.AWait(CalcExpr(args.at(0)).GetValue<long long>()))
+				exit(0);
+		}
+	};
+	FUNCTION(end) {
+		if (args.size() > 0)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.End();
+		exit(0);
+	};
+	FUNCTION(font) {
+		if (args.size() > 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		if (args.size() == 0)
+			graphic.SetFont();
+		else if (args.size() == 1)
+			graphic.SetFont(CalcExpr(args.at(0)).GetValue<long long>());
+		else if (args.size() == 2)
+			graphic.SetFont(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>());
+	};
+	FUNCTION(redraw) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.SetRedraw(CalcExpr(args.at(0)).GetValue<bool>());
+	};
+	FUNCTION(triangle) {
+		if (args.size() != 6)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.DrawTriangle(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>()
+		);
+	};
+	FUNCTION(quad) {
+		if (args.size() != 8)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.DrawRectangle(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>(),
+			CalcExpr(args.at(6)).GetValue<long double>(),
+			CalcExpr(args.at(7)).GetValue<long double>()
+		);
+	};
+	FUNCTION(rect) {
+		if (args.size() != 4)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		long long x = CalcExpr(args.at(0)).GetValue<long double>();
+		long long y = CalcExpr(args.at(1)).GetValue<long double>();
+		long long width = CalcExpr(args.at(2)).GetValue<long double>();
+		long long height = CalcExpr(args.at(3)).GetValue<long double>();
+		graphic.DrawRectangle(
+			x, y,
+			x + width, y,
+			x + width, y + height,
+			x, y + height
+		);
+	};
+	FUNCTION(roundrect) {
+		if (args.size() != 5)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.DrawRoundRect(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>()
+		);
+	};
+	FUNCTION(line) {
+		if (args.size() == 2) {
+			graphic.DrawLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>()
+			);
+		} else if (args.size() == 4) {
+			graphic.DrawLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(ellipse) {
+		if (args.size() == 4) {
+			graphic.DrawEllipse(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else if (args.size() == 5) {
+			graphic.DrawEllipse(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(circle) {
+		if (args.size() != 3)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		long double radius = CalcExpr(args.at(2)).GetValue<long double>() * 2;
+		graphic.DrawEllipse(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			radius, radius
+		);
+	};
+	FUNCTION(LoadImage) {
+		if (args.size() == 2) {
+			//画像を読み込む
+			graphic.Load_Image(
+				CalcExpr(args.at(0)).GetValue<string>(),
+				CalcExpr(args.at(1)).GetValue<long long>()
+			);
+		} else if (args.size() == 3) {
+			graphic.Load_Image(
+				CalcExpr(args.at(0)).GetValue<string>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>()
+			);
+		} else if (args.size() == 4) {
+			graphic.Load_Image(
+				CalcExpr(args.at(0)).GetValue<string>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(DrawImage) {
+		if (args.size() == 1) {
+			graphic.DrawImage(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			long double scaled_size = CalcExpr(args.at(1)).GetValue<long double>();
+			graphic.DrawImage(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				scaled_size, scaled_size
+			);
+		} else if (args.size() == 3) {
+			graphic.DrawImage(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>()
+			);
+		} else if (args.size() == 4) {
+			graphic.DrawImage(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else if (args.size() == 8) {
+			graphic.DrawImage(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>(),
+				CalcExpr(args.at(7)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(ResizeScreen) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.ResizeWindow(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+	};
+	FUNCTION(title) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.SetWindowTitle(CalcExpr(args.at(0)).GetValue<string>());
+	};
+	FUNCTION(mmload) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		audio.LoadMusic(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<long long>());
+		return;
+	};
+	FUNCTION(dmmload) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		audio.LoadSound(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<long long>());
+	};
+	FUNCTION(mmplay) {
+		if (args.size() == 1) {
+			audio.PlayMusic(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			audio.PlayMusic(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(dmmplay) {
+		if (args.size() == 1) {
+			audio.PlaySound(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			audio.PlaySound(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(mmstop) {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		audio.StopMusic();
+	};
+	FUNCTION(dmmstop) {
+		if (args.size() == 0) {
+			audio.StopSound();
+		} else if (args.size() == 1) {
+			audio.StopSound(CalcExpr(args.at(0)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(mmpause) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		audio.PauseMusic(CalcExpr(args.at(0)).GetValue<long long>());
+	};
+	FUNCTION(mmresume) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		audio.ResumeMusic(CalcExpr(args.at(0)).GetValue<long long>());
+	};
+	FUNCTION(mmvol) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		audio.SetVolume(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+	};
+	FUNCTION(screen) {
+		if (args.size() == 1) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>());
+		} else if (args.size() == 3) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 4) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<long long>());
+		} else if (args.size() == 5) {
+			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<long long>(), CalcExpr(args.at(4)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(ScreenPos) {
+		if (args.size() != 3)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.SetWindowPosition(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long long>(),
+			CalcExpr(args.at(2)).GetValue<long long>()
+		);
+	};
+	FUNCTION(gsel) {
+		if (args.size() == 1) {
+			graphic.MakeCurrentWindow(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			graphic.MakeCurrentWindow(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(ShowScreen) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.HideWindow(CalcExpr(args.at(0)).GetValue<long long>());
+	};
+	FUNCTION(HideScreen) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.ShowWindow(CalcExpr(args.at(0)).GetValue<long long>());
+	};
+	FUNCTION(gcopy) {
+		if (args.size() == 1) {
+			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>());
+		} else if (args.size() == 2) {
+			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>());
+		} else if (args.size() == 3) {
+			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long long>(), CalcExpr(args.at(2)).GetValue<long long>());
+		} else if (args.size() == 4) {
+			graphic.Gcopy(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long double>(), CalcExpr(args.at(2)).GetValue<long double>(), CalcExpr(args.at(3)).GetValue<long double>());
+		} else if (args.size() == 5) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>()
+			);
+		} else if (args.size() == 6) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>()
+			);
+		} else if (args.size() == 7) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>()
+			);
+		} else if (args.size() == 8) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>(),
+				CalcExpr(args.at(7)).GetValue<long double>()
+			);
+		} else if (args.size() == 9) {
+			graphic.Gcopy(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>(),
+				CalcExpr(args.at(7)).GetValue<long double>(),
+				CalcExpr(args.at(8)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(notesave) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		ofstream ofs(CalcExpr(args.at(0)).GetValue<string>());
+		if (!ofs)
+			throw RuntimeException("Failed to open file for writing.", lineNumber, columnNumber);
+		ofs << CalcExpr(args.at(1)).GetValue<string>();
+		ofs.close();
+	};
+	FUNCTION(makedir) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		if (!filesystem::create_directory(CalcExpr(args.at(0)).GetValue<string>()))
+			throw RuntimeException("Failed to create directory.", lineNumber, columnNumber);
+	};
+	FUNCTION(rmfile) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		if (!filesystem::remove(CalcExpr(args.at(0)).GetValue<string>()))
+			throw RuntimeException("Failed to delete file.", lineNumber, columnNumber);
+	};
+	FUNCTION(rmdir) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		if (!filesystem::remove_all(CalcExpr(args.at(0)).GetValue<string>()))
+			throw RuntimeException("Failed to delete directory.", lineNumber, columnNumber);
+	};
+	FUNCTION(rename) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		filesystem::rename(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>());
+	};
+	FUNCTION(cpfile) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		filesystem::copy_file(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>(), filesystem::copy_options::overwrite_existing);
+	};
+	FUNCTION(cpdir) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		filesystem::copy(CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(1)).GetValue<string>(), filesystem::copy_options::recursive | filesystem::copy_options::overwrite_existing);
+	};
+	FUNCTION(system) {
+		if (args.size() != 1)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		system(CalcExpr(args.at(0)).GetValue<string>().c_str());
+	};
+	FUNCTION(HideMouse) {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		SDL_HideCursor();
+	};
+	FUNCTION(ShowMouse) {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		SDL_ShowCursor();
+	};
+	FUNCTION(Set3DCamera) {
+		if (args.size() == 0) {
+			graphic.SetCameraPos(CalcExpr(args.at(0)).GetValue<long double>());
+		} else if (args.size() == 1) {
+			graphic.SetCameraPos(CalcExpr(args.at(0)).GetValue<long double>());
+		} else if (args.size() == 2) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>()
+			);
+		} else if (args.size() == 3) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>()
+			);
+		} else if (args.size() == 4) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else if (args.size() == 5) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>()
+			);
+		} else if (args.size() == 6) {
+			graphic.SetCameraPos(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(mkparticle) {
+		if (args.size() == 4) {
+			graphic.mkparticle(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>()
+			);
+		} else if (args.size() == 5) {
+			vector<long long> particle_args;
+			for (auto& arg : CalcExpr(args.at(4)).GetValue<vector<Var>>())
+				particle_args.push_back(arg.GetValue<long long>());
+			graphic.mkparticle(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				particle_args
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(ldparticle) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.ldparticle(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long long>()
+		);
+	};
+	FUNCTION(particle) {
+		if (args.size() != 5)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.drawparticle(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>()
+		);
+	};
+	FUNCTION(particler) {
+		if (args.size() != 6)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.drawparticler(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>()
+		);
+	};
+	FUNCTION(particlem) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.drawparticlem(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>()
+		);
+	};
+	FUNCTION(particlemr) {
+		if (args.size() != 3)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.drawparticlemr(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>()
+		);
+	};
+	FUNCTION(line3D) {
+		if (args.size() == 3) {
+			graphic.Draw3DLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>()
+			);
+		} else if (args.size() == 6) {
+			graphic.Draw3DLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
+	FUNCTION(cube) {
+		if (args.size() != 6)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.Draw3DBox(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>()
+		);
+	};
+}
+#undef FUNCTION

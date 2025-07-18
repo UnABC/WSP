@@ -25,6 +25,8 @@ private:
 	float mousex, mousey;	//マウス座標
 	//ユーザー定義関数
 	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
+	//システム関数
+	std::unordered_map<std::string, std::function<void(std::vector<AST*> args,unsigned long long lineNumber,unsigned long long columnNumber)>> system_functions;
 	//数学定数
 	std::map<std::string, Var> math_const;
 	//キーコード
@@ -50,6 +52,7 @@ private:
 	inline void ExitScope() { var.pop_back();static_var.pop_back();ref_var.pop_back();ref_static_var.pop_back(); };
 
 	void init_keycode();
+	void init_system_functions();
 public:
 	Evaluator();
 	~Evaluator();
