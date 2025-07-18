@@ -1513,6 +1513,7 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 	EnterScope();
 	if (node->GetMode()) {
 		static_var.back()["cnt"] = StaticVar(0LL);
+		static_var.back()["cnt"].SetType(0);
 		long long count = CalcExpr(node->GetCondition()).GetValue<long long>();
 		for (long long i = 0; i < count; i++) {
 			retval = evaluate(node->GetStatements());
@@ -1522,7 +1523,7 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 			} else if (retval.second == 2) {
 				break;
 			}
-			static_var.back()["cnt"].EditValue<long long>()++;
+			static_var.back()["cnt"]++;
 		}
 	} else {
 		while (CalcExpr(node->GetCondition()).GetValue<bool>()) {

@@ -4,7 +4,7 @@ int SCR_BLUR = 12
 int PTC_STAR = 7
 int PTC_XS = 8
 
-double _2MPI = M_PI*2.0
+double _2_5MPI = M_PI*2.0/5.0
 
 screen(0,"WSP demo",1600,900)
 ScreenPos(0,0,30)
@@ -152,10 +152,12 @@ void galaxy(){
 	cls(limit(c, 0, 255), limit(1.2 * c, 0, 255), limit(1.4 * c, 0, 255))
 	gmode(2)
 	// stars
+	int alpha1 = cc*224
+	int alpha2 = cc*64
 	repeat(800){
 		double z = limit( rnd(5000) - cb32s * 2000 - 2800, 0, 59999)
 		double r = rnd(600)
-		double f = _2MPI * cnt / 5.0//+(r / 200.0) + (0.002 * rnd(32768) / (r + 100)) - cb32
+		double f = _2_5MPI * cnt+(r / 200.0) + (0.002 * rnd(32768) / (r + 100)) - cb32
 		
 		double a = double( rnd(5000) ) / (r + 100)
 		if (rnd(2)){
@@ -164,32 +166,32 @@ void galaxy(){
 			z -= a
 		}
 		
-		color(255,255,255,cc*224)
+		color(255,255,255,alpha1)
 		particle(1,  cos(f) * r, sin(f) * r, z,  15 * (600 - r) / 600 + 2)
 		
 		if rnd(4) == 0 {
-			color(255,255,255,cc*64)
+			color(255,255,255,alpha2)
 			particlem(6, 45 * (600 - r) / 600 + 5)
 		}
 		
 		if rnd(8) == 0 {
 			a = sin(cb32*M_PI*4 + cnt*cnt)
-			color(255,255,255, a * limit( cc * 64, 0, 64 ))
+			color(255,255,255, a * limit( alpha2, 0, 64 ))
 			particlem(PTC_XS, a * 90)
 		}//*/
 	}//*/
 	//X
-	color(255,255,255,cc*64)
+	color(255,255,255,alpha2)
 	particle   (6,  0, 0, 0,  500)
 	particlem  (3,  300)
 	particlemr (PTC_STAR, cb2s*(bcnt>=30)*200 + 200, -cb32)
 	particlemr (PTC_STAR,                       200,  cb32 * 3)
 	//
 	repeat(200){
-		color(255,255,255,cc*224)
+		color(255,255,255,alpha1)
 		particle(1,  rnd(4000)-2000, -rnd(4000), rnd(4000)-2000,  7)
 		if rnd(3) == 0 {
-			color(255,255,255,cc*64)
+			color(255,255,255,alpha2)
 			particlem(6, 30)
 		}
 	}

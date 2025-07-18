@@ -441,6 +441,20 @@ Var Var::operator-() const {
 	}
 }
 
+Var& Var::operator++(int) {
+	int_value++;
+	double_value++;
+	string_value += "1";
+	bool_value = true;
+	if (array_value.empty()) {
+		array_value.push_back(Var(int_value));
+	} else {
+		for (auto& v : array_value)
+			v = v + Var(1LL); // 配列の各要素に1を加える
+	}
+	return *this;
+}
+
 Var::operator bool() const {
 	switch (type) {
 	case 0: return int_value != 0;
@@ -462,8 +476,8 @@ T Var::GetValue() const {
 	} else if constexpr (is_same_v<T, long double>) {
 		return double_value;
 	} else if constexpr (is_same_v<T, string>) {
-		if (type%10 == 0)return to_string(my_stoll(string_value));
-		if (type%10 == 1)return to_string(my_stold(string_value));
+		if (type % 10 == 0)return to_string(my_stoll(string_value));
+		if (type % 10 == 1)return to_string(my_stold(string_value));
 		return string_value;
 	} else if constexpr (is_same_v<T, bool>) {
 		return int_value != 0;
