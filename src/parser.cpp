@@ -371,9 +371,16 @@ AST* Parser::Declaration(int type) {
 	if (type == 3)
 		throw ParserException("Invalid token.\"" + currentToken->value + "\"\nExpected function declaration.", currentToken->lineNumber, currentToken->columnNumber);
 	//静的変数(初期値なし)
-	string variableName = currentToken->value; //変数名を取得
-	AST* ast = new StaticVarNodeWithoutAssignment(variableName, type, arrayIndex, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
+	vector<string> variableNames; //変数名を格納するベクター
+	variableNames.push_back(currentToken->value); //変数名を取得
 	currentToken = lexer.ExtractNextToken(); //識別子をスキップ
+	while ((currentToken->type == TokenType::Symbol) && (currentToken->value == ",")) {
+		currentToken = lexer.ExtractNextToken(); //,をスキップ
+		variableNames.push_back(currentToken->value); //変数名を取得
+		currentToken = lexer.ExtractNextToken(); //識別子をスキップ
+	}
+	AST* ast = new StaticVarNodeWithoutAssignment(variableNames, type, arrayIndex, currentToken->lineNumber, currentToken->columnNumber); //静的変数ノードを作成
+	//currentToken = lexer.ExtractNextToken(); //識別子をスキップ
 	return ast;
 }
 
@@ -383,14 +390,14 @@ AST* Parser::Argument(int type) {
 	string variableName = currentToken->value; //変数名を取得
 	AST* ast;
 	bool isReference = (type == 3);
-	if (type == 3) {
+	//if (type == 3) {
 		//参照渡し
 		ast = new VariableNode(variableName, vector<AST*>(), currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
-		ast->SetType(0); //型をintで仮設定
-	} else {
-		//値渡し
-		ast = new StaticVarNodeWithoutAssignment(variableName, type, vector<AST*>(), currentToken->lineNumber, currentToken->columnNumber);
-	}
+		ast->SetType(type); //型をintで仮設定
+	// } else {
+	// 	//値渡し
+	// 	ast = new StaticVarNodeWithoutAssignment(variableName, type, vector<AST*>(), currentToken->lineNumber, currentToken->columnNumber);
+	// }
 	currentToken = lexer.ExtractNextToken(); //変数名をスキップ
 	if ((currentToken->type == TokenType::Operator) && (currentToken->value == "=")) {
 		//デフォルト引数有

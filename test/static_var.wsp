@@ -22,5 +22,12 @@ print(-2.0*d)
 d = "string is allowed!"
 print(d)
 
-
+//このような宣言も許可
+int x,y,z
+x = "3.14"
+y = "M_PI"
+z = 2.73
+print(x)
+print(y)
+print(z)
 

@@ -13,3 +13,7 @@ print(e)
 print(hogehoge+="3")
 print(e--)
 
+repeat(3){
+	print(M_PI*cnt)
+}
+

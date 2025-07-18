@@ -6,6 +6,7 @@
 #include "shape.hpp"
 #include "Image.hpp"
 #include "font.hpp"
+#include "particle.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <vector>
@@ -22,6 +23,7 @@ private:
 	GLuint fbo, texture, rbo;
 	GLuint vao, vbo, shaderProgram;
 	GLuint64 texture_handle;
+	glm::vec3 CameraPos;
 	int width, height;
 	bool is_fullscreen;
 	bool is3D = false; // 3Dモードかどうか
@@ -61,10 +63,12 @@ public:
 	std::vector<SDL_Color> colors;	//色のリスト
 	//キャッシュ
 	std::vector<AllVertexData> all_vertices;	//全ての頂点データを保持するベクター
+	std::map<float, AllVertexData> all_3D_vertices; // 3Dモードの頂点データを保持するマップ
 
 	Shape shape;
 	Image image;
 	Font font;
+	Particle particle;
 	glm::mat4 projection;
 	glm::mat4 view;
 
@@ -90,6 +94,7 @@ public:
 	bool Is3D() const { return is3D; }
 	void Destroy() const;
 	const GLuint& GetFBO() const { return fbo; }
+	const glm::vec3& GetCameraPos() const { return CameraPos; }
 	GLuint64 GetTextureHandle() const { return texture_handle; }
 	void Clear(SDL_Color sys_col);
 	void Reset3D();

@@ -1,0 +1,24 @@
+mkparticle(0,255,255,32)
+
+ct = 0
+while (true){
+	redraw(0)
+	cls(24,24,24)
+	Set3DCamera(cos(0.04 * ct) * 2000, sin(0.04 * ct) * 2000, cos(0.03 * ct) * 1000)
+	
+	color(64, 64, 64)
+	cube(-500, -500, -500,  500, 500, 500)
+
+	
+	gmode(2)
+	color(255,255,255,128)
+	
+	randomize(0)
+	repeat(300){
+		particle(0,rnd(1000)-500,rnd(1000)-500,rnd(1000)-500,50)
+	}
+	redraw(1)
+	await(30)
+	ct++
+}
+

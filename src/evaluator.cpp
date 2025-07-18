@@ -228,7 +228,10 @@ Var Evaluator::CalcExpr(AST* ast) {
 			} else if (functionName == "string") {
 				return StaticVar(CalcExpr(args.at(0)).GetValue<string>());
 			} else if (functionName == "rnd") {
-				return Var((long long)(rand() % (CalcExpr(args.at(0)).GetValue<long long>())));
+				long long rnd_max = CalcExpr(args.at(0)).GetValue<long long>();
+				if (rnd_max <= 0)
+					throw EvaluatorException("rnd: rnd_max must be greater than 0.");
+				return Var((long long)(rand() % rnd_max));
 			} else if (functionName == "size") {
 				return Var((long long)CalcExpr(args.at(0)).GetPointer()->size());
 			} else if (functionName == "strlen") {
@@ -1084,6 +1087,16 @@ void Evaluator::VoidFunction(AST* ast) {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		system(CalcExpr(args.at(0)).GetValue<string>().c_str());
 		return;
+	} else if (functionName == "HideMouse") {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		SDL_HideCursor();
+		return;
+	} else if (functionName == "ShowMouse") {
+		if (args.size() != 0)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		SDL_ShowCursor();
+		return;
 	} else if (functionName == "Set3DCamera") {
 		if (args.size() == 0) {
 			graphic.SetCameraPos(CalcExpr(args.at(0)).GetValue<long double>());
@@ -1127,6 +1140,109 @@ void Evaluator::VoidFunction(AST* ast) {
 		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
+		return;
+	} else if (functionName == "mkparticle") {
+		if (args.size() == 4) {
+			graphic.mkparticle(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>()
+			);
+		} else if (args.size() == 5) {
+			vector<long long> particle_args;
+			for (auto& arg : CalcExpr(args.at(4)).GetValue<vector<Var>>())
+				particle_args.push_back(arg.GetValue<long long>());
+			graphic.mkparticle(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<long long>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				particle_args
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "ldparticle") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.ldparticle(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long long>()
+		);
+		return;
+	} else if (functionName == "particle") {
+		if (args.size() != 5)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.drawparticle(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "particler") {
+		if (args.size() != 6)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.drawparticler(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "particlem") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.drawparticlem(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "particlemr") {
+		if (args.size() != 3)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.drawparticlemr(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>()
+		);
+		return;
+	} else if (functionName == "line3D") {
+		if (args.size() == 3) {
+			graphic.Draw3DLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>()
+			);
+		} else if (args.size() == 6) {
+			graphic.Draw3DLine(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		}
+		return;
+	} else if (functionName == "cube") {
+		if (args.size() != 6)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.Draw3DBox(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>()
+		);
 		return;
 	}
 	if (user_func.count(functionName)) {
@@ -1303,49 +1419,65 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 Var Evaluator::ProcessStaticVar(AST* ast) {
 	//静的変数の処理
 	StaticVarNodeWithoutAssignment* node = static_cast<StaticVarNodeWithoutAssignment*>(ast);
-	string variableName = node->GetVariableName();
-	//変数の存在を確認
-	if (ref_static_var.back().count(variableName))
-		throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	if (ref_var.back().count(variableName))
-		throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	if (static_var.back().count(variableName))
-		throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	if (var.back().count(variableName))
-		throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
-	//変数の定義
-	switch (node->GetType())
-	{
-	case 0:return ((static_var.back()[variableName] = StaticVar(0LL)));
-	case 1:return ((static_var.back()[variableName] = StaticVar(0.0L)));
-	case 2:return ((static_var.back()[variableName] = StaticVar(string())));
-	case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
-	case 10:
-	case 11:
-	case 12:
-	{
-		Var init_value;
-		if (node->GetType() == 10) {
-			init_value = Var(0LL);
-		} else if (node->GetType() == 11) {
-			init_value = Var(0.0L);
-		} else if (node->GetType() == 12) {
-			init_value = Var(string());
+	Var retval;
+	for (auto variableName : node->GetVariableNames()) {
+		//変数の存在を確認
+		if (ref_static_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (ref_var.back().count(variableName))
+			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (static_var.back().count(variableName))
+			throw RuntimeException("Redefinition of static variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		if (var.back().count(variableName))
+			throw RuntimeException("Redefinition of variable: " + variableName + ".", node->lineNumber, node->columnNumber);
+		//変数の定義
+		switch (node->GetType())
+		{
+		case 0: {
+			static_var.back()[variableName] = StaticVar(0LL);
+			retval = StaticVar(0LL);
+			break;
 		}
+		case 1: {
+			static_var.back()[variableName] = StaticVar(0.0L);
+			retval = StaticVar(0.0L);
+			break;
+		}
+		case 2: {
+			static_var.back()[variableName] = StaticVar(string());
+			retval = StaticVar(string());
+			break;
+		}
+		case 3:throw RuntimeException("Void function should not return value.", node->lineNumber, node->columnNumber);
+		case 10:
+		case 11:
+		case 12:
+		{
+			Var init_value;
+			if (node->GetType() == 10) {
+				init_value = Var(0LL);
+			} else if (node->GetType() == 11) {
+				init_value = Var(0.0L);
+			} else if (node->GetType() == 12) {
+				init_value = Var(string());
+			}
 
-		//配列の初期化
-		Var init_array(init_value);
-		for (AST* index_node : node->GetArrayIndex() | views::reverse) {
-			long long index = CalcExpr(index_node).GetValue<long long>();
-			if (index < 0)
-				throw RuntimeException("Array index cannot be negative.", node->lineNumber, node->columnNumber);
-			init_array = vector<Var>(index, init_array);
+			//配列の初期化
+			Var init_array(init_value);
+			for (AST* index_node : node->GetArrayIndex() | views::reverse) {
+				long long index = CalcExpr(index_node).GetValue<long long>();
+				if (index < 0)
+					throw RuntimeException("Array index cannot be negative.", node->lineNumber, node->columnNumber);
+				init_array = vector<Var>(index, init_array);
+			}
+			static_var.back()[variableName] = move(init_array);
+			return static_var.back()[variableName];
+			break;
 		}
-		static_var.back()[variableName] = move(init_array);
-		return static_var.back()[variableName];
+		default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
+		}
 	}
-	default:throw RuntimeException("Unknown variable type.", node->lineNumber, node->columnNumber);
-	}
+	return retval;
 }
 
 inline long long Evaluator::GetTime() {
@@ -1381,6 +1513,7 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 	EnterScope();
 	if (node->GetMode()) {
 		static_var.back()["cnt"] = StaticVar(0LL);
+		static_var.back()["cnt"].SetType(0);
 		long long count = CalcExpr(node->GetCondition()).GetValue<long long>();
 		for (long long i = 0; i < count; i++) {
 			retval = evaluate(node->GetStatements());
@@ -1390,7 +1523,7 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 			} else if (retval.second == 2) {
 				break;
 			}
-			static_var.back()["cnt"].EditValue<long long>()++;
+			static_var.back()["cnt"]++;
 		}
 	} else {
 		while (CalcExpr(node->GetCondition()).GetValue<bool>()) {

@@ -51,13 +51,14 @@ public:
 	Var operator^ (const Var& value) const;
 	Var operator! () const;
 	Var operator- () const;
+	Var& operator++ (int);
 	explicit operator bool()const;
 
 	template<typename T>
 	T GetValue() const;
 	template<typename T>
 	T& EditValue();
-	std::vector<Var> *GetPointer(){return &array_value;}
+	std::vector<Var>* GetPointer() { return &array_value; }
 	int GetType() const { return type; };
 	bool IsZero(int TYPE) const;
 };
@@ -83,7 +84,7 @@ public:
 	using Var::GetValue;
 	using Var::EditValue;
 	std::vector<StaticVar> GetValue() const;
-	std::vector<StaticVar> *GetPointer(){return &static_array_value;}
+	std::vector<StaticVar>* GetPointer() { return &static_array_value; }
 	std::vector<StaticVar>& EditValue();
 	void ResizeArray(size_t size);
 	StaticVar update_array();

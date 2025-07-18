@@ -1,0 +1,35 @@
+LoadImage("test/image/star.png",10)
+cls(0,0,0)
+DrawImage(10)
+
+/*screen(11,"",640,480,16)
+mkparticle(0,255,255,255)
+LoadImage("test/image/star.png",10)
+ldparticle(1,10)
+int arr[4] = [10,2,100,80]
+mkparticle(2,  255, 0, 0,  arr)
+int arr2[8] = [6, 6,  100, 90, 80, 70, 60, 50]
+mkparticle(3,  0, 255, 0,  arr2)
+cls(0,0,0)
+Set3DCamera(0,-100,0)
+
+while(true){
+		gsel(11)
+		redraw(0)
+			cls(0,0,0)
+			gmode(2)
+			repeat(4){
+				int x = cnt*20-30
+				particle(cnt,x,0,0,10)
+			}
+		redraw(1)
+		
+		gsel(0)
+		redraw(0)
+			cls(0,0,0)
+			gcopy(11)
+			pos(0,0)
+			DrawImage(10)
+		redraw(1)
+	await(16)
+}*/

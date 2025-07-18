@@ -300,17 +300,21 @@ public:
 
 class StaticVarNodeWithoutAssignment : public AST {
 private:
-	std::string variableName;	//変数名
+	std::vector<std::string> variableNames;	//変数名
 	int type = -2;	//式の型
 	std::vector<AST*> arrayIndex;	//配列のインデックス(配列の場合のみ)
 public:
 	unsigned long long lineNumber;	//行番号
 	unsigned long long columnNumber;	//列番号
 	StaticVarNodeWithoutAssignment(std::string variableName, int type, std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variableName(variableName), type(type), arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: type(type), arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
+		variableNames.push_back(variableName);
+	};
+	StaticVarNodeWithoutAssignment(std::vector<std::string> variableNames, int type, std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
+		: variableNames(variableNames), type(type), arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::StaticVarWithoutAssignment; };
-	const std::string GetVariableName() { return variableName; };
+	const std::vector<std::string> GetVariableNames() { return variableNames; };
 	const int GetType() override { return type; };
 	std::vector<AST*> GetArrayIndex() { return arrayIndex; };
 };

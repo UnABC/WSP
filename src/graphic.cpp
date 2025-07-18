@@ -17,6 +17,8 @@ Graphic::Graphic(int width, int height, bool is_fullscreen)
 	windows[WinID].shape.Init(width, height, &windows[WinID].projection, &windows[WinID].view);
 	//画像の初期化
 	windows[WinID].image.Init(images, &windows[WinID].projection, &windows[WinID].view);
+	//パーティクルの初期化
+	windows[WinID].particle.Init(&particles, &windows[WinID].projection, &windows[WinID].view);
 
 	//開始時刻記録
 	lastTime = SDL_GetTicks();
@@ -117,6 +119,31 @@ void Graphic::DrawLine(float x1, float y1, float x2, float y2) {
 	windows[WinID].pos.y = y1; // 最後の座標を表示位置に設定
 }
 
+void Graphic::Draw3DLine(float x1, float y1, float z1, float x2, float y2, float z2) {
+	windows[WinID].shape.draw_line(x1, y1, x2, y2, windows[WinID].colors.at(0), windows[WinID].colors.at(1), gmode, windows[WinID].all_vertices, z1, z2);
+	Draw();
+	windows[WinID].pos.x = x2; // 最後の座標を表示位置に設定
+	windows[WinID].pos.y = y2; // 最後の座標を表示位置に設定
+	windows[WinID].pos.z = z2; // 最後の座標を表示位置に設定
+}
+
+void Graphic::Draw3DBox(float x1, float y1, float z1, float x2, float y2, float z2) {
+	Draw3DLine(x1, y1, z1, x1, y1, z2);
+	Draw3DLine(x1, y2, z2);
+	Draw3DLine(x1, y2, z1);
+	Draw3DLine(x1, y1, z1);
+
+	Draw3DLine(x2, y1, z1, x2, y2, z1);
+	Draw3DLine(x2, y2, z2);
+	Draw3DLine(x2, y1, z2);
+	Draw3DLine(x2, y1, z1);
+
+	Draw3DLine(x1, y1, z1, x2, y1, z1);
+	Draw3DLine(x1, y1, z2, x2, y1, z2);
+	Draw3DLine(x1, y2, z2, x2, y2, z2);
+	Draw3DLine(x1, y2, z1, x2, y2, z1);
+}
+
 void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle) {
 	windows[WinID].shape.draw_ellipse(center_x, center_y, major_axis, minor_axis, -angle, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
 	Draw();
@@ -135,6 +162,7 @@ void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle
 void Graphic::Clear(int r, int g, int b) {
 	windows[WinID].Clear({ (Uint8)r, (Uint8)g, (Uint8)b, 255 });
 	gmode = 0; //描画モードを初期化
+	Draw();
 }
 
 void Graphic::Draw(bool force) {
@@ -150,9 +178,28 @@ void Graphic::Draw(bool force) {
 		windows[WinID].system_color.b / 255.0f,
 		windows[WinID].system_color.a / 255.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // カラーバッファと深度バッファをクリア
+	//3D描画準備
+	bool is_first = true;
+	for (const auto& vertex_data : windows[WinID].all_3D_vertices | views::reverse) {
+		if (is_first || windows[WinID].all_vertices.empty() || vertex_data.second.gmode != windows[WinID].all_vertices.back().gmode || vertex_data.second.ID != windows[WinID].all_vertices.back().ID) {
+			is_first = false;
+			windows[WinID].all_vertices.push_back(vertex_data.second);
+			continue;
+		}
+		// 既存の頂点データに新しい頂点を追加
+		windows[WinID].all_vertices.back().all_vertices.insert(windows[WinID].all_vertices.back().all_vertices.end(), vertex_data.second.all_vertices.begin(), vertex_data.second.all_vertices.end());
+	}
 	//各種描画
 	int old_id = -1;
+	bool depth_test = true;
 	for (auto& vertex_data : windows[WinID].all_vertices) {
+		if (depth_test && (vertex_data.ID == 7) && windows[WinID].Is3D()) {
+			depth_test = false; // 3D描画のための深度テストを無効化
+			glDepthMask(GL_FALSE); // 深度バッファへの書き込みを無効化
+		} else if (!depth_test && (vertex_data.ID != 7)) {
+			depth_test = true; // 3D描画以外では深度テストを有効化
+			glDepthMask(GL_TRUE); // 深度バッファへの書き込みを有効化
+		}
 		if (vertex_data.ID == 6) {
 			old_id = 6; // FBOの描画は特別扱い
 			int id = vertex_data.division; // FBOのIDを取得
@@ -180,6 +227,11 @@ void Graphic::Draw(bool force) {
 		glDrawArrays(vertex_data.graphics_mode, 0, vertex_data.all_vertices.size() / vertex_data.division);
 		old_id = vertex_data.ID; // 最後に描画したIDを保存
 	}
+	// 3D描画のための深度テストを有効化
+	if (!depth_test)
+		glDepthMask(GL_TRUE); // 深度バッファへの書き込みを有効化
+	// 描画モードをリセット
+	Set_Gmode(0);
 	glBindVertexArray(0);
 
 	windows[WinID].DrawToDefault(); // スクリーン全体を描画
@@ -295,6 +347,7 @@ void Graphic::CreateScreen(int id, const string& title, int width, int height, i
 	windows[WinID].font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
 	windows[WinID].shape.Init(width, height, &windows[WinID].projection, &windows[WinID].view);
 	windows[WinID].image.Init(images, &windows[WinID].projection, &windows[WinID].view);
+	windows[WinID].particle.Init(&particles, &windows[WinID].projection, &windows[WinID].view);
 }
 
 void Graphic::MakeCurrentWindow(int id, int mode) {
@@ -304,7 +357,7 @@ void Graphic::MakeCurrentWindow(int id, int mode) {
 		windows[WinID].MakeCurrent();
 		if (mode) windows[WinID].MakeTop();
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -312,7 +365,7 @@ void Graphic::HideWindow(int id) {
 	if (windows.count(id)) {
 		windows[id].Hide();
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -320,7 +373,7 @@ void Graphic::ShowWindow(int id) {
 	if (windows.count(id)) {
 		windows[id].Show();
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -331,7 +384,7 @@ void Graphic::DestroyWindow(int id) {
 		windows[id].Destroy();
 		windows.erase(id); // ウィンドウを削除
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -348,12 +401,45 @@ void Graphic::SetWindowPosition(int id, int x, int y) {
 	if (windows.count(id)) {
 		windows[id].SetPosition(x, y);
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
 void Graphic::SetCameraPos(float x, float y, float z, float target_x, float target_y, float target_z) {
 	windows[WinID].SetCameraPos(x, y, z, target_x, target_y, target_z);
+}
+
+void Graphic::mkparticle(int id, int r, int g, int b, std::vector<long long> array) {
+	if (windows[WinID].Is3D())
+		glDisable(GL_DEPTH_TEST); // 3Dモードでは深度テストを一時無効化
+	SDL_Color particle_color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 };
+	windows[WinID].particle.mkParticle(id, particle_color, array);
+	if (windows[WinID].Is3D())
+		glEnable(GL_DEPTH_TEST);
+}
+
+void Graphic::drawparticler(int id, float x, float y, float z, float r, float angle) {
+	if (!particles.count(id))
+		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
+	windows[WinID].particle.drawParticler(id, x, y, z, r, angle, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
+}
+
+void Graphic::drawparticle(int id, float x, float y, float z, float r) {
+	if (!particles.count(id))
+		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
+	windows[WinID].particle.drawParticle(id, x, y, z, r, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
+}
+
+void Graphic::drawparticlemr(int id, float r, float angle) {
+	if (!particles.count(id))
+		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
+	windows[WinID].particle.drawParticlemr(id, r, angle, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
+}
+
+void Graphic::drawparticlem(int id, float r) {
+	if (!particles.count(id))
+		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
+	windows[WinID].particle.drawParticlem(id, r, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y, int dst_width, int dst_height) {
@@ -367,7 +453,7 @@ void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height,
 		dst_y = windows[WinID].Height() - dst_y - dst_height;
 
 		if (windows[WinID].Is3D()) {
-			windows[WinID].image.DrawBLtex(windows[id].GetTextureHandle(), dst_x, dst_y, dst_width, dst_height, src_x, src_y, src_width, src_height, windows[id].Width(), windows[id].Height(), 0, windows[WinID].all_vertices);
+			windows[WinID].image.DrawBLtex(windows[id].GetTextureHandle(), dst_x, dst_y, dst_width, dst_height, src_x, src_y, src_width, src_height, windows[id].Width(), windows[id].Height(), gmode, windows[WinID].all_vertices);
 			return; // 3Dモードではテクスチャを使用して描画
 		}
 
@@ -383,7 +469,7 @@ void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height,
 		new_data.division = id;
 		new_data.projection = windows[WinID].projection;
 		new_data.view = windows[WinID].view;
-		new_data.gmode = 0; // 通常の描画モード
+		new_data.gmode = gmode;
 		new_data.ID = 6;
 		windows[WinID].all_vertices.push_back(new_data);
 	} else {

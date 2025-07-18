@@ -1,8 +1,6 @@
 #ifndef SHAPE_HPP
 #define SHAPE_HPP
 #include "Image.hpp"
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_opengl.h>
 #include <vector>
 
 struct Texture_color {
@@ -243,7 +241,7 @@ public:
 	void SetTexture(image_data* image, bool enable = true, float tex_x = 0.0f, float tex_y = 0.0f, float tex_width = -1.0f, float tex_height = -1.0f);
 	void draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, std::vector<AllVertexData>& all_vertices, int isRect = 0);
 	void draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
-	void draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, std::vector<AllVertexData>& all_vertices);
+	void draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, std::vector<AllVertexData>& all_vertices,float z1 = 0.0f, float z2 = 0.0f);
 	void draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 };
 
