@@ -3,6 +3,7 @@
 
 #include "exception.hpp"
 #include "shader.hpp"
+#include "Image.hpp"
 #include <vector>
 #include <map>
 
@@ -116,6 +117,7 @@ public:
 	~Particle();
 	void Init(std::map<unsigned int, particle_data>* particles, glm::mat4* proj, glm::mat4* global_view);
 	void mkParticle(int id, SDL_Color particle_color, std::vector<long long> array);
+	void ldParticle(int id, int img_id, std::map<unsigned int, image_data>& images);
 	void drawParticler(int id, float x, float y, float z, float r, float angle, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha = 1.0f);
 	void drawParticle(int id, float x, float y, float z, float r, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha = 1.0f) {
 		drawParticler(id, x, y, z, r, 0.0f, color, gmode, all_vertices, cameraPos, alpha);
@@ -124,7 +126,7 @@ public:
 		drawParticler(id, current_x, current_y, current_z, r, angle, color, gmode, all_vertices, cameraPos, alpha);
 	}
 	void drawParticlem(int id, float r, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha = 1.0f) {
-		drawParticler(id, current_x, current_y, current_z, r, 0.0f , color, gmode, all_vertices, cameraPos, alpha);
+		drawParticler(id, current_x, current_y, current_z, r, 0.0f, color, gmode, all_vertices, cameraPos, alpha);
 	}
 
 };

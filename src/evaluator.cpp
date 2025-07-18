@@ -228,7 +228,10 @@ Var Evaluator::CalcExpr(AST* ast) {
 			} else if (functionName == "string") {
 				return StaticVar(CalcExpr(args.at(0)).GetValue<string>());
 			} else if (functionName == "rnd") {
-				return Var((long long)(rand() % (CalcExpr(args.at(0)).GetValue<long long>())));
+				long long rnd_max = CalcExpr(args.at(0)).GetValue<long long>();
+				if (rnd_max <= 0)
+					throw EvaluatorException("rnd: rnd_max must be greater than 0.");
+				return Var((long long)(rand() % rnd_max));
 			} else if (functionName == "size") {
 				return Var((long long)CalcExpr(args.at(0)).GetPointer()->size());
 			} else if (functionName == "strlen") {
@@ -1148,7 +1151,7 @@ void Evaluator::VoidFunction(AST* ast) {
 			);
 		} else if (args.size() == 5) {
 			vector<long long> particle_args;
-			for (auto& arg : CalcExpr(args.at(0)).GetValue<vector<Var>>())
+			for (auto& arg : CalcExpr(args.at(4)).GetValue<vector<Var>>())
 				particle_args.push_back(arg.GetValue<long long>());
 			graphic.mkparticle(
 				CalcExpr(args.at(0)).GetValue<long long>(),
@@ -1160,6 +1163,14 @@ void Evaluator::VoidFunction(AST* ast) {
 		} else {
 			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
 		}
+		return;
+	} else if (functionName == "ldparticle") {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", node->lineNumber, node->columnNumber);
+		graphic.ldparticle(
+			CalcExpr(args.at(0)).GetValue<long long>(),
+			CalcExpr(args.at(1)).GetValue<long long>()
+		);
 		return;
 	} else if (functionName == "particle") {
 		if (args.size() != 5)

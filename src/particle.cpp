@@ -144,9 +144,21 @@ void Particle::mkParticle(int id, SDL_Color particle_color, std::vector<long lon
 	glBindVertexArray(0);
 }
 
+void Particle::ldParticle(int id, int img_id, std::map<unsigned int, image_data>& images) {
+	if (!images.count(img_id))
+		throw ParticleException("Image ID :" + to_string(img_id) + " does not exist.");
+	// テクスチャハンドルを取得
+	GLuint64 texture_handle = images[img_id].texture.getBindlessTextureHandle();
+	(*particles)[id].handle1 = static_cast<GLuint>(texture_handle & 0xFFFFFFFF);
+	(*particles)[id].handle2 = static_cast<GLuint>(texture_handle >> 32);
+}
+
 void Particle::drawParticler(int id, float x, float y, float z, float r, float angle, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha) {
 	if (!shaderProgram_draw || !vbo_draw || !vao_draw)
 		throw ParticleException("Particle draw not initialized.");
+	current_x = x;
+	current_y = y;
+	current_z = z;
 	// パーティクルの位置を設定
 	float vertices[6][10] = {
 		{ x, y, z, angle, -0.5, -0.5, r, *(float*)&(*particles)[id].handle1, *(float*)&(*particles)[id].handle2, alpha },

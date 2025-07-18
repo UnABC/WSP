@@ -87,6 +87,7 @@ public:
 
 	void SetCameraPos(float x = 0.0f, float y = 0.0f, float z = 0.0f, float target_x = 0.0f, float target_y = 0.0f, float target_z = 0.0f);
 	void mkparticle(int id, int r, int g, int b, std::vector<long long> array = { 20,1,100 });
+	void ldparticle(int id, int img_id) { windows[WinID].particle.ldParticle(id, img_id, images); }
 	void drawparticler(int id, float x, float y, float z, float r, float angle);
 	void drawparticle(int id, float x, float y, float z, float r);
 	void drawparticlemr(int id, float r, float angle);

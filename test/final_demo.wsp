@@ -1,6 +1,10 @@
 int TEX_TEMP = 10
 int TEX_METAL = 11
 int SCR_BLUR = 12
+int PTC_STAR = 7
+int PTC_XS = 8
+
+double _2MPI = M_PI*2.0
 
 screen(0,"WSP demo",1600,900)
 ScreenPos(0,0,30)
@@ -17,11 +21,12 @@ mkparticle(4,127,255,127)
 mkparticle(5,127,255,255)
 mkparticle(6,100,127,255)
 
-//TODO:star.jpg
+LoadImage("test/image/star.png",1)
+ldparticle(PTC_STAR,1)
 
 //X
 int arr[6] = [4,  4,  30, 30, 150, 30]
-mkparticleX(8,  200, 200, 400,  arr)
+mkparticle(8,  200, 200, 400,  arr)
 
 //WSP
 int tc = 124
@@ -107,6 +112,8 @@ while(true){
 	
 	redraw(0)
 	randomize(0)
+	fps = getfps()
+	title(fps)
 	pmode = 0
 	
 	c = 32.0 + cos(cb32 * 12.56637) * 16
@@ -114,7 +121,7 @@ while(true){
 	if (bcnt >= 24)  c += cb8s * 128
 	
 	int fase = ibt/32
-	if (fase = 0){
+	if (fase == 0){
 		//galaxy
 		galaxy()
 	}else if (fase == 1){
@@ -146,48 +153,44 @@ void galaxy(){
 	gmode(2)
 	// stars
 	repeat(800){
-		if pmode {
-			z = limit( rnd(5000) - cb32s * 2000, -59999, 0)
-		} else {
-			z = limit( rnd(5000) - cb32s * 2000 - 2800, 0, 59999)
-		}
+		double z = limit( rnd(5000) - cb32s * 2000 - 2800, 0, 59999)
 		double r = rnd(600)
-		double f = r / 200 + 0.002 * rnd(32768) / (r + 100) + 2.0*M_PI * cnt / 5 - cb32
+		double f = _2MPI * cnt / 5.0//+(r / 200.0) + (0.002 * rnd(32768) / (r + 100)) - cb32
 		
 		double a = double( rnd(5000) ) / (r + 100)
-		if (rnd(a)){
+		if (rnd(2)){
 			z += a
 		}else{
 			z -= a
 		}
 		
 		color(255,255,255,cc*224)
-		d3particle(0,  cos(f) * r, sin(f) * r, z,  15 * (600 - r) / 600 + 2)
+		particle(1,  cos(f) * r, sin(f) * r, z,  15 * (600 - r) / 600 + 2)
+		
 		if rnd(4) == 0 {
 			color(255,255,255,cc*64)
-			d3particlem(5, 45 * (600 - r) / 600 + 5)
+			particlem(6, 45 * (600 - r) / 600 + 5)
 		}
 		
 		if rnd(8) == 0 {
 			a = sin(cb32*M_PI*4 + cnt*cnt)
 			color(255,255,255, a * limit( cc * 64, 0, 64 ))
-			d3particlem(PTC_XS, a * 90)
-		}
-	}
-	
+			particlem(PTC_XS, a * 90)
+		}//*/
+	}//*/
 	//X
 	color(255,255,255,cc*64)
-	d3particle   (6,  0, 0, 0,  500)
-	d3particlem  (3,  300)
-	d3particlemr (PTC_STAR, cb2s*(bcnt>=30)*200 + 200, -cb32)
-	d3particlemr (PTC_STAR,                       200,  cb32 * 3s)
-	
+	particle   (6,  0, 0, 0,  500)
+	particlem  (3,  300)
+	particlemr (PTC_STAR, cb2s*(bcnt>=30)*200 + 200, -cb32)
+	particlemr (PTC_STAR,                       200,  cb32 * 3)
+	//
 	repeat(200){
 		color(255,255,255,cc*224)
-		d3particle(1,  rnd(4000)-2000, -rnd(4000), rnd(4000)-2000,  7)
+		particle(1,  rnd(4000)-2000, -rnd(4000), rnd(4000)-2000,  7)
 		if rnd(3) == 0 {
 			color(255,255,255,cc*64)
-			d3particlem(6, 30)
+			particlem(6, 30)
 		}
 	}
 	
@@ -198,14 +201,15 @@ void galaxy(){
 			r = (1.0 - (0.001 * rnd(rnd(1000) + 1))) * cb4 * 0.7 + 0.1
 			f = cb32 + rnd(32768)
 			color(255,255,255,cb4s * 224)
-			d3particle(1, 0, sin(f) * r, cos(f) * r, 0.02)
+			particle(1, 0, sin(f) * r, cos(f) * r, 0.02)
 
 			if rnd(3) == 0 {
 				color(255,255,255,cb4s * 64)
-				d3particlem (6, 0.10)
+				particlem (6, 0.10)
 			}
 		}
 	}
+	Reset3D()
 	color(0,0,0)
 	rect(0,0,1600,112.5)
 	rect(0,787.5,1600,112.5)

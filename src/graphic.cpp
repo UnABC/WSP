@@ -347,6 +347,7 @@ void Graphic::CreateScreen(int id, const string& title, int width, int height, i
 	windows[WinID].font.SetFont("C:\\Windows\\Fonts\\msgothic.ttc", font_size);
 	windows[WinID].shape.Init(width, height, &windows[WinID].projection, &windows[WinID].view);
 	windows[WinID].image.Init(images, &windows[WinID].projection, &windows[WinID].view);
+	windows[WinID].particle.Init(&particles, &windows[WinID].projection, &windows[WinID].view);
 }
 
 void Graphic::MakeCurrentWindow(int id, int mode) {
@@ -356,7 +357,7 @@ void Graphic::MakeCurrentWindow(int id, int mode) {
 		windows[WinID].MakeCurrent();
 		if (mode) windows[WinID].MakeTop();
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -364,7 +365,7 @@ void Graphic::HideWindow(int id) {
 	if (windows.count(id)) {
 		windows[id].Hide();
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -372,7 +373,7 @@ void Graphic::ShowWindow(int id) {
 	if (windows.count(id)) {
 		windows[id].Show();
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -383,7 +384,7 @@ void Graphic::DestroyWindow(int id) {
 		windows[id].Destroy();
 		windows.erase(id); // ウィンドウを削除
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -400,7 +401,7 @@ void Graphic::SetWindowPosition(int id, int x, int y) {
 	if (windows.count(id)) {
 		windows[id].SetPosition(x, y);
 	} else {
-		throw WindowException("Window ID does not exist.");
+		throw WindowException("Window ID:" + to_string(id) + " does not exist.");
 	}
 }
 
@@ -419,25 +420,25 @@ void Graphic::mkparticle(int id, int r, int g, int b, std::vector<long long> arr
 
 void Graphic::drawparticler(int id, float x, float y, float z, float r, float angle) {
 	if (!particles.count(id))
-		throw WindowException("Particle ID does not exist.");
+		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
 	windows[WinID].particle.drawParticler(id, x, y, z, r, angle, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticle(int id, float x, float y, float z, float r) {
 	if (!particles.count(id))
-		throw WindowException("Particle ID does not exist.");
+		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
 	windows[WinID].particle.drawParticle(id, x, y, z, r, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticlemr(int id, float r, float angle) {
 	if (!particles.count(id))
-		throw WindowException("Particle ID does not exist.");
+		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
 	windows[WinID].particle.drawParticlemr(id, r, angle, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticlem(int id, float r) {
 	if (!particles.count(id))
-		throw WindowException("Particle ID does not exist.");
+		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
 	windows[WinID].particle.drawParticlem(id, r, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
