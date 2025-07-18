@@ -1395,7 +1395,7 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 							throw RuntimeException("Array index out of range:" + variableName + "(which is " + to_string(index) + ") < 0 "\
 								, node->lineNumber, node->columnNumber);
 						if (index >= retval->GetPointer()->size())
-							retval->ResizeArray(index + 1);
+							retval->ExpandArray(index + 1);
 						retval = &(retval->EditValue().at(index));
 					}
 					*retval = CalcExpr(expression);
@@ -1408,7 +1408,7 @@ Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 	//変数の定義！！
 	if (is_static) {
 		StaticVar retval = CalcExpr(expression);
-		if (retval.GetType() >= 10)type += 10;
+		if (retval.GetType() >= 10)type = 10 + type % 10;
 		retval.SetType(type);
 		return static_var.back()[variableName] = retval;
 	} else {

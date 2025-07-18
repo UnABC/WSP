@@ -5,11 +5,6 @@ Var& Var::operator=(const string& value) {
 	// コピーコンストラクタの実装
 	type = 2; // string型に設定
 	string_value = value;
-	int_value = my_stoll(value); // int型の値を初期化
-	double_value = my_stold(value); // double型の値を初期化
-	bool_value = (value == "") ? false : true; // bool型の値を初期化
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, Var(value)); // 配列型の値を初期化
 	return *this;
 }
 
@@ -17,22 +12,12 @@ Var& Var::operator=(const long long& value) {
 	// コピーコンストラクタの実装
 	type = 0; // int型に設定
 	int_value = value;
-	string_value = to_string(value); // string型の値を初期化
-	double_value = value; // double型の値を初期化
-	bool_value = (value != 0); // bool型の値を初期化
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, Var(value)); // 配列型の値を初期化
 	return *this;
 }
 Var& Var::operator=(const long double& value) {
 	// コピーコンストラクタの実装
 	type = 1; // double型に設定
 	double_value = value;
-	int_value = value; // int型の値を初期化
-	string_value = to_string(value); // string型の値を初期化
-	bool_value = (value != 0.0); // bool型の値を初期化
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, Var(value)); // 配列型の値を初期化
 	return *this;
 }
 
@@ -40,11 +25,6 @@ Var& Var::operator=(const bool& value) {
 	// コピーコンストラクタの実装
 	type = 4; // bool型に設定
 	int_value = value ? 1 : 0; // int型の値を初期化
-	double_value = value ? 1.0 : 0.0; // double型の値を初期化
-	string_value = value ? "1" : ""; // string型の値を初期化
-	bool_value = value; // bool型の値を初期化
-	array_value.clear(); // 配列型の値は初期化
-	array_value.resize(1, Var(value)); // 配列型の値を初期化
 	return *this;
 }
 
@@ -54,10 +34,6 @@ Var& Var::operator=(const vector<Var>& value) {
 	array_value.clear(); // 既存の配列をクリア
 	array_value.reserve(value.size()); // 配列のサイズを予約
 	array_value = value;
-	int_value = 0; // int型の値は初期化
-	double_value = 0.0; // double型の値は初期化
-	string_value = ""; // string型の値は初期化
-	bool_value = false; // bool型の値は初期化
 	if (!value.empty()) {
 		switch (type) {
 		case 10:int_value = value.at(0).int_value; break;
@@ -70,10 +46,10 @@ Var& Var::operator=(const vector<Var>& value) {
 
 Var Var::operator+(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value + value.int_value);
-	case 1: return Var(double_value + value.double_value);
-	case 2: return Var(string_value + value.string_value);
-	case 4: return Var(int_value + value.int_value);
+	case 0: return Var(int_value + value.GetValue<long long>());
+	case 1: return Var(double_value + value.GetValue<long double>());
+	case 2: return Var(string_value + value.GetValue<string>());
+	case 4: return Var(int_value + value.GetValue<long long>());
 	case 10:
 	case 11:
 	case 12: {
@@ -90,18 +66,18 @@ Var Var::operator+(const Var& value) const {
 			result.at(i) = (array_value.at(i) + value.array_value[i]);
 		return Var(result);
 	}
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator*(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value * value.int_value);
-	case 1: return Var(double_value * value.double_value);
+	case 0: return Var(int_value * value.GetValue<long long>());
+	case 1: return Var(double_value * value.GetValue<long double>());
 	case 2: {
 		//Pythonみたいな感じ
 		const size_t len = string_value.size();
-		const size_t count = (value.int_value > 0) ? value.int_value : 0;
+		const size_t count = (value.GetValue<long long>() > 0) ? value.GetValue<long long>() : 0;
 		if ((len == 0) || (count == 0)) return Var(string());
 		string result;
 		result.resize_and_overwrite(len * count, [&](char* dst, size_t) {
@@ -111,7 +87,7 @@ Var Var::operator*(const Var& value) const {
 			});
 		return Var(result);
 	}
-	case 4: return Var(int_value * value.int_value);
+	case 4: return Var(int_value * value.GetValue<long long>());
 	case 10:
 	case 11:
 	case 12: {
@@ -128,126 +104,126 @@ Var Var::operator*(const Var& value) const {
 			result.at(i) = (array_value.at(i) * value.array_value[i]);
 		return Var(result);
 	}
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator==(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value == value.int_value);
-	case 1: return Var(double_value == value.double_value);
-	case 2: return Var(string_value == value.string_value);
-	case 4: return Var(bool_value == value.bool_value);
+	case 0: return Var(int_value == value.GetValue<long long>());
+	case 1: return Var(double_value == value.GetValue<long double>());
+	case 2: return Var(string_value == value.GetValue<string>());
+	case 4: return Var(bool_value == value.GetValue<bool>());
 	case 10:
 	case 11:
 	case 12:
 		return Var(array_value == value.array_value);
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator!=(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value != value.int_value);
-	case 1: return Var(double_value != value.double_value);
-	case 2: return Var(string_value != value.string_value);
-	case 4: return Var(bool_value != value.bool_value);
+	case 0: return Var(int_value != value.GetValue<long long>());
+	case 1: return Var(double_value != value.GetValue<long double>());
+	case 2: return Var(string_value != value.GetValue<string>());
+	case 4: return Var(bool_value != value.GetValue<bool>());
 	case 10:
 	case 11:
 	case 12:
 		return Var(array_value != value.array_value);
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator&&(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value && value.int_value);
-	case 1: return Var(double_value && value.double_value);
-	case 2: return Var(bool_value && value.bool_value);
-	case 4: return Var(bool_value && value.bool_value);
+	case 0: return Var(int_value && value.GetValue<long long>());
+	case 1: return Var(double_value && value.GetValue<long double>());
+	case 2: return Var(bool_value && value.GetValue<bool>());
+	case 4: return Var(bool_value && value.GetValue<bool>());
 	case 10:
 	case 11:
 	case 12:
 		throw EvaluatorException("&& operator is not supported for array types.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator||(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value || value.int_value);
-	case 1: return Var(double_value || value.double_value);
-	case 2: return Var(bool_value || value.bool_value);
-	case 4: return Var(bool_value || value.bool_value);
+	case 0: return Var(int_value || value.GetValue<long long>());
+	case 1: return Var(double_value || value.GetValue<long double>());
+	case 2: return Var(bool_value || value.GetValue<bool>());
+	case 4: return Var(bool_value || value.GetValue<bool>());
 	case 10:
 	case 11:
 	case 12:
 		throw EvaluatorException("|| operator is not supported for array types.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator<(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value < value.int_value);
-	case 1: return Var(double_value < value.double_value);
-	case 2: return Var(string_value < value.string_value);
-	case 4: return Var(bool_value < value.bool_value);
+	case 0: return Var(int_value < value.GetValue<long long>());
+	case 1: return Var(double_value < value.GetValue<long double>());
+	case 2: return Var(string_value < value.GetValue<string>());
+	case 4: return Var(bool_value < value.GetValue<bool>());
 	case 10:
 	case 11:
 	case 12:
 		return Var(array_value.size() < value.array_value.size());
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator>(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value > value.int_value);
-	case 1: return Var(double_value > value.double_value);
-	case 2: return Var(string_value > value.string_value);
-	case 4: return Var(bool_value > value.bool_value);
+	case 0: return Var(int_value > value.GetValue<long long>());
+	case 1: return Var(double_value > value.GetValue<long double>());
+	case 2: return Var(string_value > value.GetValue<string>());
+	case 4: return Var(bool_value > value.GetValue<bool>());
 	case 10:
 	case 11:
 	case 12:
 		return Var(array_value.size() > value.array_value.size());
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator<=(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value <= value.int_value);
-	case 1: return Var(double_value <= value.double_value);
-	case 2: return Var(string_value <= value.string_value);
-	case 4: return Var(bool_value <= value.bool_value);
+	case 0: return Var(int_value <= value.GetValue<long long>());
+	case 1: return Var(double_value <= value.GetValue<long double>());
+	case 2: return Var(string_value <= value.GetValue<string>());
+	case 4: return Var(bool_value <= value.GetValue<bool>());
 	case 10:
 	case 11:
 	case 12:
 		return Var(array_value.size() <= value.array_value.size());
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator>=(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value >= value.int_value);
-	case 1: return Var(double_value >= value.double_value);
-	case 2: return Var(string_value >= value.string_value);
-	case 4: return Var(bool_value >= value.bool_value);
+	case 0: return Var(int_value >= value.GetValue<long long>());
+	case 1: return Var(double_value >= value.GetValue<long double>());
+	case 2: return Var(string_value >= value.GetValue<string>());
+	case 4: return Var(bool_value >= value.GetValue<bool>());
 	case 10:
 	case 11:
 	case 12:
 		return Var(array_value.size() >= value.array_value.size());
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator<<(const Var& value) const {
 	switch (type) {
 	case 0:
-		return Var(int_value << value.int_value);
+		return Var(int_value << value.GetValue<long long>());
 	case 1:
 	case 2:
 	case 4:
@@ -255,14 +231,14 @@ Var Var::operator<<(const Var& value) const {
 	case 11:
 	case 12:
 		throw EvaluatorException("<< operator is not supported for this type.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator>>(const Var& value) const {
 	switch (type) {
 	case 0:
-		return Var(int_value >> value.int_value);
+		return Var(int_value >> value.GetValue<long long>());
 	case 1:
 	case 2:
 	case 4:
@@ -270,13 +246,13 @@ Var Var::operator>>(const Var& value) const {
 	case 11:
 	case 12:
 		throw EvaluatorException(">> operator is not supported for this type.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator%(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value % value.int_value);
+	case 0: return Var(int_value % value.GetValue<long long>());
 	case 10: {
 		if (value.array_value.size() == 1) {
 			if (value.array_value.at(0).int_value == 0)
@@ -302,14 +278,14 @@ Var Var::operator%(const Var& value) const {
 	case 11:
 	case 12:
 		throw EvaluatorException("% operator is not supported for this type.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator/(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value / value.int_value);
-	case 1: return Var(double_value / value.double_value);
+	case 0: return Var(int_value / value.GetValue<long long>());
+	case 1: return Var(double_value / value.GetValue<long double>());
 	case 10:
 	case 11: {
 		if (value.array_value.size() == 1) {
@@ -334,14 +310,14 @@ Var Var::operator/(const Var& value) const {
 	case 2: throw EvaluatorException("/ operator is not supported for string type.");
 	case 4:
 		throw EvaluatorException("/ operator is not supported for this type.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator-(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value - value.int_value);
-	case 1: return Var(double_value - value.double_value);
+	case 0: return Var(int_value - value.GetValue<long long>());
+	case 1: return Var(double_value - value.GetValue<long double>());
 	case 10:
 	case 11: {
 		if (value.array_value.size() == 1) {
@@ -361,13 +337,13 @@ Var Var::operator-(const Var& value) const {
 	case 2: throw EvaluatorException("- operator is not supported for string type.");
 	case 4:
 		throw EvaluatorException("- operator is not supported for this type.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator&(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value & value.int_value);
+	case 0: return Var(int_value & value.GetValue<long long>());
 	case 1:
 	case 2:
 	case 10:
@@ -376,13 +352,13 @@ Var Var::operator&(const Var& value) const {
 		throw EvaluatorException("& operator is not supported for this type.");
 	case 4:
 		return Var(bool_value && value.bool_value);
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator|(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value | value.int_value);
+	case 0: return Var(int_value | value.GetValue<long long>());
 	case 1:
 	case 2:
 	case 10:
@@ -391,13 +367,13 @@ Var Var::operator|(const Var& value) const {
 		throw EvaluatorException("| operator is not supported for this type.");
 	case 4:
 		return Var(bool_value || value.bool_value);
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var Var::operator^(const Var& value) const {
 	switch (type) {
-	case 0: return Var(int_value ^ value.int_value);
+	case 0: return Var(int_value ^ value.GetValue<long long>());
 	case 1:
 	case 2:
 	case 10:
@@ -406,7 +382,7 @@ Var Var::operator^(const Var& value) const {
 		throw EvaluatorException("^ operator is not supported for this type.");
 	case 4:
 		return Var(bool_value != value.bool_value);
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
@@ -420,7 +396,7 @@ Var Var::operator!() const {
 	case 11:
 	case 12:
 		throw EvaluatorException("! operator is not supported for array types.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
@@ -437,20 +413,34 @@ Var Var::operator-() const {
 	}
 	case 12:
 		throw EvaluatorException("- operator is not supported for array types.");
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 Var& Var::operator++(int) {
-	int_value++;
-	double_value++;
-	string_value += "1";
-	bool_value = true;
-	if (array_value.empty()) {
-		array_value.push_back(Var(int_value));
-	} else {
-		for (auto& v : array_value)
-			v = v + Var(1LL); // 配列の各要素に1を加える
+	switch (type) {
+	case 0: // int型
+		int_value++;
+		break;
+	case 1: // double型
+		double_value++;
+		break;
+	case 2: // string型
+		string_value += "1"; // 文字列に"1"を追加
+		break;
+	case 4: // bool型
+		bool_value = true; // bool型はtrueに設定
+		break;
+	case 10: //array型
+	case 11:
+	case 12:
+		if (!array_value.empty()) {
+			for (auto& v : array_value)
+				v = v + Var(1LL); // 配列の各要素に1を加える
+		}
+		break;
+	default:
+		throw EvaluatorException("Unknown type for increment operator.");
 	}
 	return *this;
 }
@@ -465,22 +455,78 @@ Var::operator bool() const {
 	case 11:
 	case 12:
 		return !array_value.empty();
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type: " + to_string(type));
 	}
 }
 
 template<typename T>
 T Var::GetValue() const {
 	if constexpr (is_same_v<T, long long>) {
-		return int_value;
+		switch (type) {
+		case 0: return int_value;
+		case 1: return static_cast<long long>(double_value);
+		case 2: return my_stoll(string_value);
+		case 4: return bool_value ? 1 : 0;
+		case 10:
+			if (array_value.empty()) return 0;
+			return array_value.at(0).GetValue<long long>();
+		case 11:
+			if (array_value.empty()) return 0;
+			return static_cast<long long>(array_value.at(0).GetValue<long double>());
+		case 12:
+			if (array_value.empty()) return 0;
+			return my_stoll(array_value.at(0).GetValue<string>());
+		default: throw EvaluatorException("Unknown type: " + to_string(type));
+		}
 	} else if constexpr (is_same_v<T, long double>) {
-		return double_value;
+		switch (type) {
+		case 0: return static_cast<long double>(int_value);
+		case 1: return double_value;
+		case 2: return my_stold(string_value);
+		case 4: return bool_value ? 1.0 : 0.0;
+		case 10:
+			if (array_value.empty()) return 0.0;
+			return static_cast<long double>(array_value.at(0).GetValue<long long>());
+		case 11: return array_value.empty() ? 0.0 : array_value.at(0).GetValue<long double>();
+		case 12:
+			if (array_value.empty()) return 0.0;
+			return my_stold(array_value.at(0).GetValue<string>());
+		default: throw EvaluatorException("Unknown type: " + to_string(type));
+		}
 	} else if constexpr (is_same_v<T, string>) {
-		if (type % 10 == 0)return to_string(my_stoll(string_value));
-		if (type % 10 == 1)return to_string(my_stold(string_value));
-		return string_value;
+		switch (type) {
+		case 0: return to_string(int_value);
+		case 1: return to_string(double_value);
+		case 2: return string_value;
+		case 4: return bool_value ? "true" : "false";
+		case 10:
+			if (array_value.empty()) return "";
+			return array_value.at(0).GetValue<string>();
+		case 11:
+			if (array_value.empty()) return "";
+			return to_string(array_value.at(0).GetValue<long double>());
+		case 12:
+			if (array_value.empty()) return "";
+			return array_value.at(0).GetValue<string>();
+		default: throw EvaluatorException("Unknown type: " + to_string(type));
+		}
 	} else if constexpr (is_same_v<T, bool>) {
-		return int_value != 0;
+		switch (type) {
+		case 0: return int_value != 0;
+		case 1: return double_value != 0.0;
+		case 2: return !string_value.empty();
+		case 4: return bool_value;
+		case 10:
+			if (array_value.empty()) return false;
+			return array_value.at(0).GetValue<bool>();
+		case 11:
+			if (array_value.empty()) return false;
+			return array_value.at(0).GetValue<long double>() != 0.0;
+		case 12:
+			if (array_value.empty()) return false;
+			return !array_value.at(0).GetValue<string>().empty();
+		default: throw EvaluatorException("Unknown type: " + to_string(type));
+		}
 	} else if constexpr (is_same_v<T, vector<Var>>) {
 		return array_value;
 	} else {
@@ -491,12 +537,20 @@ T Var::GetValue() const {
 template<typename T>
 T& Var::EditValue() {
 	if constexpr (is_same_v<T, long long>) {
+		int_value = GetValue<long long>();
+		type = 0;
 		return int_value;
 	} else if constexpr (is_same_v<T, long double>) {
+		double_value = GetValue<long double>();
+		type = 1;
 		return double_value;
 	} else if constexpr (is_same_v<T, string>) {
+		string_value = GetValue<string>();
+		type = 2;
 		return string_value;
 	} else if constexpr (is_same_v<T, bool>) {
+		bool_value = GetValue<bool>();
+		type = 4;
 		return bool_value;
 	} else if constexpr (is_same_v<T, vector<Var>>) {
 		return array_value;
@@ -628,10 +682,14 @@ vector<StaticVar>& StaticVar::EditValue() {
 	return static_array_value;
 }
 
-void StaticVar::ResizeArray(size_t size) {
+void StaticVar::ExpandArray(size_t size) {
 	// 静的配列のサイズを変更
-	static_array_value.resize(size);
-	array_value.resize(size);
+	StaticVar new_var;
+	new_var.type = type; // 新しい型を設定
+	while (static_array_value.size() < size) {
+		static_array_value.push_back(new_var);
+		array_value.push_back(new_var);
+	}
 	return;
 }
 
@@ -644,18 +702,39 @@ StaticVar StaticVar::update_array() {
 	return *this;
 }
 
+void StaticVar::SetType(int new_type) {
+	switch (new_type)
+	{
+	case 0:
+		int_value = GetValue<long long>();
+	case 1:
+		double_value = GetValue<long double>();
+	case 2:
+		string_value = GetValue<string>();
+	case 4:
+		bool_value = GetValue<bool>();
+	case 10:
+	case 11:
+	case 12:
+		break;
+	default:
+		throw EvaluatorException("Unknown type for StaticVar.: " + to_string(new_type));
+	}
+	type = new_type; // 新しい型を設定
+}
+
 bool Var::IsZero(int TYPE) const {
 	//ゼロかどうかを判定
 	switch (TYPE) {
-	case 0: return int_value == 0;
-	case 1: return double_value == 0.0;
-	case 2: return string_value == "";
-	case 4: return bool_value == false;
+	case 0: return GetValue<long long>() == 0;
+	case 1: return GetValue<long double>() == 0.0;
+	case 2: return GetValue<string>().empty();
+	case 4: return GetValue<bool>() == false;
 	case 10:
 	case 11:
 	case 12:
 		return array_value.empty();
-	default: throw EvaluatorException("Unknown type.");
+	default: throw EvaluatorException("Unknown type.: " + to_string(TYPE));
 	}
 }
 

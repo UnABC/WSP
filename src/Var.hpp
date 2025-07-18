@@ -19,11 +19,11 @@ protected:
 	long double my_stold(const std::string str) const;
 public:
 	Var() : type(-2), int_value(0), double_value(0.0), string_value(""), bool_value(false) {};
-	Var(long long          value) : type(0), int_value(value), double_value(value), string_value(std::to_string(value)), bool_value(value != 0) {};
-	Var(long double        value) : type(1), int_value(value), double_value(value), string_value(std::to_string(value)), bool_value(value != 0.0) {};
-	Var(const std::string& value) : type(2), int_value(my_stoll(value)), double_value(my_stold(value)), string_value(value), bool_value(value != "") {};
-	Var(bool               value) : type(4), int_value(value ? 1 : 0), double_value(value ? 1.0 : 0.0), string_value(value ? "1" : ""), bool_value(value) {};
-	Var(std::vector<Var> array) : type(10 + (array.empty() ? 0 : array.at(0).type) % 10), int_value(0), double_value(0.0), string_value(""), bool_value(false), array_value(array) {};
+	Var(long long          value) : type(0), int_value(value) {};
+	Var(long double        value) : type(1), double_value(value) {};
+	Var(const std::string& value) : type(2), string_value(value) {};
+	Var(bool               value) : type(4), bool_value(value) {};
+	Var(std::vector<Var> array) : type(10 + (array.empty() ? 0 : array.at(0).type) % 10), array_value(array) {};
 
 	Var& operator=(const std::string& value);
 	Var& operator=(const long long& value);
@@ -80,13 +80,13 @@ public:
 	StaticVar& operator=(const Var& value);
 	StaticVar& operator=(const std::vector<Var>& value);
 
-	void SetType(int type) { this->type = type; };
+	void SetType(int new_type);
 	using Var::GetValue;
 	using Var::EditValue;
 	std::vector<StaticVar> GetValue() const;
 	std::vector<StaticVar>* GetPointer() { return &static_array_value; }
 	std::vector<StaticVar>& EditValue();
-	void ResizeArray(size_t size);
+	void ExpandArray(size_t size);
 	StaticVar update_array();
 };
 
