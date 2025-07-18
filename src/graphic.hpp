@@ -65,10 +65,12 @@ public:
 	void DrawRoundRect(float x, float y, float width, float height, float radius);
 	void DrawLine(float x1, float y1, float x2, float y2);
 	void DrawLine(float x1, float y1) { DrawLine(x1, y1, windows[WinID].pos.x, windows[WinID].pos.y); };
+	void DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle = 0.0f);
+
 	void Draw3DLine(float x1, float y1, float z1, float x2, float y2, float z2);
 	void Draw3DLine(float x1, float y1, float z1) { Draw3DLine(windows[WinID].pos.x, windows[WinID].pos.y, windows[WinID].pos.z, x1, y1, z1); };
 	void Draw3DBox(float x1, float y1, float z1, float x2, float y2, float z2);
-	void DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle = 0.0f);
+	void Draw3DRect(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4);
 
 	void DrawImage(unsigned int id, float x_size = 1.0f, float y_size = 1.0f, float angle = 0.0f, int tex_x1 = -1, int tex_y1 = -1, int tex_width = -1, int tex_height = -1);
 

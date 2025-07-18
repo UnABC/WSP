@@ -501,7 +501,7 @@ Var Evaluator::ProcessBinaryOperator(AST* left_node, AST* right_node, string ope
 }
 
 //+=, -=, *=, /=, %=, &=, |=, ^=
-Var Evaluator::BinaryAssignmentOperator(AST* left_node, Var &Left, Var &Right, string operatorType, BinaryOperatorNode* node) {
+Var Evaluator::BinaryAssignmentOperator(AST* left_node, Var& Left, Var& Right, string operatorType, BinaryOperatorNode* node) {
 	if (left_node->GetNodeType() != Node::Variable)
 		throw RuntimeException("Invalid left operand type.", node->lineNumber, node->columnNumber);
 	string variableName = static_cast<VariableNode*>(left_node)->GetVariableName();
@@ -1619,6 +1619,24 @@ void Evaluator::init_system_functions() {
 			CalcExpr(args.at(3)).GetValue<long double>(),
 			CalcExpr(args.at(4)).GetValue<long double>(),
 			CalcExpr(args.at(5)).GetValue<long double>()
+		);
+	};
+	FUNCTION(texture3D) {
+		if (args.size() != 12)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		graphic.Draw3DRect(
+			CalcExpr(args.at(0)).GetValue<long double>(),
+			CalcExpr(args.at(1)).GetValue<long double>(),
+			CalcExpr(args.at(2)).GetValue<long double>(),
+			CalcExpr(args.at(3)).GetValue<long double>(),
+			CalcExpr(args.at(4)).GetValue<long double>(),
+			CalcExpr(args.at(5)).GetValue<long double>(),
+			CalcExpr(args.at(6)).GetValue<long double>(),
+			CalcExpr(args.at(7)).GetValue<long double>(),
+			CalcExpr(args.at(8)).GetValue<long double>(),
+			CalcExpr(args.at(9)).GetValue<long double>(),
+			CalcExpr(args.at(10)).GetValue<long double>(),
+			CalcExpr(args.at(11)).GetValue<long double>()
 		);
 	};
 }

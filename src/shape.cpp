@@ -159,7 +159,7 @@ void Shape::SetTexture(image_data* image, bool enable, float tex_x, float tex_y,
 	}
 }
 
-void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, vector<AllVertexData>& all_vertices, int isRect) {
+void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, vector<AllVertexData>& all_vertices, int isRect, float z1, float z2, float z3) {
 	if (!shaderProgram_triangle || !vbo || !vao)
 		throw ShapeException("Shape not initialized.");
 	// 色の設定
@@ -221,9 +221,9 @@ void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, floa
 
 	// 頂点データの設定
 	float vertices[3][12] = {
-		{x1, y1,0.0, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, texture.enable, tex1.x, tex1.y, *(float*)&handle1, *(float*)&handle2},
-		{x2, y2,0.0, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a, texture.enable, tex2.x, tex2.y, *(float*)&handle1, *(float*)&handle2},
-		{x3, y3,0.0, normalized_color3.r, normalized_color3.g, normalized_color3.b, normalized_color3.a, texture.enable, tex3.x, tex3.y, *(float*)&handle1, *(float*)&handle2}
+		{x1, y1,z1, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, texture.enable, tex1.x, tex1.y, *(float*)&handle1, *(float*)&handle2},
+		{x2, y2,z2, normalized_color2.r, normalized_color2.g, normalized_color2.b, normalized_color2.a, texture.enable, tex2.x, tex2.y, *(float*)&handle1, *(float*)&handle2},
+		{x3, y3,z3, normalized_color3.r, normalized_color3.g, normalized_color3.b, normalized_color3.a, texture.enable, tex3.x, tex3.y, *(float*)&handle1, *(float*)&handle2}
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
@@ -307,7 +307,7 @@ void Shape::draw_round_rectangle(float x, float y, float width, float height, fl
 	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 17);
 }
 
-void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, vector<AllVertexData>& all_vertices,float z1, float z2) {
+void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, vector<AllVertexData>& all_vertices, float z1, float z2) {
 	if (!shaderProgram_triangle || !vbo_line || !vao_line)
 		throw ShapeException("Shape not initialized.");
 	// 色の設定

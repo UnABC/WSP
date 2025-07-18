@@ -144,6 +144,12 @@ void Graphic::Draw3DBox(float x1, float y1, float z1, float x2, float y2, float 
 	Draw3DLine(x1, y2, z1, x2, y2, z1);
 }
 
+void Graphic::Draw3DRect(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4) {
+	windows[WinID].shape.draw_triangle(x1, y1, x2, y2, x3, y3, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), gmode, windows[WinID].all_vertices, 1, z1, z2, z3);
+	windows[WinID].shape.draw_triangle(x1, y1, x3, y3, x4, y4, windows[WinID].colors.at(0), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices, 2, z1, z3, z4);
+	Draw();
+}
+
 void Graphic::DrawEllipse(float center_x, float center_y, float major_axis, float minor_axis, float angle) {
 	windows[WinID].shape.draw_ellipse(center_x, center_y, major_axis, minor_axis, -angle, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, windows[WinID].all_vertices);
 	Draw();

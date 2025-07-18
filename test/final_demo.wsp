@@ -1,4 +1,3 @@
-int TEX_TEMP = 10
 int TEX_METAL = 11
 int SCR_BLUR = 12
 int PTC_STAR = 7
@@ -35,18 +34,7 @@ int tx[tc] = [20,14,13,7,2,1,0,-1,-2,-3,-10,-11,-12,-13,-14,-15,-16,-17,-18,20,1
 int ty[tc] = [7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,6,6,6,6,6,6,6,6,5,5,5,5,5,5,5,5,4,4,4,4,4,4,4,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-2,-2,-2,-2,-2,-2,-2,-3,-3,-3,-3,-3,-3,-3,-4,-4,-4,-4,-4,-4,-4,-5,-5,-5,-5,-5,-6,-6,-6,-6,-6,-6,-6,-6,-6]
 
 //メタルテクスチャ
-screen(TEX_TEMP,"",64,1024,16)
-repeat(64){
-	hsvcolor(0,0,(1.0 - sin(M_PI * cnt / 63)) * 240)
-	line(cnt,0,cnt,1024)
-}
-screen(TEX_METAL,"",64,1024,16)
-repeat(1024){
-	hsvcolor(cnt / 4, 128, 128 + rnd(64))
-	line(0,cnt,64,cnt)
-}
-gmode(4)
-gcopy(TEX_TEMP)
+LoadImage("test/image/TEX_METAL.png",TEX_METAL)
 
 screen(SCR_BLUR,"",1600,900,16)
 gsel(0)
@@ -57,6 +45,7 @@ int time_offset = gettime()-st_pos
 int ms
 double c
 int pmode
+int gmd
 
 double cb1,cb2,cb4,cb8,cb16,cb32,cb1s,cb2s,cb4s,cb8s,cb16s,cb32s
 double xb1,xb2,xb4,xb8,xb16,xb32,xb1s,xb2s,xb4s,xb8s,xb16s,xb32s
@@ -114,20 +103,21 @@ while(true){
 	
 	int fase = ibt/32
 	if (fase == 0){
-		//galaxy
-		galaxy()
+		//galaxy()
+		WSP1()
 	}else if (fase == 1){
 		//TSUBAME
-		
+		WSP2()
 	}else if (fase == 2){
-		//WSP
-		
+		WSP1()
+	}else if (fase == 3){
+		WSP2()
 	}
 	
 	redraw(1)
 	await(16)
 }
-
+//TODO:最後が...
 void galaxy(){
 	double cc
 	if bcnt >= 28 {
@@ -208,4 +198,95 @@ void galaxy(){
 	rect(0,0,1600,112.5)
 	rect(0,787.5,1600,112.5)
 }
+
+//完成！
+void WSP1(){
+	Set3DCamera(xb32 * 5000 - 4500, xb32s*xb32s*xb32s * -3000, 0,  0, xb32s * 2000, 0)
+	cls(limit(c, 0, 255), limit(c, 0, 255), limit(c * 2, 0, 255))
+	gmd = 160
+	wsp_core(xb32 * 700 + 200)
+	Reset3D()
+	color(0,0,0)
+	rect(0,0,1600,112.5)
+	rect(0,787.5,1600,112.5)
+}
+
+//すべてが...
+void WSP2(){
+	//TODO:blur
+	//if bcnt >= 24
+	
+	int y = cb32s*cb32s*cb32s * 3000
+	Set3DCamera(xb32s * 3000 + cb32s * 8000 - 8000, y, 0,   0, -y, 0)
+	cls(limit(c, 0, 255), limit(c, 0, 255), limit(c * 2, 0, 255))
+	/*if bcnt < 16 {
+		a = xb16s * xb16s * 64
+		color(limit(c+a, 0, 255), limit(c+a, 0, 255), limit(c*2+a, 0, 255))
+		rect(0,0,1600,112.5)
+		rect(0,787.5,1600,112.5)
+	}*/
+	randomize(0)
+
+
+	gmd = 160
+	if bcnt < 16 {
+		gmd += xb16s * 64
+	}
+	
+	pmode = 1
+	
+	wsp_core(cb32s * 900)
+	
+	//パーティクル飛び散り
+	if bcnt < 16 {
+		Set3DCamera(0, -100, 0)
+		repeat(150){
+			f = rnd(32768)
+			r = sqrt(cb32) * rnd(200) + 30
+			color(0,0,0,xb16s * 48)
+			particle(2, cos(f) * r, 0, sin(f) * r / 3, 1)
+			color(0,0,0,xb16s * 24)
+			if cnt % 3 == 0 {
+				particlem(PTC_XS, 4)
+			} else {
+				particlem(6, 4)
+			}
+		}
+	}
+}
+
+void wsp_core(int nx){
+	gmode(2)
+	color(0,0,0,gmd)
+	//テクスチャ
+	repeat(tc){
+		int x = (rnd(1000) - 500) * nx / 1000
+		int z = ty[cnt] * 100
+		int y = tx[cnt] * 100 - z/5
+		particle(6, x, y, z, 60)
+		
+		if bcnt < 16 && pmode {
+			color(0,0,0,xb16s * 224)
+			if cnt%6 {
+				particlem(6, 140)
+			} else {
+				particlem(PTC_STAR, 250)
+			}
+			color(0,0,0,gmd)
+		}
+		texture(TEX_METAL,0, 400 + z/3, 64, 32)
+		texture3D(x,y - 150,z -  50,x,y + 150,z -  50,x,y + 150,z+50,x,y-150,z+50)
+	}
+	
+	repeat (600){
+		color(0,0,0,gmd)
+		particle( 1,  rnd(10000)-5000, rnd(10000)-5000, rnd(10000)-5000,  18)
+
+		if rnd(3) == 0 {
+			color(0,0,0,gmd/6)
+			particlem(6,  72)
+		}
+	}
+}
+
 
