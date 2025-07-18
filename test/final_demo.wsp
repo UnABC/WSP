@@ -169,7 +169,7 @@ void galaxy(){
 		if rnd(8) == 0 {
 			a = sin(cb32*_4_MPI + cnt*cnt)
 			color(255,255,255, a * limit( alpha2, 0, 64 ))
-			particlem(PTC_XS, a * 90)
+			particlem(PTC_XS, a * 45)
 		}//*/
 	}//*/
 	//X

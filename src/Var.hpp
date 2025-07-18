@@ -6,25 +6,22 @@
 #include <vector>
 #include <ranges>
 #include <charconv>
+#include <variant>
 
 class Var {
 protected:
 	int type; // 0: int, 1: double, 2: string, 4: bool,10: int array, 11: double array, 12: string array
-	long long int_value;
-	long double double_value;
-	std::string string_value;
-	bool bool_value;
-	std::vector<Var> array_value;
+	std::variant<long long, long double, std::string, bool, std::vector<Var>> value; // 値を保持するためのvariant
 	//変換関数
 	long long my_stoll(const std::string str) const;
 	long double my_stold(const std::string str) const;
 public:
-	Var() : type(-2), int_value(0), double_value(0.0), string_value(""), bool_value(false) {};
-	Var(long long          value) : type(0), int_value(value) {};
-	Var(long double        value) : type(1), double_value(value) {};
-	Var(const std::string& value) : type(2), string_value(value) {};
-	Var(bool               value) : type(4), bool_value(value) {};
-	Var(std::vector<Var> array) : type(10 + (array.empty() ? 0 : array.at(0).type) % 10), array_value(array) {};
+	Var() : type(-2) {};
+	Var(long long          value) : type(0), value(value) {};
+	Var(long double        value) : type(1), value(value) {};
+	Var(const std::string& value) : type(2), value(value) {};
+	Var(bool               value) : type(4), value(value) {};
+	Var(std::vector<Var> array) : type(10 + (array.empty() ? 0 : array.at(0).type) % 10), value(array) {};
 
 	Var& operator=(const std::string& value);
 	Var& operator=(const long long& value);
@@ -59,7 +56,7 @@ public:
 	T GetValue() const;
 	template<typename T>
 	T& EditValue();
-	std::vector<Var>* GetPointer() { return &array_value; }
+	std::vector<Var>* GetPointer() { return &std::get<std::vector<Var>>(value); }
 	int GetType() const { return type; };
 	bool IsZero(int TYPE) const;
 };

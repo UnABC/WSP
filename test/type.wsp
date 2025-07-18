@@ -15,7 +15,7 @@ number = "123"
 print(a)	//8
 print(b)	//0.785375
 print(c)	//6
-print(d)	//137
+print(d)	//137.0
 print(e)	//0
 print(a+b)	//8
 print(b+a)	//8.785375
@@ -24,7 +24,7 @@ print(g)	//-16.7
 print(h)	//-3.6
 print(i)	//30
 print(j)	//0.5
-print(k)	//243
+print(k)	//243.0
 print(double(2)*(M_PI))	//6.28...
 print(hogehoge)	//Hello world!
 print(greet_to+"Tokyo Tech!") 	//Hello Tokyo Tech!
