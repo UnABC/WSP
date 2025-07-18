@@ -173,10 +173,11 @@ void Window::SetTitle(const std::string& title) const {
 
 void Window::SetCameraPos(float x, float y, float z, float target_x, float target_y, float target_z) {
 	glm::vec3 UPvec(0.0f, 0.0f, 1.0f); // 上方向はZ軸
+	CameraPos = glm::vec3(x, y, z);
 	const glm::vec3 ViewVec = glm::normalize(glm::vec3(target_x - x, target_y - y, target_z - z));
 	if (abs(glm::dot(ViewVec, UPvec)) > 0.999f)
 		UPvec = glm::vec3(0.0f, 1.0f, 0.0f); // Z軸と平行な場合はY軸を上方向に設定
-	view = glm::lookAt(glm::vec3(x, y, z), glm::vec3(target_x, target_y, target_z), UPvec);
+	view = glm::lookAt(CameraPos, glm::vec3(target_x, target_y, target_z), UPvec);
 	projection = glm::infinitePerspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f);
 	is3D = true; // 3Dモードに設定
 	glEnable(GL_DEPTH_TEST);
@@ -197,6 +198,7 @@ void Window::Destroy() const {
 
 void Window::Clear(SDL_Color sys_col) {
 	all_vertices.clear(); // 全ての頂点データをクリア
+	all_3D_vertices.clear(); // 3Dモードの頂点データをクリア
 	pos = { 0, 0, 0 }; // 表示位置を初期化
 	color = { 0, 0, 0, 255 };
 	system_color = move(sys_col); // システム色を設定

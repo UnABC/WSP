@@ -21,7 +21,6 @@ class Particle {
 	glm::mat4* projection;
 	glm::mat4* view;
 	std::map<unsigned int, particle_data>* particles; // パーティクルデータのマップ
-	std::vector<float> all_vertices; // 全ての頂点データ
 	const int PCACHE_D = 18;
 	const int PTS_D = (PCACHE_D + 1) * PCACHE_D / 2;
 	const int PTS_DM1 = PTS_D - 1;
@@ -35,13 +34,13 @@ class Particle {
 	// パーティクル生成用
 	const char* vertexShaderSource = R"glsl(
 		#version 450 core
-		layout (location = 0) in vec3 position;
+		layout (location = 0) in vec2 position;
 		layout (location = 1) in vec4 color;
 		out vec4 outColor;
 		uniform mat4 projection;
 
 		void main() {
-			gl_Position = projection * vec4(position, 1.0);
+			gl_Position = projection * vec4(position, 0.0, 1.0);
 			outColor = color;
 		}
 	)glsl";
@@ -63,7 +62,9 @@ class Particle {
 		layout (location = 2) in vec2 texpos;
 		layout (location = 3) in float radius;
 		layout (location = 4) in uvec2 aTexHandle;
+		layout (location = 5) in float alpha;
 		out vec2 vTexCoord;
+		out float outAlpha;
 		flat out uvec2 TexHandle;
 		uniform mat4 projection;
 		uniform mat4 view;
@@ -82,18 +83,21 @@ class Particle {
 			gl_Position = projection * view * vec4(view_pos, 1.0);
 			vTexCoord = texpos + 0.5f; // テクスチャ座標を[0, 1]に変換
 			TexHandle = aTexHandle;
+			outAlpha = alpha;
 		}
 	)glsl";
 	const char* fragmentShaderSource_draw = R"glsl(
 		#version 450 core
 		#extension GL_ARB_bindless_texture : require
 		in vec2 vTexCoord;
+		in float outAlpha;
 		out vec4 FragColor;
 		flat in uvec2 TexHandle;
 
 		void main() {
 			sampler2D image = sampler2D(TexHandle);
 			vec4 texColor = texture(image, vTexCoord);
+			texColor.a *= outAlpha; // アルファ値を適用
 			if (texColor.a < 0.1) 
 				discard; // アルファ値が低い場合は描画しない
 			FragColor = texColor;
@@ -112,15 +116,15 @@ public:
 	~Particle();
 	void Init(std::map<unsigned int, particle_data>* particles, glm::mat4* proj, glm::mat4* global_view);
 	void mkParticle(int id, SDL_Color particle_color, std::vector<long long> array);
-	void drawParticler(int id, float x, float y, float z, float r, float angle, SDL_Color color, int gmode, std::vector<AllVertexData>& all_vertices);
-	void drawParticle(int id, float x, float y, float z, float r, SDL_Color color, int gmode, std::vector<AllVertexData>& all_vertices) {
-		drawParticler(id, x, y, z, r, 0.0f, color, gmode, all_vertices);
+	void drawParticler(int id, float x, float y, float z, float r, float angle, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha = 1.0f);
+	void drawParticle(int id, float x, float y, float z, float r, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha = 1.0f) {
+		drawParticler(id, x, y, z, r, 0.0f, color, gmode, all_vertices, cameraPos, alpha);
 	}
-	void drawParticlemr(int id, float r, float angle, SDL_Color color, int gmode, std::vector<AllVertexData>& all_vertices) {
-		drawParticler(id, current_x, current_y, current_z, r, angle, color, gmode, all_vertices);
+	void drawParticlemr(int id, float r, float angle, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha = 1.0f) {
+		drawParticler(id, current_x, current_y, current_z, r, angle, color, gmode, all_vertices, cameraPos, alpha);
 	}
-	void drawParticlem(int id, float r, SDL_Color color, int gmode, std::vector<AllVertexData>& all_vertices) {
-		drawParticler(id, current_x, current_y, current_z, r, 0.0f, color, gmode, all_vertices);
+	void drawParticlem(int id, float r, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha = 1.0f) {
+		drawParticler(id, current_x, current_y, current_z, r, 0.0f , color, gmode, all_vertices, cameraPos, alpha);
 	}
 
 };

@@ -162,6 +162,7 @@ void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle
 void Graphic::Clear(int r, int g, int b) {
 	windows[WinID].Clear({ (Uint8)r, (Uint8)g, (Uint8)b, 255 });
 	gmode = 0; //描画モードを初期化
+	Draw();
 }
 
 void Graphic::Draw(bool force) {
@@ -177,9 +178,28 @@ void Graphic::Draw(bool force) {
 		windows[WinID].system_color.b / 255.0f,
 		windows[WinID].system_color.a / 255.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // カラーバッファと深度バッファをクリア
+	//3D描画準備
+	bool is_first = true;
+	for (const auto& vertex_data : windows[WinID].all_3D_vertices | views::reverse) {
+		if (is_first || windows[WinID].all_vertices.empty() || vertex_data.second.gmode != windows[WinID].all_vertices.back().gmode || vertex_data.second.ID != windows[WinID].all_vertices.back().ID) {
+			is_first = false;
+			windows[WinID].all_vertices.push_back(vertex_data.second);
+			continue;
+		}
+		// 既存の頂点データに新しい頂点を追加
+		windows[WinID].all_vertices.back().all_vertices.insert(windows[WinID].all_vertices.back().all_vertices.end(), vertex_data.second.all_vertices.begin(), vertex_data.second.all_vertices.end());
+	}
 	//各種描画
 	int old_id = -1;
+	bool depth_test = true;
 	for (auto& vertex_data : windows[WinID].all_vertices) {
+		if (depth_test && (vertex_data.ID == 7) && windows[WinID].Is3D()) {
+			depth_test = false; // 3D描画のための深度テストを無効化
+			glDepthMask(GL_FALSE); // 深度バッファへの書き込みを無効化
+		} else if (!depth_test && (vertex_data.ID != 7)) {
+			depth_test = true; // 3D描画以外では深度テストを有効化
+			glDepthMask(GL_TRUE); // 深度バッファへの書き込みを有効化
+		}
 		if (vertex_data.ID == 6) {
 			old_id = 6; // FBOの描画は特別扱い
 			int id = vertex_data.division; // FBOのIDを取得
@@ -207,6 +227,9 @@ void Graphic::Draw(bool force) {
 		glDrawArrays(vertex_data.graphics_mode, 0, vertex_data.all_vertices.size() / vertex_data.division);
 		old_id = vertex_data.ID; // 最後に描画したIDを保存
 	}
+	// 3D描画のための深度テストを有効化
+	if (!depth_test)
+		glDepthMask(GL_TRUE); // 深度バッファへの書き込みを有効化
 	// 描画モードをリセット
 	Set_Gmode(0);
 	glBindVertexArray(0);
@@ -397,25 +420,25 @@ void Graphic::mkparticle(int id, int r, int g, int b, std::vector<long long> arr
 void Graphic::drawparticler(int id, float x, float y, float z, float r, float angle) {
 	if (!particles.count(id))
 		throw WindowException("Particle ID does not exist.");
-	windows[WinID].particle.drawParticler(id, x, y, z, r, angle, windows[WinID].color, gmode, windows[WinID].all_vertices);
+	windows[WinID].particle.drawParticler(id, x, y, z, r, angle, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticle(int id, float x, float y, float z, float r) {
 	if (!particles.count(id))
 		throw WindowException("Particle ID does not exist.");
-	windows[WinID].particle.drawParticle(id, x, y, z, r, windows[WinID].color, gmode, windows[WinID].all_vertices);
+	windows[WinID].particle.drawParticle(id, x, y, z, r, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticlemr(int id, float r, float angle) {
 	if (!particles.count(id))
 		throw WindowException("Particle ID does not exist.");
-	windows[WinID].particle.drawParticlemr(id, r, angle, windows[WinID].color, gmode, windows[WinID].all_vertices);
+	windows[WinID].particle.drawParticlemr(id, r, angle, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticlem(int id, float r) {
 	if (!particles.count(id))
 		throw WindowException("Particle ID does not exist.");
-	windows[WinID].particle.drawParticlem(id, r, windows[WinID].color, gmode, windows[WinID].all_vertices);
+	windows[WinID].particle.drawParticlem(id, r, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].GetCameraPos(), (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y, int dst_width, int dst_height) {
