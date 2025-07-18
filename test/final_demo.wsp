@@ -5,6 +5,7 @@ int PTC_STAR = 7
 int PTC_XS = 8
 
 double _2_5MPI = M_PI*2.0/5.0
+double _4_MPI  = M_PI*4.0 
 
 screen(0,"WSP demo",1600,900)
 ScreenPos(0,0,30)
@@ -59,7 +60,7 @@ int pmode
 
 double cb1,cb2,cb4,cb8,cb16,cb32,cb1s,cb2s,cb4s,cb8s,cb16s,cb32s
 double xb1,xb2,xb4,xb8,xb16,xb32,xb1s,xb2s,xb4s,xb8s,xb16s,xb32s
-int bcnt,fcnt
+int bcnt
 
 //初期化完了！！
 mmplay(1)
@@ -76,38 +77,29 @@ while(true){
 	
 	// cbN : N beat count-up (0.0 -> 1.0)
 	
-	cb1  =  fbt -  ibt
 	cb2  = (fbt - (ibt /  2 *  2)) /  2
 	cb4  = (fbt - (ibt /  4 *  4)) /  4
 	cb8  = (fbt - (ibt /  8 *  8)) /  8
-	cb16 = (fbt - (ibt / 16 * 16)) / 16
 	cb32 = (fbt - (ibt / 32 * 32)) / 32
 
-	cb1s  = cb1  * cb1
 	cb2s  = cb2  * cb2
 	cb4s  = cb4  * cb4
 	cb8s  = cb8  * cb8
-	cb16s = cb16 * cb16
 	cb32s = cb32 * cb32
 
 	// xbN : N beat count-down (1.0 -> 0.0)
 
-	xb1  = 1.0 - cb1
 	xb2  = 1.0 - cb2
 	xb4  = 1.0 - cb4
 	xb8  = 1.0 - cb8
-	xb16 = 1.0 - cb16
 	xb32 = 1.0 - cb32
 
-	xb1s  = xb1  * xb1
 	xb2s  = xb2  * xb2
 	xb4s  = xb4  * xb4
 	xb8s  = xb8  * xb8
-	xb16s = xb16 * xb16
 	xb32s = xb32 * xb32
 	
 	bcnt = ibt%32
-	fcnt = cb1 + bcnt
 	
 	
 	redraw(0)
@@ -157,10 +149,10 @@ void galaxy(){
 	repeat(800){
 		double z = limit( rnd(5000) - cb32s * 2000 - 2800, 0, 59999)
 		double r = rnd(600)
-		double f = _2_5MPI * cnt+(r / 200.0) + (0.002 * rnd(32768) / (r + 100)) - cb32
+		double f = _2_5MPI * cnt+r / 200.0 + 0.002 * rnd(32768) / (r + 100) - cb32
 		
 		double a = double( rnd(5000) ) / (r + 100)
-		if (rnd(2)){
+		if rnd(2){
 			z += a
 		}else{
 			z -= a
@@ -175,7 +167,7 @@ void galaxy(){
 		}
 		
 		if rnd(8) == 0 {
-			a = sin(cb32*M_PI*4 + cnt*cnt)
+			a = sin(cb32*_4_MPI + cnt*cnt)
 			color(255,255,255, a * limit( alpha2, 0, 64 ))
 			particlem(PTC_XS, a * 90)
 		}//*/

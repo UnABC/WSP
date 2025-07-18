@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <ranges>
+#include <charconv>
 
 class Var {
 protected:

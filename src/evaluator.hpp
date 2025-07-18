@@ -34,7 +34,7 @@ private:
 	//各種計算等
 	Var CalcExpr(AST* ast);
 	Var ProcessBinaryOperator(AST* left_node, AST* right, std::string operatorType, BinaryOperatorNode* node);
-	Var BinaryAssignmentOperator(AST* left_node, Var Left, Var Right, std::string operatorType, BinaryOperatorNode* node);
+	Var BinaryAssignmentOperator(AST* left_node, Var &Left, Var &Right, std::string operatorType, BinaryOperatorNode* node);
 	Var EvaluateFunction(UserFunctionNode* node);
 	std::pair<Var, int> IfStatement(AST* node);
 	std::pair<Var, int> WhileStatement(AST* ast);

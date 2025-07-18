@@ -501,7 +501,7 @@ Var Evaluator::ProcessBinaryOperator(AST* left_node, AST* right_node, string ope
 }
 
 //+=, -=, *=, /=, %=, &=, |=, ^=
-Var Evaluator::BinaryAssignmentOperator(AST* left_node, Var Left, Var Right, string operatorType, BinaryOperatorNode* node) {
+Var Evaluator::BinaryAssignmentOperator(AST* left_node, Var &Left, Var &Right, string operatorType, BinaryOperatorNode* node) {
 	if (left_node->GetNodeType() != Node::Variable)
 		throw RuntimeException("Invalid left operand type.", node->lineNumber, node->columnNumber);
 	string variableName = static_cast<VariableNode*>(left_node)->GetVariableName();

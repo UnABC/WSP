@@ -560,21 +560,19 @@ T& Var::EditValue() {
 }
 
 long long Var::my_stoll(const string str) const {
-	try {
-		return stoll(str);
-	}
-	catch (...) {
-		return 0; // 変換できない場合は0を返す
-	}
+	long long value;
+	const auto result = from_chars(str.data(), str.data() + str.size(), value);
+	if (result.ec == errc())
+		return value;
+	return 0LL;
 }
 
 long double Var::my_stold(const string str) const {
-	try {
-		return stold(str);
-	}
-	catch (...) {
-		return 0.0; // 変換できない場合は0.0を返す
-	}
+	long double value;
+	const auto result = from_chars(str.data(), str.data() + str.size(), value);
+	if (result.ec == errc())
+		return value;
+	return 0.0L;
 }
 
 template long long Var::GetValue<long long>() const;
