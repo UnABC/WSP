@@ -15,6 +15,7 @@ class Image {
 private:
 	glm::mat4* projection;
 	glm::mat4* view;
+	int* projectionID;
 
 	// 画像データのリスト
 	std::map<unsigned int, image_data>* images;
@@ -53,7 +54,7 @@ private:
 		}
 	)glsl";
 public:
-	void Init(std::map<unsigned int, image_data>& global_images, glm::mat4* proj, glm::mat4* global_view);
+	void Init(std::map<unsigned int, image_data>& global_images, glm::mat4* proj, glm::mat4* global_view,int *projID);
 	void Load(const std::string& file_path, int id, int center_x = 0, int center_y = 0);
 	void DrawImage(unsigned int id, float x, float y, float x_size, float y_size, float angle, int tex_x, int tex_y, int tex_width, int tex_height, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
 	void DrawBLtex(GLuint64 handle, float x, float y, float x_size, float y_size, int tex_x, int tex_y, int tex_width, int tex_height, float tex_def_width, float tex_def_height, int gmode, std::vector<AllVertexData>& all_vertices);

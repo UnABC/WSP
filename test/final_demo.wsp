@@ -103,11 +103,12 @@ while(true){
 	
 	int fase = ibt/32
 	if (fase == 0){
-		//galaxy()
-		WSP1()
+		galaxy()
+		//WSP2()
+		//WSP1()
 	}else if (fase == 1){
 		//TSUBAME
-		WSP2()
+		WSP1()
 	}else if (fase == 2){
 		WSP1()
 	}else if (fase == 3){
@@ -121,7 +122,7 @@ while(true){
 void galaxy(){
 	double cc
 	if bcnt >= 28 {
-		cc = cb4s * 5 + 1
+		cc = 1.0 + cb4s * 5.0
 	} else if bcnt >= 8 {
 		cc = 1.0
 	} else {
@@ -134,8 +135,8 @@ void galaxy(){
 	cls(limit(c, 0, 255), limit(1.2 * c, 0, 255), limit(1.4 * c, 0, 255))
 	gmode(2)
 	// stars
-	int alpha1 = cc*224
-	int alpha2 = cc*64
+	int alpha1 = cc*224.0
+	int alpha2 = cc*64.0
 	repeat(800){
 		double z = limit( rnd(5000) - cb32s * 2000 - 2800, 0, 59999)
 		double r = rnd(600)
@@ -194,6 +195,7 @@ void galaxy(){
 		}
 	}
 	Reset3D()
+	gmode(0)
 	color(0,0,0)
 	rect(0,0,1600,112.5)
 	rect(0,787.5,1600,112.5)
@@ -206,6 +208,8 @@ void WSP1(){
 	gmd = 160
 	wsp_core(xb32 * 700 + 200)
 	Reset3D()
+	texture(-1)
+	gmode(0)
 	color(0,0,0)
 	rect(0,0,1600,112.5)
 	rect(0,787.5,1600,112.5)

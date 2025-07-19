@@ -2,9 +2,10 @@
 #include "Image.hpp"
 using namespace std;
 
-void Image::Init(map<unsigned int, image_data>& global_images, glm::mat4* proj, glm::mat4* global_view) {
+void Image::Init(map<unsigned int, image_data>& global_images, glm::mat4* proj, glm::mat4* global_view, int* projID) {
 	projection = proj;
 	view = global_view;
+	projectionID = projID;
 
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
@@ -106,6 +107,7 @@ void Image::DrawImage(unsigned int id, float x, float y, float x_size, float y_s
 		new_data.vao = vao;
 		new_data.vbo = vbo;
 		new_data.shaderProgram = shaderProgram;
+		new_data.projectionID = *projectionID;
 		all_vertices.push_back(new_data);
 	}
 	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 11);
@@ -149,6 +151,7 @@ void Image::DrawBLtex(GLuint64 handle, float x, float y, float x_size, float y_s
 		new_data.vao = vao;
 		new_data.vbo = vbo;
 		new_data.shaderProgram = shaderProgram;
+		new_data.projectionID = *projectionID;
 		all_vertices.push_back(new_data);
 	}
 	// 既存の頂点データに新しい頂点を追加

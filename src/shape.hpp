@@ -23,8 +23,10 @@ class Shape {
 	GLuint shaderProgram_ellipse;
 
 	Texture_color texture;
-	glm::mat4 *projection;
-	glm::mat4 *view;
+	glm::mat4* projection;
+	glm::mat4* view;
+	std::vector<AllVertexData>* all_vertices;
+	int* projectionID;
 	//三角形のシェーダー
 	const char* vertexShaderSource = R"glsl(
 		#version 450 core
@@ -237,12 +239,12 @@ class Shape {
 public:
 	Shape() : width(640), height(480), vao(0), vbo(0), shaderProgram_triangle(0) {};
 	~Shape();
-	void Init(int w, int h,glm::mat4* proj, glm::mat4* global_view);
+	void Init(int w, int h, glm::mat4* proj, glm::mat4* global_view, int* projID, std::vector<AllVertexData>* all_vertices_ptr);
 	void SetTexture(image_data* image, bool enable = true, float tex_x = 0.0f, float tex_y = 0.0f, float tex_width = -1.0f, float tex_height = -1.0f);
-	void draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, std::vector<AllVertexData>& all_vertices, int isRect = 0,float z1 = 0.0f, float z2 = 0.0f, float z3 = 0.0f);
-	void draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
-	void draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, std::vector<AllVertexData>& all_vertices,float z1 = 0.0f, float z2 = 0.0f);
-	void draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, std::vector<AllVertexData>& all_vertices);
+	void draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, int isRect = 0, float z1 = 0.0f, float z2 = 0.0f, float z3 = 0.0f);
+	void draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode);
+	void draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, float z1 = 0.0f, float z2 = 0.0f);
+	void draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode);
 };
 
 #endif

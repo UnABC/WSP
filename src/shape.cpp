@@ -13,11 +13,13 @@ Shape::~Shape() {
 	if (shaderProgram_roundrect) glDeleteProgram(shaderProgram_roundrect);
 }
 
-void Shape::Init(int w, int h, glm::mat4* proj, glm::mat4* global_view) {
+void Shape::Init(int w, int h, glm::mat4* proj, glm::mat4* global_view, int* projID, vector<AllVertexData>* all_vertices_ptr) {
 	width = w;
 	height = h;
 	projection = proj;
 	view = global_view;
+	projectionID = projID;
+	all_vertices = all_vertices_ptr;
 	// 三角形の頂点配列オブジェクトとバッファオブジェクトを生成
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
@@ -159,7 +161,7 @@ void Shape::SetTexture(image_data* image, bool enable, float tex_x, float tex_y,
 	}
 }
 
-void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, vector<AllVertexData>& all_vertices, int isRect, float z1, float z2, float z3) {
+void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, int isRect, float z1, float z2, float z3) {
 	if (!shaderProgram_triangle || !vbo || !vao)
 		throw ShapeException("Shape not initialized.");
 	// 色の設定
@@ -227,7 +229,7 @@ void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, floa
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 2)) {
+	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 2)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
@@ -238,12 +240,13 @@ void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, floa
 		new_data.vbo = vbo;
 		new_data.shaderProgram = shaderProgram_triangle;
 		new_data.division = 12;
-		all_vertices.push_back(new_data);
+		new_data.projectionID = *projectionID;
+		all_vertices->push_back(move(new_data));
 	}
-	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 3 * 12);
+	all_vertices->back().all_vertices.insert(all_vertices->back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 3 * 12);
 }
 
-void Shape::draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, vector<AllVertexData>& all_vertices) {
+void Shape::draw_round_rectangle(float x, float y, float width, float height, float radius, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode) {
 	if (!shaderProgram_roundrect || !vbo_roundrect || !vao_roundrect)
 		throw ShapeException("Shape not initialized.");
 	// 色の設定
@@ -290,7 +293,7 @@ void Shape::draw_round_rectangle(float x, float y, float width, float height, fl
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 3)) {
+	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 3)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
@@ -301,13 +304,14 @@ void Shape::draw_round_rectangle(float x, float y, float width, float height, fl
 		new_data.vbo = vbo_roundrect;
 		new_data.shaderProgram = shaderProgram_roundrect;
 		new_data.division = 17;
-		all_vertices.push_back(new_data);
+		new_data.projectionID = *projectionID;
+		all_vertices->push_back(new_data);
 	}
 	// 既存の頂点データに新しい頂点を追加
-	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 17);
+	all_vertices->back().all_vertices.insert(all_vertices->back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 17);
 }
 
-void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, vector<AllVertexData>& all_vertices, float z1, float z2) {
+void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, SDL_Color color2, int gmode, float z1, float z2) {
 	if (!shaderProgram_triangle || !vbo_line || !vao_line)
 		throw ShapeException("Shape not initialized.");
 	// 色の設定
@@ -322,7 +326,7 @@ void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, 
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 4)) {
+	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 4)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
@@ -334,13 +338,14 @@ void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, 
 		new_data.shaderProgram = shaderProgram_triangle;
 		new_data.division = 7;
 		new_data.graphics_mode = GL_LINES; // 線分の描画モード
-		all_vertices.push_back(new_data);
+		new_data.projectionID = *projectionID;
+		all_vertices->push_back(new_data);
 	}
 	// 既存の頂点データに新しい頂点を追加
-	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 2 * 7);
+	all_vertices->back().all_vertices.insert(all_vertices->back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 2 * 7);
 }
 
-void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode, vector<AllVertexData>& all_vertices) {
+void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float minor_axis, float angle, SDL_Color color1, SDL_Color color2, SDL_Color color3, SDL_Color color4, int gmode) {
 	if (!shaderProgram_ellipse || !vbo_ellipse || !vao_ellipse)
 		throw ShapeException("Shape not initialized.");
 	// 色の設定
@@ -389,7 +394,7 @@ void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 5)) {
+	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 5)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
@@ -400,8 +405,9 @@ void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float
 		new_data.vbo = vbo_ellipse;
 		new_data.shaderProgram = shaderProgram_ellipse;
 		new_data.division = 17;
-		all_vertices.push_back(new_data);
+		new_data.projectionID = *projectionID;
+		all_vertices->push_back(new_data);
 	}
 	// 既存の頂点データに新しい頂点を追加
-	all_vertices.back().all_vertices.insert(all_vertices.back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 17);
+	all_vertices->back().all_vertices.insert(all_vertices->back().all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 17);
 }

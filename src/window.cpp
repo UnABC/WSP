@@ -133,6 +133,7 @@ void Window::Resize(int new_width, int new_height) {
 	} else {
 		projection = ShaderUtil::recalcProjection(width, height);
 	}
+	projectionID++;
 	SDL_SetWindowSize(window, width, height);
 
 	// 古いテクスチャハンドルを非居住化
@@ -180,6 +181,7 @@ void Window::SetCameraPos(float x, float y, float z, float target_x, float targe
 	view = glm::lookAt(CameraPos, glm::vec3(target_x, target_y, target_z), UPvec);
 	projection = glm::infinitePerspective(glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f);
 	is3D = true; // 3Dモードに設定
+	projectionID++;
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -201,6 +203,7 @@ void Window::Clear(SDL_Color sys_col) {
 	all_3D_vertices.clear(); // 3Dモードの頂点データをクリア
 	pos = { 0, 0, 0 }; // 表示位置を初期化
 	color = { 0, 0, 0, 255 };
+	projectionID = 0;
 	system_color = move(sys_col); // システム色を設定
 	fill(colors.begin(), colors.end(), color); // 色のリストを初期化
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -211,6 +214,7 @@ void Window::Reset3D() {
 	view = glm::mat4(1.0f);
 	projection = ShaderUtil::recalcProjection(width, height);
 	is3D = false; // 3Dモードを解除
+	projectionID++;
 	glDisable(GL_DEPTH_TEST);
 }
 

@@ -10,10 +10,11 @@ Particle::~Particle() {
 	if (shaderProgram_draw) glDeleteProgram(shaderProgram_draw);
 }
 
-void Particle::Init(map<unsigned int, particle_data>* particles_data, glm::mat4* proj, glm::mat4* global_view) {
+void Particle::Init(map<unsigned int, particle_data>* particles_data, glm::mat4* proj, glm::mat4* global_view, int* projID) {
 	projection = proj;
 	view = global_view;
 	particles = particles_data;
+	projectionID = projID;
 
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
@@ -182,7 +183,8 @@ void Particle::drawParticler(int id, float x, float y, float z, float r, float a
 		new_data.vao = vao_draw;
 		new_data.vbo = vbo_draw;
 		new_data.shaderProgram = shaderProgram_draw;
-		all_vertices[distance] = new_data;
+		new_data.projectionID = *projectionID;
+		all_vertices[distance] = move(new_data);
 	}
 	// 既存の頂点データに新しい頂点を追加
 	all_vertices[distance].all_vertices.insert(all_vertices[distance].all_vertices.end(), &vertices[0][0], &vertices[0][0] + 6 * 10);

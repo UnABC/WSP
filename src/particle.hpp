@@ -21,6 +21,7 @@ class Particle {
 	GLuint shaderProgram_draw;
 	glm::mat4* projection;
 	glm::mat4* view;
+	int* projectionID;
 	std::map<unsigned int, particle_data>* particles; // パーティクルデータのマップ
 	const int PCACHE_D = 18;
 	const int PTS_D = (PCACHE_D + 1) * PCACHE_D / 2;
@@ -115,7 +116,7 @@ class Particle {
 	void createFBO(int id);
 public:
 	~Particle();
-	void Init(std::map<unsigned int, particle_data>* particles, glm::mat4* proj, glm::mat4* global_view);
+	void Init(std::map<unsigned int, particle_data>* particles, glm::mat4* proj, glm::mat4* global_view,int * projID);
 	void mkParticle(int id, SDL_Color particle_color, std::vector<long long> array);
 	void ldParticle(int id, int img_id, std::map<unsigned int, image_data>& images);
 	void drawParticler(int id, float x, float y, float z, float r, float angle, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha = 1.0f);

@@ -23,7 +23,6 @@ private:
 	GLuint fbo, texture, rbo;
 	GLuint vao, vbo, shaderProgram;
 	GLuint64 texture_handle;
-	glm::vec3 CameraPos;
 	int width, height;
 	bool is_fullscreen;
 	bool is3D = false; // 3Dモードかどうか
@@ -71,6 +70,8 @@ public:
 	Particle particle;
 	glm::mat4 projection;
 	glm::mat4 view;
+	int projectionID = 0;
+	glm::vec3 CameraPos;
 
 	Window() : colors(4, { 0, 0, 0, 255 }) {} // 初期化時に白色を設定
 	~Window();
@@ -94,7 +95,6 @@ public:
 	bool Is3D() const { return is3D; }
 	void Destroy() const;
 	const GLuint& GetFBO() const { return fbo; }
-	const glm::vec3& GetCameraPos() const { return CameraPos; }
 	GLuint64 GetTextureHandle() const { return texture_handle; }
 	void Clear(SDL_Color sys_col);
 	void Reset3D();

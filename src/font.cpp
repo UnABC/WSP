@@ -11,9 +11,10 @@ Font::~Font() {
 	if (library)FT_Done_FreeType(library);
 }
 
-void Font::Init(unordered_map<char16_t, Character>& global_char, BLTexture& global_texture, glm::mat4* proj, glm::mat4* global_view) {
+void Font::Init(unordered_map<char16_t, Character>& global_char, BLTexture& global_texture, glm::mat4* proj, glm::mat4* global_view, int* projID) {
 	projection = proj;
 	view = global_view;
+	projectionID = projID;
 
 	if (FT_Init_FreeType(&library))
 		throw FontException("Failed to initialize FreeType library.");
@@ -188,6 +189,7 @@ void Font::SetTexts(string text, float x, float y, int width, SDL_Color color1, 
 			new_data.vbo = vbo;
 			new_data.shaderProgram = shaderProgram;
 			new_data.division = 11;
+			new_data.projectionID = *projectionID;
 			all_vertices.push_back(new_data);
 		}
 		// 既存の頂点データに新しい頂点を追加

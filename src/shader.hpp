@@ -20,6 +20,7 @@ struct AllVertexData {
     GLuint vao, vbo;
     GLuint shaderProgram;
     GLenum graphics_mode = GL_TRIANGLES; // 描画モード
+    int projectionID = 0;
 };
 
 
