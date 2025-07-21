@@ -178,7 +178,7 @@ void Font::SetTexts(string text, float x, float y, int width, SDL_Color color1, 
 		};
 		// 頂点データをall_verticesに追加
 		int local_gmode = gmode - (gmode % 2);
-		if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 0)) {
+		if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 0) || (all_vertices.back().projectionID != *projectionID)) {
 			AllVertexData new_data;
 			new_data.all_vertices = vector<float>();
 			new_data.gmode = local_gmode;

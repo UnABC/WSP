@@ -184,7 +184,7 @@ void Graphic::Draw(bool force) {
 		windows[WinID].system_color.b / 255.0f,
 		windows[WinID].system_color.a / 255.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // カラーバッファと深度バッファをクリア
-
+	glDisable(GL_DEPTH_TEST);
 	//3D描画
 	glDepthMask(GL_FALSE);
 	int old_id = -1;

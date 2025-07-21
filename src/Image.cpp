@@ -140,7 +140,7 @@ void Image::DrawBLtex(GLuint64 handle, float x, float y, float x_size, float y_s
 		{x         , y         , 0.0f, tex_min_x, tex_min_y, normalized_color1.r, normalized_color1.g, normalized_color1.b, normalized_color1.a, *(float*)&handle1, *(float*)&handle2}
 	};
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 1)) {
+	if (all_vertices.empty() || (all_vertices.back().gmode != local_gmode) || (all_vertices.back().ID != 1) || (all_vertices.back().projectionID != *projectionID)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;

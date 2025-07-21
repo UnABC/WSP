@@ -172,7 +172,7 @@ void Particle::drawParticler(int id, float x, float y, float z, float r, float a
 	};
 	float distance = glm::length(glm::vec3(x, y, z) - cameraPos);
 	int local_gmode = gmode - (gmode % 2);
-	if (!all_vertices.count(distance)) {
+	if (!all_vertices.count(distance) || (all_vertices[distance].gmode != local_gmode) || (all_vertices[distance].ID != 7) || (all_vertices[distance].projectionID != *projectionID)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;

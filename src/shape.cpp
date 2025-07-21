@@ -229,7 +229,7 @@ void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, floa
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 2)) {
+	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 2) || (all_vertices->back().projectionID != *projectionID)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
@@ -293,7 +293,7 @@ void Shape::draw_round_rectangle(float x, float y, float width, float height, fl
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 3)) {
+	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 3) || (all_vertices->back().projectionID != *projectionID)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
@@ -326,7 +326,7 @@ void Shape::draw_line(float x1, float y1, float x2, float y2, SDL_Color color1, 
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 4)) {
+	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 4) || (all_vertices->back().projectionID != *projectionID)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
@@ -394,7 +394,7 @@ void Shape::draw_ellipse(float center_x, float center_y, float major_axis, float
 	};
 	//キャッシュ作成
 	int local_gmode = gmode - (gmode % 2);
-	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 5)) {
+	if (all_vertices->empty() || (all_vertices->back().gmode != local_gmode) || (all_vertices->back().ID != 5) || (all_vertices->back().projectionID != *projectionID)) {
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
