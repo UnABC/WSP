@@ -26,7 +26,7 @@ private:
 	//ユーザー定義関数
 	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
 	//システム関数
-	std::unordered_map<std::string, std::function<void(std::vector<AST*> args,unsigned long long lineNumber,unsigned long long columnNumber)>> system_functions;
+	std::unordered_map<std::string, std::function<void(std::vector<AST*> args, unsigned long long lineNumber, unsigned long long columnNumber)>> system_functions;
 	//数学定数
 	std::map<std::string, Var> math_const;
 	//キーコード
@@ -34,13 +34,13 @@ private:
 	//各種計算等
 	Var CalcExpr(AST* ast);
 	Var ProcessBinaryOperator(AST* left_node, AST* right, std::string operatorType, BinaryOperatorNode* node);
-	Var BinaryAssignmentOperator(AST* left_node, Var &Left, Var &Right, std::string operatorType, BinaryOperatorNode* node);
 	Var EvaluateFunction(UserFunctionNode* node);
 	std::pair<Var, int> IfStatement(AST* node);
 	std::pair<Var, int> WhileStatement(AST* ast);
 	void VoidFunction(AST* ast);
-	Var ProcessVariables(AST* ast, bool is_static, int &type);
+	Var ProcessVariables(AST* ast, bool is_static, int& type);
 	Var ProcessStaticVar(AST* ast);
+	Var AssignVariable(Var expression, std::string& variableName, VariableNode* variable, bool is_static, int& type, unsigned long long lineNumber, unsigned long long columnNumber);
 	std::pair<Var, int> ProcessFunction(AST* ast);
 	inline long long GetTime();
 	long double GetFPS();

@@ -200,8 +200,8 @@ void galaxy(){
 	Reset3D()
 	gmode(0)
 	color(0,0,0)
-	rect(0,0,1600,112.5)
-	rect(0,787.5,1600,112.5)
+	rect(0,0,1600,113)
+	rect(0,787.5,1600,113)
 }
 
 //完成！
@@ -214,8 +214,8 @@ void WSP1(){
 	texture(-1)
 	gmode(0)
 	color(0,0,0)
-	rect(0,0,1600,112.5)
-	rect(0,787.5,1600,112.5)
+	rect(0,0,1600,113)
+	rect(0,787.5,1600,113)
 }
 
 //すべてが...
@@ -227,9 +227,11 @@ void WSP2(){
 	if bcnt < 16 {
 		a = xb16s * xb16s * 64
 		Reset3D()
+		gmode(2)
 		color(limit(c+a, 0, 255), limit(c+a, 0, 255), limit(c*2+a, 0, 255))
-		rect(0,0,1600,112.5)
-		rect(0,787.5,1600,112.5)
+		rect(0,0,1600,113)
+		rect(0,787.5,1600,113)
+		gmode(0)
 	}
 	Set3DCamera(xb32s * 3000 + cb32s * 8000 - 8000, y, 0,   0, -y, 0)
 	
