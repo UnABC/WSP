@@ -33,6 +33,14 @@ Evaluator::Evaluator() {
 	math_const["M_LOG10E"] = (long double)0.43429448190325182765;
 	math_const["M_LN2"] = (long double)0.69314718055994530942;
 	math_const["M_LN10"] = (long double)2.30258509299404568402;
+	math_const["M_DOUBLE_PI"] = (long double)6.28318530717958647692;
+	math_const["M_THREE_PI"] = (long double)9.42477796076937971539;
+	math_const["M_FOUR_PI"] = (long double)12.56637061435917295385;
+	math_const["M_FIVE_PI"] = (long double)15.70796326794946619132;
+	math_const["M_SIX_PI"] = (long double)18.84955592153875942945;
+	math_const["M_SEVEN_PI"] = (long double)21.99114857512805266758;
+	math_const["M_EIGHT_PI"] = (long double)25.13274122871947626083;
+	math_const["M_NINE_PI"] = (long double)28.27433388230813816400;
 	math_const["M_PI_2"] = (long double)1.57079632679489661923;
 	math_const["M_PI_4"] = (long double)0.78539816339744830962;
 	math_const["M_1_PI"] = (long double)0.31830988618379067154;

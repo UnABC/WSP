@@ -3,8 +3,7 @@ int SCR_BLUR = 12
 int PTC_STAR = 7
 int PTC_XS = 8
 
-double _2_5MPI = M_PI*2.0/5.0
-double _4_MPI  = M_PI*4.0 
+double _2_5MPI = M_DOUBLE_PI/5.0
 
 screen(0,"WSP demo",1600,900)
 ScreenPos(0,0,30)
@@ -172,7 +171,7 @@ void galaxy(){
 		}
 		
 		if rnd(8) == 0 {
-			a = sin(cb32*_4_MPI + cnt*cnt)
+			a = sin(cb32*M_FOUR_PI + cnt*cnt)
 			color(255,255,255, a * limit( alpha2, 0, 64 ))
 			particlem(PTC_XS, a * 45)
 		}//*/
