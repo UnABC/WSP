@@ -221,6 +221,16 @@ Var Evaluator::CalcExpr(AST* ast) {
 			MATH_FUNC(exp);
 			MATH_FUNC(log);
 			MATH_FUNC(log10);
+			MATH_FUNC(ceil);
+			MATH_FUNC(floor);
+			MATH_FUNC(round);
+			MATH_FUNC(trunc);
+			MATH_FUNC(sinh);
+			MATH_FUNC(cosh);
+			MATH_FUNC(tanh);
+			MATH_FUNC(asinh);
+			MATH_FUNC(acosh);
+			MATH_FUNC(atanh);
 #undef MATH_FUNC
 			//その他組み込み関数(!=void,引数は1つ)
 			if (functionName == "double") {
@@ -284,6 +294,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 							return func(CalcExpr(args.at(0)).GetValue<long double>(),CalcExpr(args.at(1)).GetValue<long double>());
 			MATH_FUNC(pow);
 			MATH_FUNC(atan2);
+			MATH_FUNC(fmod);
+			MATH_FUNC(hypot);
 #undef MATH_FUNC
 			//その他組み込み関数(!=void,引数は2つ)
 			if (functionName == "min") {
@@ -347,6 +359,14 @@ Var Evaluator::CalcExpr(AST* ast) {
 			return Var(1LL);
 		} else if (variableName == "false") {
 			return Var(0LL);
+		} else if (variableName == "ginfo_r") {
+			return Var(graphic.GetColorR());
+		} else if (variableName == "ginfo_g") {
+			return Var(graphic.GetColorG());
+		} else if (variableName == "ginfo_b") {
+			return Var(graphic.GetColorB());
+		} else if (variableName == "ginfo_a") {
+			return Var(graphic.GetColorA());
 		}
 		//変数の存在を確認
 		if (node->GetArrayIndex().empty()) {
@@ -492,10 +512,9 @@ Var Evaluator::ProcessBinaryOperator(AST* left_node, AST* right_node, string ope
 		}
 		if (left_node->GetNodeType() != Node::Variable)
 			throw RuntimeException("Invalid left operand type.", node->lineNumber, node->columnNumber);
-		string variableName = static_cast<VariableNode*>(left_node)->GetVariableName();
 		int type = 0;
 		//変数の存在を確認
-#define AssignOperator(op) return AssignVariable(Left op Right,variableName,static_cast<VariableNode*>(left_node),false,type, node->lineNumber, node->columnNumber);
+#define AssignOperator(op) return AssignVariable(Left op Right,static_cast<VariableNode*>(left_node),false,type, node->lineNumber, node->columnNumber);
 		if (operatorType == "+=") AssignOperator(+);
 		if (operatorType == "-=") AssignOperator(-);
 		if (operatorType == "*=") AssignOperator(*);
@@ -628,8 +647,9 @@ Var Evaluator::EvaluateFunction(UserFunctionNode* node) {
 	return retval;
 }
 
-Var Evaluator::AssignVariable(Var expression, string& variableName, VariableNode* variable, bool is_static, int& type, unsigned long long lineNumber, unsigned long long columnNumber) {
+Var Evaluator::AssignVariable(Var expression, VariableNode* variable, bool is_static, int& type, unsigned long long lineNumber, unsigned long long columnNumber) {
 	//静的変数の場合、同一スコープ内での再定義は不可
+	string variableName = variable->GetVariableName();
 	if (is_static) {
 		if (ref_static_var.back().count(variableName))
 			throw RuntimeException("Redefinition of static variable: " + variableName + ".", lineNumber, columnNumber);
@@ -711,10 +731,9 @@ Var Evaluator::AssignVariable(Var expression, string& variableName, VariableNode
 
 Var Evaluator::ProcessVariables(AST* ast, bool is_static, int& type) {
 	AssignmentNode* node = static_cast<AssignmentNode*>(ast);
-	string variableName = node->GetVariableName();
 	AST* expression = node->GetExpression();
 	VariableNode* variable = static_cast<VariableNode*>(node->GetVariable());
-	return AssignVariable(CalcExpr(expression), variableName, variable, is_static, type, node->lineNumber, node->columnNumber);
+	return AssignVariable(CalcExpr(expression), variable, is_static, type, node->lineNumber, node->columnNumber);
 }
 
 Var Evaluator::ProcessStaticVar(AST* ast) {

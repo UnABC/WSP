@@ -41,6 +41,7 @@ private:
 
 	void FailedToInitialize(const std::string& message);
 	void Set_Gmode(int gmode);
+	inline int limit(int value, int min, int max) const {return std::max(min, std::min(value, max));}
 	SDL_Color HSV2RGB(int h, int s, int v) const;
 public:
 	Graphic(int width = 640, int height = 480, bool is_fullscreen = false);
@@ -56,6 +57,10 @@ public:
 	void Load_Image(const std::string& file_path, unsigned int id, int center_x = 0, int center_y = 0);
 	void SetGmode(int mode) { gmode = mode; }
 	void SetTexture(int id, float tex_x = 0.0f, float tex_y = 0.0f, float tex_width = -1.0f, float tex_height = -1.0f);
+	long long GetColorR() const { return windows.at(WinID).color.r; }
+	long long GetColorG() const { return windows.at(WinID).color.g; }
+	long long GetColorB() const { return windows.at(WinID).color.b; }
+	long long GetColorA() const { return windows.at(WinID).color.a; }
 
 	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
 	bool Wait(unsigned long long milliseconds = 1);

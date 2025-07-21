@@ -40,7 +40,7 @@ private:
 	void VoidFunction(AST* ast);
 	Var ProcessVariables(AST* ast, bool is_static, int& type);
 	Var ProcessStaticVar(AST* ast);
-	Var AssignVariable(Var expression, std::string& variableName, VariableNode* variable, bool is_static, int& type, unsigned long long lineNumber, unsigned long long columnNumber);
+	Var AssignVariable(Var expression, VariableNode* variable, bool is_static, int& type, unsigned long long lineNumber, unsigned long long columnNumber);
 	std::pair<Var, int> ProcessFunction(AST* ast);
 	inline long long GetTime();
 	long double GetFPS();

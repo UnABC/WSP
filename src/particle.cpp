@@ -154,7 +154,7 @@ void Particle::ldParticle(int id, int img_id, std::map<unsigned int, image_data>
 	(*particles)[id].handle2 = static_cast<GLuint>(texture_handle >> 32);
 }
 
-void Particle::drawParticler(int id, float x, float y, float z, float r, float angle, SDL_Color color, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha) {
+void Particle::drawParticler(int id, float x, float y, float z, float r, float angle, int gmode, std::map<float, AllVertexData>& all_vertices, glm::vec3 cameraPos, float alpha) {
 	if (!shaderProgram_draw || !vbo_draw || !vao_draw)
 		throw ParticleException("Particle draw not initialized.");
 	current_x = x;

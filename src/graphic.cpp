@@ -48,7 +48,7 @@ void Graphic::FailedToInitialize(const string& message) {
 
 void Graphic::SetColors(int r, int g, int b, int a, int index) {
 	if (index < 0 || index >= windows[WinID].colors.size()) return; //範囲外アクセス防止
-	windows[WinID].colors.at(index) = { (Uint8)r, (Uint8)g, (Uint8)b,(Uint8)a };
+	windows[WinID].colors.at(index) = { (Uint8)limit(r, 0, 255), (Uint8)limit(g, 0, 255), (Uint8)limit(b, 0, 255), (Uint8)limit(a, 0, 255) };
 	if (index == 0) windows[WinID].color = windows[WinID].colors.at(0); //0番目の色を現在の色に設定
 }
 
@@ -166,7 +166,7 @@ void Graphic::DrawImage(unsigned int id, float x_size, float y_size, float angle
 }
 
 void Graphic::Clear(int r, int g, int b) {
-	windows[WinID].Clear({ (Uint8)r, (Uint8)g, (Uint8)b, 255 });
+	windows[WinID].Clear({ (Uint8)limit(r, 0, 255), (Uint8)limit(g, 0, 255), (Uint8)limit(b, 0, 255), 255 });
 	gmode = 0; //描画モードを初期化
 	Draw();
 }
@@ -430,25 +430,25 @@ void Graphic::mkparticle(int id, int r, int g, int b, std::vector<long long> arr
 void Graphic::drawparticler(int id, float x, float y, float z, float r, float angle) {
 	if (!particles.count(id))
 		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
-	windows[WinID].particle.drawParticler(id, x, y, z, r, angle, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].CameraPos, (float)windows[WinID].color.a / 255.0f);
+	windows[WinID].particle.drawParticler(id, x, y, z, r, angle, gmode, windows[WinID].all_3D_vertices, windows[WinID].CameraPos, (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticle(int id, float x, float y, float z, float r) {
 	if (!particles.count(id))
 		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
-	windows[WinID].particle.drawParticle(id, x, y, z, r, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].CameraPos, (float)windows[WinID].color.a / 255.0f);
+	windows[WinID].particle.drawParticle(id, x, y, z, r, gmode, windows[WinID].all_3D_vertices, windows[WinID].CameraPos, (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticlemr(int id, float r, float angle) {
 	if (!particles.count(id))
 		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
-	windows[WinID].particle.drawParticlemr(id, r, angle, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].CameraPos, (float)windows[WinID].color.a / 255.0f);
+	windows[WinID].particle.drawParticlemr(id, r, angle, gmode, windows[WinID].all_3D_vertices, windows[WinID].CameraPos, (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::drawparticlem(int id, float r) {
 	if (!particles.count(id))
 		throw WindowException("Particle ID:" + to_string(id) + " does not exist.");
-	windows[WinID].particle.drawParticlem(id, r, windows[WinID].color, gmode, windows[WinID].all_3D_vertices, windows[WinID].CameraPos, (float)windows[WinID].color.a / 255.0f);
+	windows[WinID].particle.drawParticlem(id, r, gmode, windows[WinID].all_3D_vertices, windows[WinID].CameraPos, (float)windows[WinID].color.a / 255.0f);
 }
 
 void Graphic::Gcopy(int id, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y, int dst_width, int dst_height) {

@@ -50,9 +50,10 @@ double c
 int pmode
 int gmd
 
-double cb1,cb2,cb4,cb8,cb16,cb32,cb1s,cb2s,cb4s,cb8s,cb16s,cb32s
-double xb1,xb2,xb4,xb8,xb16,xb32,xb1s,xb2s,xb4s,xb8s,xb16s,xb32s
+double cb2,cb4,cb8,cb16,cb32,cb2s,cb4s,cb8s,cb16s,cb32s
+double xb2,xb4,xb8,xb16,xb32,xb2s,xb4s,xb8s,xb16s,xb32s
 int bcnt
+int mode_blur
 
 //初期化完了！！
 mmplay(1)
@@ -72,6 +73,7 @@ while(true){
 	cb2  = (fbt - (ibt /  2 *  2)) /  2
 	cb4  = (fbt - (ibt /  4 *  4)) /  4
 	cb8  = (fbt - (ibt /  8 *  8)) /  8
+	cb16 = (fbt - (ibt / 16 * 16)) / 16
 	cb32 = (fbt - (ibt / 32 * 32)) / 32
 
 	cb2s  = cb2  * cb2
@@ -84,20 +86,21 @@ while(true){
 	xb2  = 1.0 - cb2
 	xb4  = 1.0 - cb4
 	xb8  = 1.0 - cb8
+	xb16 = 1.0 - cb16
 	xb32 = 1.0 - cb32
 
 	xb2s  = xb2  * xb2
 	xb4s  = xb4  * xb4
 	xb8s  = xb8  * xb8
+	xb16s = xb16 * xb16
 	xb32s = xb32 * xb32
 	
-	bcnt = ibt%32
+	bcnt = ibt%32//+20
 	
 	
 	redraw(0)
 	randomize(0)
-	fps = getfps()
-	title(fps)
+	title(getfps())
 	pmode = 0
 	
 	c = 32.0 + cos(cb32 * 12.56637) * 16
@@ -106,20 +109,34 @@ while(true){
 	
 	int fase = ibt/32
 	if (fase == 0){
-		//galaxy()
+		galaxy()
 		//WSP2()
-		WSP1()
+		//WSP1()
 	}else if (fase == 1){
 		//TSUBAME
-		WSP2()
-	}else if (fase == 2){
 		WSP1()
+	}else if (fase == 2){
+		WSP2()
 	}else if (fase == 3){
 		WSP2()
+	}else{
+		end()
+	}
+	if (mode_blur){
+		redraw(1)
+		gsel(0)
+		redraw(0)
+		Reset3D()
+		cls(0,0,0)
+		gmode(0)
+		color(255,255,255,mode_blur)
+		pos(0,0)
+		gcopy(SCR_BLUR)
+		mode_blur = 0
 	}
 	
 	redraw(1)
-	await(16)
+	await()
 }
 //TODO:最後が...
 void galaxy(){
@@ -138,26 +155,20 @@ void galaxy(){
 	cls(limit(c, 0, 255), limit(1.2 * c, 0, 255), limit(1.4 * c, 0, 255))
 	gmode(2)
 	// stars
-	int alpha1 = cc*224.0
-	int alpha2 = cc*64.0
+	int alpha1 = limit(224.0*cc,0,255)
+	int alpha2 = limit(64.0*cc,0,255)
+	int cash = cb32s * 2000 + 2800
 	repeat(800){
-		double z = limit( rnd(5000) - cb32s * 2000 - 2800, 0, 59999)
 		double r = rnd(600)
 		double f = _2_5MPI * cnt+r / 200.0 + 0.002 * rnd(32768) / (r + 100) - cb32
-		
 		double a = double( rnd(5000) ) / (r + 100)
-		if rnd(2){
-			z += a
-		}else{
-			z -= a
-		}
 		
 		color(255,255,255,alpha1)
-		particle(1,  cos(f) * r, sin(f) * r, z,  15 * (600 - r) / 600 + 2)
+		particle(1,  cos(f) * r, sin(f) * r, limit( rnd(5000) - cash, 0, 59999)+(rnd(2)?a:-a),  17.0-0.025*r)
 		
 		if rnd(4) == 0 {
 			color(255,255,255,alpha2)
-			particlem(6, 45 * (600 - r) / 600 + 5)
+			particlem(6, 50.0-0.075*r)
 		}
 		
 		if rnd(8) == 0 {
@@ -185,14 +196,16 @@ void galaxy(){
 	// フレア
 	if bcnt >= 28 {
 		Set3DCamera(2)
+		alpha1 = limit(cb4s * 224,0,255)
+		alpha2 = limit(cb4s * 64 ,0,255)
 		repeat(50){
 			r = (1.0 - (0.001 * rnd(rnd(1000) + 1))) * cb4 * 0.7 + 0.1
 			f = cb32 + rnd(32768)
-			color(255,255,255,cb4s * 224)
+			color(255,255,255,alpha1)
 			particle(1, 0, sin(f) * r, cos(f) * r, 0.02)
 
 			if rnd(3) == 0 {
-				color(255,255,255,cb4s * 64)
+				color(255,255,255,alpha2)
 				particlem (6, 0.10)
 			}
 		}
@@ -218,17 +231,18 @@ void WSP1(){
 	rect(0,787.5,1600,113)
 }
 
-//すべてが...
 void WSP2(){
-	//TODO:blur
-	//if bcnt >= 24
-	int y = cb32s*cb32s*cb32s * 3000
+	if bcnt >= 24{
+		mode_blur = limit(exp(log(0.875 * cb8)*(32.0/(fps+1))) * 256, 32, 256)
+		gsel(SCR_BLUR)
+	}
+	int y = pow(cb32s,3)*3000
 	cls(limit(c, 0, 255), limit(c, 0, 255), limit(c * 2, 0, 255))
 	if bcnt < 16 {
-		a = xb16s * xb16s * 64
+		double a = xb16s * xb16s * 64
 		Reset3D()
 		gmode(2)
-		color(limit(c+a, 0, 255), limit(c+a, 0, 255), limit(c*2+a, 0, 255))
+		color(limit(ginfo_r+a, 0, 255), limit(ginfo_g+a, 0, 255), limit(ginfo_b+a, 0, 255))
 		rect(0,0,1600,113)
 		rect(0,787.5,1600,113)
 		gmode(0)
@@ -241,7 +255,7 @@ void WSP2(){
 	gmd = 160
 	if bcnt < 16 {
 		gmd += xb16s * 64
-	}//
+	}
 	
 	pmode = 1
 	
@@ -275,7 +289,7 @@ void wsp_core(int nx){
 		int y = tx[cnt] - z/5
 		particle(6, x, y, z, 60)
 		
-		if bcnt < 16 && pmode {
+		if (bcnt < 16) && pmode {
 			color(0,0,0,xb16s * 224)
 			if cnt%6 {
 				particlem(6, 140)

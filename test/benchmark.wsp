@@ -28,12 +28,32 @@ void calc_test(){
 	}
 }
 
+void scope_test(){
+	repeat(1000){
+		double r = M_PI * 2000 + 2800-cnt
+		double b = cos(0.0001*cnt)*r
+	}
+}
+
+void scope_test2(){
+	double cash = M_PI * 2000 + 2800
+	repeat(1000){
+		double r = cash-cnt
+		double b = cos(0.0001*cnt)*r
+	}
+}
+
+int sum_time = 0
+repeat(50){
 start_time = gettime()
 //print_test(0)
-calc_test()
+scope_test2()
 //var_test()
 end_time = gettime()
+sum_time += end_time-start_time
+}
+int avr_time = sum_time/50
 pos(100,100)
 color(0,0,0)
-print("実行時間:"+string(end_time-start_time)+"ms")
-console("実行時間:"+string(end_time-start_time)+"ms")
+print("実行時間:"+string(avr_time)+"ms")
+console("実行時間:"+string(avr_time)+"ms")
