@@ -1,0 +1,11 @@
+mmload("test/audio/vijore.mp3",1)
+mmplay(1)
+while(true){
+	redraw(0)
+	cls(255,255,255)
+	pos(0,0)
+	print(mmseek(1))
+	redraw(1)
+	await()
+}
+

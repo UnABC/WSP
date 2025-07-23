@@ -632,9 +632,14 @@ StaticVar::StaticVar(const vector<StaticVar>& value) : Var() {
 
 template<typename T>
 StaticVar& StaticVar::operator=(const T& value) {
-	int const_type = type;
-	operator=(value);
-	type = const_type; // 元の型を保持
+	if (type < 10) {
+		int const_type = type;
+		operator=(value);
+		type = const_type; // 元の型を保持
+	} else {
+		for (auto& v : get<vector<Var>>(this->value))
+			v = value;
+	}
 	return *this;
 }
 
@@ -648,7 +653,8 @@ StaticVar& StaticVar::operator=(const Var& value) {
 	case 10:
 	case 11:
 	case 12: {
-		this->value.emplace<vector<Var>>(value.GetValue<vector<Var>>());
+		for (Var& v : get<vector<Var>>(this->value))
+			v = value; // 配列の各要素に値を設定
 		static_array_value.clear(); // 静的配列用の値をクリア
 		static_array_value.reserve(get<vector<Var>>(this->value).size());
 		for (const auto& v : get<vector<Var>>(this->value))

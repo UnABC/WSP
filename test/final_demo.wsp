@@ -2,6 +2,8 @@ int TEX_METAL = 11
 int SCR_BLUR = 12
 int PTC_STAR = 7
 int PTC_XS = 8
+int TEX_TSUBAME_WIN = 13
+int TEX_TSUBAME_BIRD = 14
 
 double _2_5MPI = M_DOUBLE_PI/5.0
 
@@ -22,6 +24,8 @@ mkparticle(6,100,127,255)
 
 LoadImage("test/image/star.png",1)
 ldparticle(PTC_STAR,1)
+LoadImage("test/image/TSUBAME-window.png",TEX_TSUBAME_WIN)
+LoadImage("test/image/TSUBAME-bird.png",TEX_TSUBAME_BIRD)
 
 //X
 int arr[6] = [4,  4,  30, 30, 150, 30]
@@ -41,10 +45,8 @@ LoadImage("test/image/TEX_METAL.png",TEX_METAL)
 screen(SCR_BLUR,"",1600,900,16)
 gsel(0)
 
-double bpm = 144.0
-int st_pos = 666
-int time_offset = gettime()-st_pos
-int ms
+//double bpm = 144.0
+int time_offset = gettime()
 double c
 int pmode
 int gmd
@@ -59,8 +61,7 @@ mmplay(1)
 while(true){
 	if (getkey("ESC"))end()
 	
-	ms = gettime()-time_offset
-	double fbt = bpm*ms/60000-4
+	double fbt = 0.0024 * (gettime()-time_offset)-4.0
 	int ibt = int(fbt)
 	if (fbt < 0){
 		await()
@@ -72,12 +73,14 @@ while(true){
 	cb2  = (fbt - (ibt /  2 *  2)) /  2
 	cb4  = (fbt - (ibt /  4 *  4)) /  4
 	cb8  = (fbt - (ibt /  8 *  8)) /  8
+	
 	cb16 = (fbt - (ibt / 16 * 16)) / 16
 	cb32 = (fbt - (ibt / 32 * 32)) / 32
 
 	cb2s  = cb2  * cb2
 	cb4s  = cb4  * cb4
 	cb8s  = cb8  * cb8
+	cb16s = cb16 * cb16
 	cb32s = cb32 * cb32
 
 	// xbN : N beat count-down (1.0 -> 0.0)
@@ -108,18 +111,18 @@ while(true){
 	
 	int fase = ibt/32
 	if (fase == 0){
+		//TSUBAME()
 		galaxy()
 		//WSP2()
 		//WSP1()
 	}else if (fase == 1){
-		//TSUBAME
-		WSP1()
+		TSUBAME()
 	}else if (fase == 2){
-		WSP2()
+		WSP1()
 	}else if (fase == 3){
 		WSP2()
 	}else{
-		end()
+		
 	}
 	if (mode_blur){
 		redraw(1)
@@ -137,7 +140,7 @@ while(true){
 	redraw(1)
 	await()
 }
-//TODO:最後が...
+
 void galaxy(){
 	double cc
 	if bcnt >= 28 {
@@ -157,23 +160,25 @@ void galaxy(){
 	int alpha1 = limit(224.0*cc,0,255)
 	int alpha2 = limit(64.0*cc,0,255)
 	int cash = cb32s * 2000 + 2800
+	color(0,0,0,alpha1)
 	repeat(800){
 		double r = rnd(600)
 		double f = _2_5MPI * cnt+r / 200.0 + 0.002 * rnd(32768) / (r + 100) - cb32
 		double a = double( rnd(5000) ) / (r + 100)
 		
-		color(255,255,255,alpha1)
 		particle(1,  cos(f) * r, sin(f) * r, limit( rnd(5000) - cash, 0, 59999)+(rnd(2)?a:-a),  17.0-0.025*r)
 		
 		if rnd(4) == 0 {
-			color(255,255,255,alpha2)
+			color(0,0,0,alpha2)
 			particlem(6, 50.0-0.075*r)
+			color(0,0,0,alpha1)
 		}
 		
 		if rnd(8) == 0 {
 			a = sin(cb32*M_FOUR_PI + cnt*cnt)
-			color(255,255,255, a * limit( alpha2, 0, 64 ))
+			color(0,0,0, a * limit( alpha2, 0, 64 ))
 			particlem(PTC_XS, a * 45)
+			color(0,0,0,alpha1)
 		}//*/
 	}//*/
 	//X
@@ -182,13 +187,14 @@ void galaxy(){
 	particlem  (3,  300)
 	particlemr (PTC_STAR, cb2s*(bcnt>=30)*200 + 200, -cb32)
 	particlemr (PTC_STAR,                       200,  cb32 * 3)
-	//
+	
+	color(255,255,255,alpha1)
 	repeat(200){
-		color(255,255,255,alpha1)
 		particle(1,  rnd(4000)-2000, -rnd(4000), rnd(4000)-2000,  7)
 		if rnd(3) == 0 {
 			color(255,255,255,alpha2)
 			particlem(6, 30)
+			color(255,255,255,alpha1)
 		}
 	}
 	
@@ -215,7 +221,124 @@ void galaxy(){
 	rect(0,0,1600,113)
 	rect(0,787.5,1600,113)
 }
+void TSUBAME(){
+	if bcnt < 8  c += xb8 * 32
+	cls(limit(c, 0, 255), limit(c, 0, 255), limit(c + 32, 0, 255))
 
+	double y,cz,tz
+	int TSUBAME_ALPHA
+	int TSUBAME_GMODE
+	double TSUBAME_X[4]
+	double TSUBAME_Y[4]
+	double TSUBAME_Z[4]
+	if bcnt < 16 {
+		y  = 6000.0 - cb16s * 3000
+		cz = xb16s * 16000
+		tz = cz
+		//TSUBAME,Z軸回転
+		double theta = cb16*M_DOUBLE_PI
+		
+		TSUBAME_X[1] = TSUBAME_X[2] = 1000.0*cos(theta)
+		TSUBAME_X[0] = TSUBAME_X[3] = -1000.0*cos(theta)
+		
+		TSUBAME_Y[0] = TSUBAME_Y[3] = 1000.0*sin(theta)
+		TSUBAME_Y[1] = TSUBAME_Y[2] = -1000.0*sin(theta)
+		
+		if (bcnt < 8){
+			TSUBAME_Z[1] = TSUBAME_Z[0] = tz-1000.0
+			TSUBAME_Z[2] = TSUBAME_Z[3] = tz+1000.0
+		}else{
+			double theta2 = theta/2
+ 			TSUBAME_Y += 2000.0*cos(theta2)
+			
+			TSUBAME_Z[1] = TSUBAME_Z[0] = tz-1000.0*sin(theta2)
+			TSUBAME_Z[2] = TSUBAME_Z[3] = tz+1000.0*sin(theta2)
+		}
+		TSUBAME_ALPHA = (bcnt < 8)?cb8s*255:255
+		TSUBAME_GMODE = 1
+	} else {
+		y  = xb16s * 3000
+		tz = cb16s * 16000
+		cz = tz*cb16
+		//TSUBAME,X軸回転！
+		TSUBAME_X[1] = TSUBAME_X[2] = 1000.0
+		TSUBAME_X[0] = TSUBAME_X[3] = -1000.0
+		
+		double theta2 = min(cb16s*M_PI_2*1.6,M_PI_2)
+		TSUBAME_Y[0] = TSUBAME_Y[1] = 1000.0*sin(theta2) - 2000.0*cos(theta2)
+		TSUBAME_Y[3] = TSUBAME_Y[2] = -1000.0 -1000.0*cos(theta2)
+		
+		TSUBAME_Z = min(tz*1.6,16000)
+		TSUBAME_Z[2] -= 1000.0*sin(2.0*theta2)
+		TSUBAME_Z[3] -= 1000.0*sin(2.0*theta2)
+		
+		TSUBAME_ALPHA = (xb16s+1.0)*122.5
+		TSUBAME_GMODE = 3
+	}
+	//Z:高さ、Y:奥行
+	Set3DCamera( 0, y, cz,  0, 0, tz)
+
+	c += 160
+	
+	gmode(2)
+	color(0, 0, 0,192)
+	
+	// 極
+	repeat(2){
+		zz = cnt * 16100
+		color(0, 0, 0,48)
+		particle(1,  0, 0, zz,  1500)
+		color(0, 0, 0,128)
+		particlemr(PTC_STAR, 700, -cb32)
+		particlemr(PTC_STAR, 700, cb32 * 3)
+	}
+	//TSUBAME(窓)
+	gmode(TSUBAME_GMODE)
+	color(255,255,255,TSUBAME_ALPHA)
+	texture(TEX_TSUBAME_WIN)
+	texture3D(1000,-1000,16000,-1000,-1000,16000,-1000,1000,16000,1000,1000,16000)
+	gmode(TSUBAME_GMODE)
+	texture(TEX_TSUBAME_BIRD)
+	//TSUBAME
+	texture3D(TSUBAME_X[0],TSUBAME_Y[0],TSUBAME_Z[0],TSUBAME_X[1],TSUBAME_Y[1],TSUBAME_Z[1],TSUBAME_X[2],TSUBAME_Y[2],TSUBAME_Z[2],TSUBAME_X[3],TSUBAME_Y[3],TSUBAME_Z[3])
+	texture(-1)
+	gmode(2)
+	color(0, 0, 0,192)
+	// カラフルな浮遊物
+	repeat(500){
+		particle(1+cnt%6,  rnd(4000)-2000, rnd(4000)-2000, rnd(20000)-2000,  30)
+
+		if rnd(3) == 0 {
+			color(0, 0, 0,32)
+			particlem(1+cnt%6, 240)
+			color(0, 0, 0,192)
+		}
+
+		if rnd(16) == 0 {
+			a = sin(cb32*M_FOUR_PI + cnt*cnt)
+			color(0, 0, 0,a * 72)
+			particlem(PTC_XS, a * 480)
+			color(0, 0, 0,192)
+		}
+	}//*/
+	//その他浮遊物
+	color(0, 0, 0,192)
+	repeat(100){
+		particle(1,  rnd(10000)-5000, rnd(10000)-5000, rnd(20000)-2000,  30)
+
+		if rnd(3) == 0 {
+			color(0, 0, 0,32)
+			particlem(6, 240)
+			color(0, 0, 0,192)
+		}
+	}
+	
+	Reset3D()
+	gmode(0)
+	color(0,0,0)
+	rect(0,0,1600,113)
+	rect(0,787.5,1600,113)
+}
 //完成！
 void WSP1(){
 	Set3DCamera(xb32 * 5000 - 4500, xb32s*xb32s*xb32s * -3000, 0,  0, xb32s * 2000, 0)
@@ -264,8 +387,8 @@ void WSP2(){
 	if bcnt < 16 {
 		Set3DCamera(0, -100, 0)
 		repeat(150){
-			f = rnd(32768)
-			r = sqrt(cb32) * rnd(200) + 30
+			double f = rnd(32768)
+			double r = sqrt(cb32) * rnd(200) + 30
 			color(0,0,0,xb16s * 48)
 			particle(2, cos(f) * r, 0, sin(f) * r / 3, 1)
 			color(0,0,0,xb16s * 24)
@@ -300,14 +423,13 @@ void wsp_core(int nx){
 		texture(TEX_METAL,0, 400 + z/3, 64, 32)
 		texture3D(x,y - 150,z -  50,x,y + 150,z -  50,x,y + 150,z+50,x,y-150,z+50)
 	}
-	
+	color(0,0,0,gmd)
 	repeat (600){
-		color(0,0,0,gmd)
 		particle( 1,  rnd(10000)-5000, rnd(10000)-5000, rnd(10000)-5000,  18)
-
 		if rnd(3) == 0 {
 			color(0,0,0,gmd/6)
 			particlem(6,  72)
+			color(0,0,0,gmd)
 		}
 	}
 }
