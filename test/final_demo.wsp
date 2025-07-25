@@ -12,7 +12,7 @@ ScreenPos(0,0,30)
 HideMouse()
 cls(0,0,0)
 
-mmload("test/audio/vijore.mp3",1)
+mmload("test/audio/demo.mp3",1)
 
 //色々初期化
 mkparticle(1,255,255,255)
@@ -45,8 +45,6 @@ LoadImage("test/image/TEX_METAL.png",TEX_METAL)
 screen(SCR_BLUR,"",1600,900,16)
 gsel(0)
 
-//double bpm = 144.0
-int time_offset = gettime()
 double c
 int pmode
 int gmd
@@ -57,7 +55,9 @@ int bcnt
 int mode_blur
 
 //初期化完了！！
+int time_offset = gettime()
 mmplay(1)
+mmpos(1,39.9)
 while(true){
 	if (getkey("ESC"))end()
 	
@@ -111,27 +111,29 @@ while(true){
 	
 	int fase = ibt/32
 	if (fase == 0){
-		//TSUBAME()
-		galaxy()
-		//WSP2()
-		//WSP1()
+		//galaxy()
+
+		WSP2()
 	}else if (fase == 1){
-		TSUBAME()
+		//TSUBAME()
+		
+		//dialog("ERROR!","error",2)
 	}else if (fase == 2){
 		WSP1()
 	}else if (fase == 3){
 		WSP2()
-	}else{
+	}else if (fase == 5){
 		
+	}else{
+	
 	}
 	if (mode_blur){
-		redraw(1)
 		gsel(0)
 		redraw(0)
 		Reset3D()
 		cls(0,0,0)
 		gmode(0)
-		color(255,255,255,mode_blur)
+		color(0,0,0,mode_blur)
 		pos(0,0)
 		gcopy(SCR_BLUR)
 		mode_blur = 0
@@ -227,6 +229,9 @@ void TSUBAME(){
 
 	double y,cz,tz
 	int TSUBAME_ALPHA
+	int TSUBAME_R[4]
+	int TSUBAME_G[4]
+	int TSUBAME_B[4]
 	int TSUBAME_GMODE
 	double TSUBAME_X[4]
 	double TSUBAME_Y[4]
@@ -256,6 +261,7 @@ void TSUBAME(){
 		}
 		TSUBAME_ALPHA = (bcnt < 8)?cb8s*255:255
 		TSUBAME_GMODE = 1
+		TSUBAME_R = TSUBAME_G = TSUBAME_B = 0
 	} else {
 		y  = xb16s * 3000
 		tz = cb16s * 16000
@@ -274,6 +280,22 @@ void TSUBAME(){
 		
 		TSUBAME_ALPHA = (xb16s+1.0)*122.5
 		TSUBAME_GMODE = 3
+		//色の指定
+		TSUBAME_R[0] = 255.0 * (sin(fbt) * 0.5 + 0.5)
+		TSUBAME_G[0] = 255.0 * (sin(fbt + M_DOUBLE_PI / 3) * 0.5 + 0.5)
+		TSUBAME_B[0] = 255.0 * (sin(fbt + M_FOUR_PI   / 3) * 0.5 + 0.5)
+		
+		TSUBAME_R[1] = 255.0 * (cos(fbt) * 0.5 + 0.5)
+		TSUBAME_G[1] = 255.0 * (cos(fbt + M_DOUBLE_PI / 3) * 0.5 + 0.5)
+		TSUBAME_B[1] = 255.0 * (cos(fbt + M_FOUR_PI   / 3) * 0.5 + 0.5)
+		
+		TSUBAME_R[2] = 255.0 * (-sin(fbt) * 0.5 + 0.5)
+		TSUBAME_G[2] = 255.0 * (-sin(fbt + M_DOUBLE_PI / 3) * 0.5 + 0.5)
+		TSUBAME_B[2] = 255.0 * (-sin(fbt + M_FOUR_PI   / 3) * 0.5 + 0.5)
+		
+		TSUBAME_R[3] = 255.0 * (-cos(fbt) * 0.5 + 0.5)
+		TSUBAME_G[3] = 255.0 * (-cos(fbt + M_DOUBLE_PI / 3) * 0.5 + 0.5)
+		TSUBAME_B[3] = 255.0 * (-cos(fbt + M_FOUR_PI   / 3) * 0.5 + 0.5)
 	}
 	//Z:高さ、Y:奥行
 	Set3DCamera( 0, y, cz,  0, 0, tz)
@@ -294,7 +316,8 @@ void TSUBAME(){
 	}
 	//TSUBAME(窓)
 	gmode(TSUBAME_GMODE)
-	color(255,255,255,TSUBAME_ALPHA)
+	//color(255,255,255,TSUBAME_ALPHA)
+	repeat(4){color(TSUBAME_R[cnt],TSUBAME_G[cnt],TSUBAME_B[cnt],TSUBAME_ALPHA,cnt)}
 	texture(TEX_TSUBAME_WIN)
 	texture3D(1000,-1000,16000,-1000,-1000,16000,-1000,1000,16000,1000,1000,16000)
 	gmode(TSUBAME_GMODE)

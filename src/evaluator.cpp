@@ -1287,6 +1287,11 @@ void Evaluator::init_system_functions() {
 			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
 		}
 	};
+	FUNCTION(mmpos) {
+		if (args.size() != 2)
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		audio.SetPos(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<long double>());
+	};
 	FUNCTION(dmmplay) {
 		if (args.size() == 1) {
 			audio.PlaySound(CalcExpr(args.at(0)).GetValue<long long>());

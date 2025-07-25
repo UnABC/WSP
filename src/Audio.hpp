@@ -20,14 +20,15 @@ public:
 	void StopSound(int channel = -1) { Mix_HaltChannel(channel); };
 
 	void LoadMusic(const std::string& filename, int channel);
-	void PlayMusic(unsigned int channel, int loops = -1);
+	void PlayMusic(unsigned int channel, int loops = 0);
+	void SetPos(unsigned int channel, double position);
 	void PauseMusic(unsigned int channel);
 	void ResumeMusic(unsigned int channel);
-	void StopMusic(){ Mix_HaltMusic(); };
+	void StopMusic() { Mix_HaltMusic(); };
 	bool IsMusicPlaying(unsigned int channel) const;
 	double GetMusicPosition(unsigned int channel) const;
 
-	void SetVolume(int channel,int volume);	//音量設定
+	void SetVolume(int channel, int volume);	//音量設定
 	int GetVolume(int channel) const;	//音量取得
 };
 

@@ -2,7 +2,7 @@
 using namespace std;
 
 Audio::Audio() {
-	if (!Mix_OpenAudio(0,NULL))
+	if (!Mix_OpenAudio(0, NULL))
 		throw AudioException("Failed to open audio: " + string(SDL_GetError()));
 	if (SDL_Init(SDL_INIT_AUDIO) < 0)
 		throw AudioException("Failed to initialize SDL: " + string(SDL_GetError()));
@@ -38,6 +38,13 @@ void Audio::PlaySound(unsigned int channel, int loops) {
 		throw AudioException("No sound loaded to play.");
 	if (Mix_PlayChannel(channel, sound[channel], loops) == -1)
 		throw AudioException("Failed to play sound: " + string(SDL_GetError()));
+}
+
+void Audio::SetPos(unsigned int channel, double position) {
+	if (!music.count(channel))
+		throw AudioException("No music loaded to set position.");
+	if (Mix_SetMusicPosition(position) == -1)
+		throw AudioException("Failed to set music position: " + string(SDL_GetError()));
 }
 
 void Audio::LoadMusic(const string& filename, int channel) {

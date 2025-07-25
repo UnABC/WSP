@@ -26,6 +26,7 @@ private:
 	int width, height;
 	bool is_fullscreen;
 	bool is3D = false; // 3Dモードかどうか
+	int window_mode = 0;
 
 	const char* vertexShaderSource = R"glsl(
 		#version 450 core
@@ -91,6 +92,7 @@ public:
 	SDL_GLContext GetGLContext() const { return glContext; }
 	int Width() const { return width; }
 	int Height() const { return height; }
+	int GetWindowMode() const { return window_mode; }
 	bool IsFullscreen() const { return is_fullscreen; }
 	bool Is3D() const { return is3D; }
 	void Destroy() const;

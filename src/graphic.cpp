@@ -172,7 +172,7 @@ void Graphic::Clear(int r, int g, int b) {
 }
 
 void Graphic::Draw(bool force) {
-	if (!redraw) return; //描画フラグがfalseなら何もしない
+	if (!force && !redraw) return; //描画フラグがfalseなら何もしない
 	if (!force && (lastTime + 1000 / fps > SDL_GetTicks())) return; //フレームレート制限
 	lastTime = SDL_GetTicks();
 
@@ -242,6 +242,10 @@ void Graphic::Draw(bool force) {
 	// 描画モードをリセット
 	Set_Gmode(0);
 	glBindVertexArray(0);
+	if (windows[WinID].GetWindowMode() & 16){
+		glFlush();
+		return;
+	}
 
 	windows[WinID].DrawToDefault(); // スクリーン全体を描画
 

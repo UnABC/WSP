@@ -10,6 +10,7 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 	this->width = width;
 	this->height = height;
 	this->is_fullscreen = mode & 1;
+	window_mode = mode;
 
 	Uint32 flags = SDL_WINDOW_OPENGL;
 	if (mode & 1)
