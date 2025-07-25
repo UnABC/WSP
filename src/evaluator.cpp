@@ -294,6 +294,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 				return Var(content);
 			} else if (functionName == "exist") {
 				return Var(filesystem::exists(CalcExpr(args.at(0)).GetValue<string>()) ? 1LL : 0LL);
+			} else if (functionName == "ChooseDialog") {
+				return Var(graphic.ChooseDialog("", CalcExpr(args.at(0)).GetValue<string>()));
 			}
 		} else if (args.size() == 2) {
 			//引数2つ
@@ -319,6 +321,8 @@ Var Evaluator::CalcExpr(AST* ast) {
 				return Var((long long)(pos == string::npos ? -1 : pos));
 			} else if (functionName == "strmid") {
 				return Var(CalcExpr(args.at(0)).GetValue<string>().substr(CalcExpr(args.at(1)).GetValue<long long>()));
+			} else if (functionName == "ChooseDialog") {
+				return Var(graphic.ChooseDialog(CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(0)).GetValue<string>()));
 			}
 		} else if (args.size() == 3) {
 			//引数3つ
@@ -335,6 +339,18 @@ Var Evaluator::CalcExpr(AST* ast) {
 				if (value < min_value) return min_value;
 				if (value > max_value) return max_value;
 				return value;
+			} else if (functionName == "ChooseDialog") {
+				return Var(graphic.ChooseDialog(CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>()));
+			}
+		} else if (args.size() == 4) {
+			//引数4つ
+			if (functionName == "ChooseDialog") {
+				return Var(graphic.ChooseDialog(CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<string>()));
+			}
+		} else if (args.size() == 5) {
+			//引数5つ
+			if (functionName == "ChooseDialog") {
+				return Var(graphic.ChooseDialog(CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(0)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<string>(), CalcExpr(args.at(4)).GetValue<string>()));
 			}
 		}
 		//ユーザー定義関数
@@ -1048,12 +1064,13 @@ void Evaluator::init_system_functions() {
 		}
 	};
 	FUNCTION(dialog) {
-		if (args.size() > 3)
+		if (args.size() > 4)
 			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
-		Var message = (args.size() < 1) ? "" : CalcExpr(args.at(0));
-		Var title = (args.size() < 2) ? "" : CalcExpr(args.at(1));
-		Var type = (args.size() < 3) ? 0LL : CalcExpr(args.at(2));
-		graphic.CallDialog(title.GetValue<string>(), message.GetValue<string>(), type.GetValue<long long>());
+		string message = (args.size() < 1) ? "" : CalcExpr(args.at(0)).GetValue<string>();
+		string title = (args.size() < 2) ? "" : CalcExpr(args.at(1)).GetValue<string>();
+		long long type = (args.size() < 3) ? 0LL : CalcExpr(args.at(2)).GetValue<long long>();
+		string button = (args.size() < 4) ? "OK" : CalcExpr(args.at(3)).GetValue<string>();
+		graphic.CallDialog(title, message, type, button);
 	};
 	FUNCTION(wait) {
 		if (args.size() > 1)
@@ -1341,6 +1358,16 @@ void Evaluator::init_system_functions() {
 			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<long long>());
 		} else if (args.size() == 5) {
 			graphic.CreateScreen(CalcExpr(args.at(0)).GetValue<long long>(), CalcExpr(args.at(1)).GetValue<string>(), CalcExpr(args.at(2)).GetValue<long long>(), CalcExpr(args.at(3)).GetValue<long long>(), CalcExpr(args.at(4)).GetValue<long long>());
+		} else if (args.size() == 7) {
+			graphic.CreateScreen(
+				CalcExpr(args.at(0)).GetValue<long long>(),
+				CalcExpr(args.at(1)).GetValue<string>(),
+				CalcExpr(args.at(2)).GetValue<long long>(),
+				CalcExpr(args.at(3)).GetValue<long long>(),
+				CalcExpr(args.at(4)).GetValue<long long>(),
+				CalcExpr(args.at(5)).GetValue<long long>(),
+				CalcExpr(args.at(6)).GetValue<long long>()
+			);
 		} else {
 			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
 		}
@@ -1363,12 +1390,12 @@ void Evaluator::init_system_functions() {
 			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
 		}
 	};
-	FUNCTION(ShowScreen) {
+	FUNCTION(HideScreen) {
 		if (args.size() != 1)
 			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
 		graphic.HideWindow(CalcExpr(args.at(0)).GetValue<long long>());
 	};
-	FUNCTION(HideScreen) {
+	FUNCTION(ShowScreen) {
 		if (args.size() != 1)
 			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
 		graphic.ShowWindow(CalcExpr(args.at(0)).GetValue<long long>());

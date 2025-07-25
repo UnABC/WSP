@@ -77,7 +77,7 @@ public:
 	Window() : colors(4, { 0, 0, 0, 255 }) {} // 初期化時に白色を設定
 	~Window();
 
-	void Create(bool isfirst, const std::string& title, int width, int height, int mode = 0);
+	void Create(bool isfirst, const std::string& title, int width, int height, int mode = 0,int pos_x = SDL_WINDOWPOS_CENTERED, int pos_y = SDL_WINDOWPOS_CENTERED);
 	void SetFullscreen(bool fullscreen);
 	void Resize(int new_width, int new_height);
 	void SetTitle(const std::string& title) const;
@@ -85,8 +85,8 @@ public:
 	void SetCameraPos(float x = 0.0f, float y = 0.0f, float z = 0.0f, float target_x = 0.0f, float target_y = 0.0f, float target_z = 0.0f);
 	void MakeCurrent();
 	void MakeTop() { SDL_RaiseWindow(window); }
-	void Hide() { SDL_HideWindow(window); }
-	void Show() { SDL_ShowWindow(window); }
+	void Hide() { SDL_HideWindow(window);window_mode |= 16; }
+	void Show() { SDL_ShowWindow(window);window_mode &= ~16; }
 	bool GLSwap() { return SDL_GL_SwapWindow(window); }
 	SDL_Window* GetSDLWindow() const { return window; }
 	SDL_GLContext GetGLContext() const { return glContext; }

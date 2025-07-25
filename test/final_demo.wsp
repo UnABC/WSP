@@ -42,6 +42,16 @@ repeat(tc){
 //メタルテクスチャ
 LoadImage("test/image/TEX_METAL.png",TEX_METAL)
 
+//後半用画像
+LoadImage("test/image/segmentation-fault.png",20)
+LoadImage("test/image/force-end.png",21)
+LoadImage("test/image/warn.png",22)
+LoadImage("test/image/info.png",23)
+LoadImage("test/image/windows11_warn.png",24)
+LoadImage("test/image/dialog25.png",25)
+LoadImage("test/image/dialog26.png",26)
+LoadImage("test/image/dialog27.png",27)
+
 screen(SCR_BLUR,"",1600,900,16)
 gsel(0)
 
@@ -54,10 +64,12 @@ double xb2,xb4,xb8,xb16,xb32,xb2s,xb4s,xb8s,xb16s,xb32s
 int bcnt
 int mode_blur
 
+//(TODO:DEBUG用↓)
+int debug_time = 13.3*4.5*1000//13.3*4*1000
 //初期化完了！！
-int time_offset = gettime()
+int time_offset = gettime()//+debug_time
 mmplay(1)
-mmpos(1,39.9)
+mmpos(1,0.001*debug_time)
 while(true){
 	if (getkey("ESC"))end()
 	
@@ -112,20 +124,16 @@ while(true){
 	int fase = ibt/32
 	if (fase == 0){
 		//galaxy()
-
-		WSP2()
+		//WSP2()
+		break
 	}else if (fase == 1){
-		//TSUBAME()
-		
-		//dialog("ERROR!","error",2)
+		TSUBAME()
 	}else if (fase == 2){
 		WSP1()
 	}else if (fase == 3){
 		WSP2()
-	}else if (fase == 5){
-		
 	}else{
-	
+		break
 	}
 	if (mode_blur){
 		gsel(0)
@@ -141,6 +149,134 @@ while(true){
 	
 	redraw(1)
 	await()
+}
+screen(20,"Runtime Error",270,114,0,650,350)
+redraw(0)
+cls(0,0,0)
+DrawImage(20)
+ShowMouse()
+gsel(0)
+int old_time
+int error_id = 21
+int error_pos = 0
+int FORCE_END_COUNT = 0
+int warn_count = 0
+int window_flag = 0
+
+while (true){
+	if (getkey("ESC"))end()
+	int now = gettime()-time_offset+debug_time
+	
+	if ((66200 < now) && (now < 68200) && ((now-old_time) > 80)){
+		create_Dialog(70+error_pos,100+error_pos)
+		error_pos += 30
+		old_time = now
+	} else if ((68200 < now) && (now < 68800) && ((now-old_time) > 100)){
+		error_pos = 0
+		if (FORCE_END_COUNT == 0){
+			create_Dialog(500,150,21,168,"WSP")
+		}else if (FORCE_END_COUNT == 1){
+			create_Dialog(1300,150,21,168,"WSP")
+		}else if (FORCE_END_COUNT == 2){
+			create_Dialog(900,150,21,168,"WSP")
+		}else if (FORCE_END_COUNT == 5){
+			repeat(error_id-20){HideScreen(20+cnt)}
+			console("HIEEDN!")
+			error_id = 20
+			error_pos = 0
+		}
+		FORCE_END_COUNT++
+		old_time = now
+	}else if ((68800 < now) && (now < 70300) && ((now-old_time) > 80)){
+		create_Dialog(70+error_pos,100+error_pos)
+		error_pos += 30
+		if (error_id == 25){
+			create_Dialog(50,80,21,168,"WSP")
+		}else if (error_id == 29){
+			create_Dialog(1382,80,21,168,"WSP")
+		}else if (error_id == 33){
+			create_Dialog(50,756,21,168,"WSP")
+		}else if (error_id == 37){
+			create_Dialog(1382,756,21,168,"WSP")
+		}
+		old_time = now
+	}else if ((70300 < now) && (now < 71000) && ((now-old_time) > 80)){
+		if (warn_count == 0){
+			create_Dialog(700,80,22,201,"警告")
+		}else if (warn_count == 1){
+			create_Dialog(700,756,22,201,"警告")
+		}else if (warn_count == 2){
+			create_Dialog(1100,390,23,299,"Windows11より")
+		}else if (warn_count == 3){
+			create_Dialog(300,390,23,299,"Windows11より")
+		}else if (warn_count == 7){
+			repeat(error_id-21){HideScreen(21+cnt)}
+			console("HIEEDN!")
+			error_id = 20
+			error_pos = 0
+		}
+		old_time = now
+		warn_count++
+	}else if ((71000 < now) && (now < 73000) && ((now-old_time) > 80)){
+		create_Dialog(1300-error_pos,100+error_pos,24,252,"命令")
+		error_pos += 30
+		old_time = now
+	}else if ((73400 < now) && (now < 74500) && ((now-old_time) > 80)){
+		if (!window_flag){
+			repeat(error_id-21){HideScreen(21+cnt)}
+			console("HIEEDN!")
+			error_id = 20
+			error_pos = 0
+			window_flag = 1
+			warn_count = 0
+		}else{
+			create_Dialog(1300-error_pos,100+error_pos,24,252,"命令")
+			error_pos += 30
+		}
+		old_time = now
+	}else if ((74500 < now) && (now < 75000) && ((now-old_time) > 150)){
+		if (warn_count == 0){
+			create_Dialog(100,130,25,271,"Windows10より")
+		}else if (warn_count == 1){
+			create_Dialog(1400,750,26,180,"このdemoについて",122)
+			error_pos = 0
+		}
+		warn_count++
+		old_time = now
+	}else if ((75000 < now) && (now < 75500) && ((now-old_time) > 100)){
+		create_Dialog(150+error_pos,600,27,786,"このdemoについて",122)
+		error_pos += 40
+		old_time = now
+	}else if ((76000 < now) && (now < 80000) && ((now-old_time) > 500)){
+		if (window_flag){
+			repeat(error_id-21){HideScreen(21+cnt)}
+			console("HIEEDN!")
+			error_id = 20
+			error_pos = 0
+			window_flag = 0
+			warn_count = 0
+		}else{
+			if (warn_count == 1){
+				
+			}
+		}
+		old_time = now
+		warn_count++
+	}
+	
+	redraw(0)
+	redraw(1)
+	await()
+}
+
+void create_Dialog(int pos_x,int pos_y,int image_ID = 20,int win_x = 270,string title_msg = "Runtime Error",int win_y = 114){
+	screen(error_id,title_msg,win_x,win_y,0,pos_x,pos_y)
+	redraw(0)
+	cls(0,0,0)
+	DrawImage(image_ID)
+	gsel(0)
+	error_id++
+	console("created:"+error_id)
 }
 
 void galaxy(){

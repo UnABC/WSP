@@ -6,7 +6,7 @@ Window::~Window() {
 	Destroy();
 }
 
-void Window::Create(bool isfirst, const std::string& title, int width, int height, int mode) {
+void Window::Create(bool isfirst, const std::string& title, int width, int height, int mode, int pos_x, int pos_y) {
 	this->width = width;
 	this->height = height;
 	this->is_fullscreen = mode & 1;
@@ -35,6 +35,7 @@ void Window::Create(bool isfirst, const std::string& title, int width, int heigh
 	window = SDL_CreateWindow(title.c_str(), width, height, flags);
 	if (!window)
 		throw WindowException("Failed to create SDL Window: " + string(SDL_GetError()));
+	SDL_SetWindowPosition(window, pos_x, pos_y);
 
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, isfirst ? 0 : 1);
 	glContext = SDL_GL_CreateContext(window);

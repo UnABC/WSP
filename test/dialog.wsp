@@ -1,6 +1,8 @@
-dialog("dialogテスト","Info",0)
-dialog("警告ダイアログ","けーこく",1)
-dialog("エラー！","うそだよ",2)
+dialog("Windows 10 もうすぐサポート切れるってよ","Info",0)
+dialog("使用楽曲\n'Vijore' by onoken\nRED ZONE","けーこく",0,"わかった")
+dialog("強制終了しました","WSP",2)
+print(ChooseDialog("あ"*70+"\n"+"あ"*70+"\n"+"あ"*30,"選べ",2,"あ"*20,"あ"*20)?"Yes":"No")
+wait(1000)
 //0で除算エラー！
 a = 10/0
 

@@ -41,7 +41,7 @@ private:
 
 	void FailedToInitialize(const std::string& message);
 	void Set_Gmode(int gmode);
-	inline int limit(int value, int min, int max) const {return std::max(min, std::min(value, max));}
+	inline int limit(int value, int min, int max) const { return std::max(min, std::min(value, max)); }
 	SDL_Color HSV2RGB(int h, int s, int v) const;
 public:
 	Graphic(int width = 640, int height = 480, bool is_fullscreen = false);
@@ -62,7 +62,8 @@ public:
 	long long GetColorB() const { return windows.at(WinID).color.b; }
 	long long GetColorA() const { return windows.at(WinID).color.a; }
 
-	void CallDialog(const std::string& title, const std::string& message, int type = 0) const;
+	void CallDialog(const std::string& title = "", const std::string& message = "", int type = 0, std::string button = "OK") const;
+	bool ChooseDialog(const std::string& title, const std::string& message, int type = 0, std::string yes_button = "Yes", std::string no_button = "No") const;
 	bool Wait(unsigned long long milliseconds = 1);
 	bool AWait(unsigned long long milliseconds = 1);
 	void DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
@@ -83,7 +84,7 @@ public:
 	void Reset3D() { windows[WinID].Reset3D(); }
 	void SetRedraw(bool redraw) { if (this->redraw = redraw)Draw(); }
 
-	void CreateScreen(int id, const std::string& title = "WSP", int width = 640, int height = 480, int mode = 0);
+	void CreateScreen(int id, const std::string& title = "WSP", int width = 640, int height = 480, int mode = 0, int pos_x = SDL_WINDOWPOS_CENTERED, int pos_y = SDL_WINDOWPOS_CENTERED);
 	void MakeCurrentWindow(int id, int mode = 0);
 	void HideWindow(int id);
 	void ShowWindow(int id);

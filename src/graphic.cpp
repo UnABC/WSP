@@ -85,7 +85,7 @@ void Graphic::SetTexture(int id, float tex_x, float tex_y, float tex_width, floa
 
 //ダイアログ表示
 //type: 0=情報, 1=警告, 2=エラー
-void Graphic::CallDialog(const string& title, const string& message, int type) const {
+void Graphic::CallDialog(const string& title, const string& message, int type, string button) const {
 	SDL_MessageBoxFlags flags;
 	switch (type) {
 	case 0: flags = SDL_MESSAGEBOX_INFORMATION; break;
@@ -93,7 +93,52 @@ void Graphic::CallDialog(const string& title, const string& message, int type) c
 	case 2: flags = SDL_MESSAGEBOX_ERROR; break;
 	default: flags = SDL_MESSAGEBOX_INFORMATION; break; //デフォルトは情報
 	}
-	SDL_ShowSimpleMessageBox(flags, title.c_str(), message.c_str(), windows.at(WinID).GetSDLWindow());
+	if (button == "OK") {
+		SDL_ShowSimpleMessageBox(flags, title.c_str(), message.c_str(), windows.at(WinID).GetSDLWindow());
+		return; // OKボタンのみの場合はここで終了
+	}
+	SDL_MessageBoxButtonData buttons[] = {
+		{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, button.c_str() }
+	};
+	SDL_MessageBoxData messageboxdata = {
+		flags,
+		windows.at(WinID).GetSDLWindow(),
+		title.c_str(),
+		message.c_str(),
+		SDL_arraysize(buttons),
+		buttons,
+		NULL
+	};
+	int buttonid;
+	if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0)
+		throw WindowException("Failed to show message box: " + string(SDL_GetError()));
+}
+
+bool Graphic::ChooseDialog(const string& title, const string& message, int type, string yes_button, string no_button) const {
+	SDL_MessageBoxButtonData buttons[] = {
+		{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, no_button.c_str() },
+		{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, yes_button.c_str() }
+	};
+	SDL_MessageBoxFlags flags;
+	switch (type) {
+	case 0: flags = SDL_MESSAGEBOX_INFORMATION; break;
+	case 1: flags = SDL_MESSAGEBOX_WARNING; break;
+	case 2: flags = SDL_MESSAGEBOX_ERROR; break;
+	default: flags = SDL_MESSAGEBOX_INFORMATION; break; //デフォルトは情報
+	}
+	SDL_MessageBoxData messageboxdata = {
+		flags,
+		windows.at(WinID).GetSDLWindow(),
+		title.c_str(),
+		message.c_str(),
+		SDL_arraysize(buttons),
+		buttons,
+		NULL
+	};
+	int buttonid;
+	if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0)
+		throw WindowException("Failed to show message box: " + string(SDL_GetError()));
+	return buttonid; // Yesボタンが押されたかどうか
 }
 
 void Graphic::DrawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
@@ -242,7 +287,7 @@ void Graphic::Draw(bool force) {
 	// 描画モードをリセット
 	Set_Gmode(0);
 	glBindVertexArray(0);
-	if (windows[WinID].GetWindowMode() & 16){
+	if (windows[WinID].GetWindowMode() & 16) {
 		glFlush();
 		return;
 	}
@@ -343,17 +388,19 @@ SDL_Color Graphic::HSV2RGB(int h, int s, int v) const {
 	return { static_cast<Uint8>(r * 255), static_cast<Uint8>(g * 255), static_cast<Uint8>(b * 255), 255 };
 }
 
-void Graphic::CreateScreen(int id, const string& title, int width, int height, int mode) {
+void Graphic::CreateScreen(int id, const string& title, int width, int height, int mode, int pos_x, int pos_y) {
 	if (windows.count(id)) {
 		windows[id].SetTitle(title);
 		windows[id].Resize(width, height);
 		windows[id].SetFullscreen(mode & 1);
 		windows[id].MakeCurrent();
+		windows[id].SetPosition(pos_x, pos_y);
+		windows[id].Show();
 		windows[id].MakeTop();
 		WinID = id; // 既存のウィンドウを更新
 		return; // 既存のウィンドウを更新
 	}
-	windows[id].Create(false, title, width, height, mode);
+	windows[id].Create(false, title, width, height, mode, pos_x, pos_y);
 	WinID = id; // 新しいウィンドウを作成したので、現在のウィンドウIDを更新
 
 	windows[WinID].font.Init(characters, glyph_atlas, &windows[WinID].projection, &windows[WinID].view, &windows[WinID].projectionID);
