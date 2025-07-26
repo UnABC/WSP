@@ -189,9 +189,60 @@ void Graphic::Draw3DBox(float x1, float y1, float z1, float x2, float y2, float 
 	Draw3DLine(x1, y2, z1, x2, y2, z1);
 }
 
-void Graphic::Draw3DRect(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4) {
-	windows[WinID].shape.draw_triangle(x1, y1, x2, y2, x3, y3, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), gmode, 1, z1, z2, z3);
-	windows[WinID].shape.draw_triangle(x1, y1, x3, y3, x4, y4, windows[WinID].colors.at(0), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, 2, z1, z3, z4);
+void Graphic::Draw3DBoxTex(float x, float y, float z, float size, float x_angle, float y_angle, float z_angle) {
+	const float halfSide = size / 2.0f;
+	const std::vector<glm::vec3> vertices = {
+		{-halfSide, -halfSide, -halfSide}, // 0: 左下奥
+		{ halfSide, -halfSide, -halfSide}, // 1: 右下奥
+		{ halfSide,  halfSide, -halfSide}, // 2: 右上奥
+		{-halfSide,  halfSide, -halfSide}, // 3: 左上奥
+		{-halfSide, -halfSide,  halfSide}, // 4: 左下手前
+		{ halfSide, -halfSide,  halfSide}, // 5: 右下手前
+		{ halfSide,  halfSide,  halfSide}, // 6: 右上手前
+		{-halfSide,  halfSide,  halfSide}  // 7: 左上手前
+	};
+	// 2. 変換行列（モデル行列）の作成
+	// 単位行列で初期化
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
+	// a. 平行移動: 指定された中心座標へ移動
+	modelMatrix = glm::translate(modelMatrix, glm::vec3(x, y, z));
+	// b. 回転: Y軸、X軸、Z軸の順に回転させる
+	//    glmの行列計算は右から掛かるため、この記述順で Z -> X -> Y の回転が適用される
+	modelMatrix = glm::rotate(modelMatrix, y_angle, glm::vec3(0.0f, 1.0f, 0.0f));
+	modelMatrix = glm::rotate(modelMatrix, x_angle, glm::vec3(1.0f, 0.0f, 0.0f));
+	modelMatrix = glm::rotate(modelMatrix, z_angle, glm::vec3(0.0f, 0.0f, 1.0f));
+
+	// 3. 全ての頂点を変換
+	std::vector<glm::vec4> transformedVertices;
+	transformedVertices.reserve(vertices.size());
+	for (const auto& vertex : vertices) {
+		// 同次座標 (w=1) にして行列を適用
+		transformedVertices.push_back(modelMatrix * glm::vec4(vertex, 1.0f));
+	}
+
+	// 4. 6つの面を定義し、Draw3DRectで描画
+	//    各面を構成する頂点のインデックスを定義
+	const std::vector<std::vector<int>> faces = {
+		{4, 5, 6, 7}, // 前面 (Front)
+		{1, 0, 3, 2}, // 後面 (Back)
+		{7, 6, 2, 3}, // 上面 (Top)
+		{4, 5, 1, 0}, // 下面 (Bottom)
+		{4, 0, 3, 7}, // 左面 (Left)
+		{5, 1, 2, 6}  // 右面 (Right)
+	};
+
+	for (const auto& face : faces) {
+		const glm::vec4& v1 = transformedVertices[face[0]];
+		const glm::vec4& v2 = transformedVertices[face[1]];
+		const glm::vec4& v3 = transformedVertices[face[2]];
+		const glm::vec4& v4 = transformedVertices[face[3]];
+		Draw3DRect(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z, v4.x, v4.y, v4.z, true);
+	}
+}
+
+void Graphic::Draw3DRect(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, bool is_tex) {
+	windows[WinID].shape.draw_triangle(x1, y1, x2, y2, x3, y3, windows[WinID].colors.at(0), windows[WinID].colors.at(1), windows[WinID].colors.at(2), gmode, 1, z1, z2, z3, is_tex);
+	windows[WinID].shape.draw_triangle(x1, y1, x3, y3, x4, y4, windows[WinID].colors.at(0), windows[WinID].colors.at(2), windows[WinID].colors.at(3), gmode, 2, z1, z3, z4, is_tex);
 	Draw();
 }
 
@@ -269,6 +320,7 @@ void Graphic::Draw(bool force) {
 			glBindFramebuffer(GL_FRAMEBUFFER, windows[WinID].GetFBO());
 			continue; // FBOの描画はここで終了
 		}
+		if (vertex_data.ID == 8) glEnable(GL_DEPTH_TEST); //3D描画用
 		if ((vertex_data.ID != old_id) || (vertex_data.projectionID != old_projectionID)) {
 			if (!vertex_data.shaderProgram || !vertex_data.vao || !vertex_data.vbo)
 				throw WindowException("Invalid vertex data in all_vertices.");
@@ -281,6 +333,7 @@ void Graphic::Draw(bool force) {
 		Set_Gmode(vertex_data.gmode);
 		glBufferData(GL_ARRAY_BUFFER, vertex_data.all_vertices.size() * sizeof(float), vertex_data.all_vertices.data(), GL_DYNAMIC_DRAW);
 		glDrawArrays(vertex_data.graphics_mode, 0, vertex_data.all_vertices.size() / vertex_data.division);
+		if (vertex_data.ID == 8) glDisable(GL_DEPTH_TEST);
 		old_id = vertex_data.ID; // 最後に描画したIDを保存
 		old_projectionID = vertex_data.projectionID; // 最後に描画したprojectionIDを保存
 	}
@@ -346,6 +399,7 @@ void Graphic::End() const {
 }
 
 void Graphic::Set_Gmode(int gmode) {
+	glBlendEquation(GL_FUNC_ADD);
 	if (gmode == 0) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	} else if (gmode == 2) {
@@ -353,7 +407,8 @@ void Graphic::Set_Gmode(int gmode) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	} else if (gmode == 4) {
 		// 減算合成
-		glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+		glBlendEquation(GL_FUNC_SUBTRACT);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	} else if (gmode == 6) {
 		// 乗算合成
 		glBlendFunc(GL_DST_ALPHA, GL_ZERO);

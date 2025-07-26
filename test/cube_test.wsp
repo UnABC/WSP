@@ -1,0 +1,15 @@
+LoadImage("test/image/tech_chan.png",1,315,372)
+
+ct = 0
+while (true){
+	redraw(0)
+	cls(24,24,24)
+	Set3DCamera(cos(0.04 * ct) * 2000, sin(0.04 * ct) * 2000, cos(0.03 * ct) * 1000)
+	
+	texture(1)
+	cubeTex(0,0, 0,  1000)
+	
+	redraw(1)
+	await(30)
+	ct++
+}

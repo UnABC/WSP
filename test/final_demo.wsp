@@ -1,11 +1,20 @@
 int TEX_METAL = 11
 int SCR_BLUR = 12
+int SCR_SUB = 13
 int PTC_STAR = 7
 int PTC_XS = 8
+int PTC_TRAP = 9
+int PTC_GAME = 10
+int PTC_GRAPHIC = 11
+int PTC_SYSAD = 12
+int PTC_SOUND = 13
+int PTC_CTF = 14
+int PTC_KAGGLE = 15
 int TEX_TSUBAME_WIN = 13
 int TEX_TSUBAME_BIRD = 14
 
 double _2_5MPI = M_DOUBLE_PI/5.0
+double M_PI_10 = M_PI/10.0
 
 screen(0,"WSP demo",1600,900)
 ScreenPos(0,0,30)
@@ -24,8 +33,26 @@ mkparticle(6,100,127,255)
 
 LoadImage("test/image/star.png",1)
 ldparticle(PTC_STAR,1)
+LoadImage("test/image/traP_logo_icon400x400.png",2)
+ldparticle(PTC_TRAP,2)
+LoadImage("test/image/trap_game.png",3)
+ldparticle(PTC_GAME,3)
+LoadImage("test/image/Graphics-team.png",4)
+ldparticle(PTC_GRAPHIC,4)
+LoadImage("test/image/SysAd.png",5)
+ldparticle(PTC_SYSAD,5)
+LoadImage("test/image/Sound-trap.png",6)
+ldparticle(PTC_SOUND,6)
+LoadImage("test/image/CTF.png",7)
+ldparticle(PTC_CTF,7)
+LoadImage("test/image/Kaggle.png",8)
+ldparticle(PTC_KAGGLE,8)
 LoadImage("test/image/TSUBAME-window.png",TEX_TSUBAME_WIN)
 LoadImage("test/image/TSUBAME-bird.png",TEX_TSUBAME_BIRD)
+
+//DEBUG用!
+//LoadImage("test/image/debug.png",100)
+
 
 //X
 int arr[6] = [4,  4,  30, 30, 150, 30]
@@ -51,8 +78,30 @@ LoadImage("test/image/windows11_warn.png",24)
 LoadImage("test/image/dialog25.png",25)
 LoadImage("test/image/dialog26.png",26)
 LoadImage("test/image/dialog27.png",27)
+LoadImage("test/image/dialog28.png",28)
+LoadImage("test/image/dialog29.png",29)
+LoadImage("test/image/dialog30.png",30)
+LoadImage("test/image/dialog31.png",31)
+LoadImage("test/image/dialog32.png",32)
+LoadImage("test/image/dialog33.png",33)
+LoadImage("test/image/dialog34.png",34,108,70)
+LoadImage("test/image/honkan.png",35)
+LoadImage("test/image/dialog36.png",36)
+LoadImage("test/image/dialog37.png",37)
+LoadImage("test/image/dialog38.png",38)
+LoadImage("test/image/dialog39.png",39)
+LoadImage("test/image/dialog40.png",40,108,70)
+LoadImage("test/image/dialog41.png",41)
+LoadImage("test/image/dialog42.png",42)
+LoadImage("test/image/dialog43.png",43)
+LoadImage("test/image/dialog44.png",44)
+LoadImage("test/image/dialog45.png",45,86,70)
+
+LoadImage("test/image/masu.png",50)
 
 screen(SCR_BLUR,"",1600,900,16)
+screen(SCR_SUB ,"",1600,900,16)
+repeat(60){screen(20+cnt,"",212,114,16)}
 gsel(0)
 
 double c
@@ -65,7 +114,7 @@ int bcnt
 int mode_blur
 
 //(TODO:DEBUG用↓)
-int debug_time = 13.3*4.5*1000//13.3*4*1000
+int debug_time = 0//85000//13.3*4.5*1000//13.3*4*1000
 //初期化完了！！
 int time_offset = gettime()//+debug_time
 mmplay(1)
@@ -123,9 +172,8 @@ while(true){
 	
 	int fase = ibt/32
 	if (fase == 0){
-		//galaxy()
-		//WSP2()
-		break
+		galaxy()
+		//break
 	}else if (fase == 1){
 		TSUBAME()
 	}else if (fase == 2){
@@ -156,12 +204,14 @@ cls(0,0,0)
 DrawImage(20)
 ShowMouse()
 gsel(0)
-int old_time
+int old_time,old_time2
 int error_id = 21
 int error_pos = 0
 int FORCE_END_COUNT = 0
 int warn_count = 0
 int window_flag = 0
+int flip = 0
+int flip_sw = 0
 
 while (true){
 	if (getkey("ESC"))end()
@@ -181,7 +231,7 @@ while (true){
 			create_Dialog(900,150,21,168,"WSP")
 		}else if (FORCE_END_COUNT == 5){
 			repeat(error_id-20){HideScreen(20+cnt)}
-			console("HIEEDN!")
+			//console("HIEEDN!")
 			error_id = 20
 			error_pos = 0
 		}
@@ -210,31 +260,31 @@ while (true){
 		}else if (warn_count == 3){
 			create_Dialog(300,390,23,299,"Windows11より")
 		}else if (warn_count == 7){
-			repeat(error_id-21){HideScreen(21+cnt)}
-			console("HIEEDN!")
+			repeat(error_id-20){HideScreen(20+cnt)}
+			//console("HIEEDN!")
 			error_id = 20
 			error_pos = 0
 		}
 		old_time = now
 		warn_count++
 	}else if ((71000 < now) && (now < 73000) && ((now-old_time) > 80)){
-		create_Dialog(1300-error_pos,100+error_pos,24,252,"命令")
+		create_Dialog(1300-error_pos,100+error_pos,24,252,"警告")
 		error_pos += 30
 		old_time = now
 	}else if ((73400 < now) && (now < 74500) && ((now-old_time) > 80)){
 		if (!window_flag){
-			repeat(error_id-21){HideScreen(21+cnt)}
-			console("HIEEDN!")
+			repeat(error_id-20){HideScreen(20+cnt)}
+			//console("HIEEDN!")
 			error_id = 20
 			error_pos = 0
 			window_flag = 1
 			warn_count = 0
 		}else{
-			create_Dialog(1300-error_pos,100+error_pos,24,252,"命令")
+			create_Dialog(1300-error_pos,100+error_pos,24,252,"警告")
 			error_pos += 30
 		}
 		old_time = now
-	}else if ((74500 < now) && (now < 75000) && ((now-old_time) > 150)){
+	}else if ((74500 < now) && (now < 74900) && ((now-old_time) > 150)){
 		if (warn_count == 0){
 			create_Dialog(100,130,25,271,"Windows10より")
 		}else if (warn_count == 1){
@@ -243,25 +293,148 @@ while (true){
 		}
 		warn_count++
 		old_time = now
-	}else if ((75000 < now) && (now < 75500) && ((now-old_time) > 100)){
-		create_Dialog(150+error_pos,600,27,786,"このdemoについて",122)
+	}else if ((74900 < now) && (now < 75400) && ((now-old_time) > 100)){
+		create_Dialog(150+error_pos,600,27,786,"あ"*12,122)
 		error_pos += 40
 		old_time = now
-	}else if ((76000 < now) && (now < 80000) && ((now-old_time) > 500)){
+	}else if ((75500 < now) && (now < 77000) && ((now-old_time) > 360)){
 		if (window_flag){
-			repeat(error_id-21){HideScreen(21+cnt)}
-			console("HIEEDN!")
+			repeat(error_id-20){HideScreen(20+cnt)}
+			//console("HIEEDN!")
 			error_id = 20
 			error_pos = 0
 			window_flag = 0
 			warn_count = 0
-		}else{
-			if (warn_count == 1){
-				
-			}
+		}
+		if (warn_count == 0){
+			create_Dialog(100,80,28,138,"木綿")
+		}else if (warn_count == 1){
+			create_Dialog(1372,80,28,138,"木綿")
+		}else if (warn_count == 2){
+			create_Dialog(100,756,28,138,"木綿")
+		}else if (warn_count == 3){
+			create_Dialog(1372,756,28,138,"木綿")
 		}
 		old_time = now
 		warn_count++
+	}else if ((77000 < now) && (now < 77900) && ((now-old_time) > 60)){
+		create_Dialog(1200-error_pos,300,29,212,"【悲報】")
+		error_pos += 40
+		old_time = now
+	}else if ((77900 < now) && (now < 79000) && ((now-old_time) > 60)){
+		if (!window_flag){
+			repeat(error_id-20){HideScreen(20+cnt)}
+			//console("HIEEDN!")
+			error_id = 20
+			error_pos = 0
+			window_flag = 1
+			warn_count = 0
+		}
+		if (warn_count < 12){
+			create_Dialog(100+error_pos+(warn_count/4)*130,130+error_pos,30,131,"重要!")
+		}else if (warn_count < 15){
+			create_Dialog(100+550*(warn_count%3),400,30,131,"重要!")
+		}
+		error_pos += 30
+		if (warn_count%4 == 3)error_pos = 0
+		old_time = now
+		warn_count++
+	}else if ((79000 < now) && (now < 80000) && ((now-old_time) > 60)){
+		if (window_flag){
+			repeat(error_id-20){HideScreen(20+cnt)}
+			//console("HIEEDN!")
+			error_id = 20
+			error_pos = 0
+			window_flag = 0
+			warn_count = 0
+		}
+		if (warn_count < 12){
+			create_Dialog(100+error_pos,130+error_pos+(warn_count/4)*250,30,131,"重要!")
+		}else if (warn_count == 12){
+			create_Dialog(650,220,30,131,"重要!",114,2.0)
+		}else if (warn_count == 13){
+			create_Dialog(915,220,30,131,"重要!",114,2.0)
+		}else if (warn_count == 14){
+			create_Dialog(650,478,30,131,"重要!",114,2.0)
+		}else if (warn_count == 15){
+			create_Dialog(915,478,30,131,"重要!",114,2.0)
+		}
+		error_pos += 30
+		if (warn_count%4 == 3)error_pos = 0
+		old_time = now
+		warn_count++
+	}else if ((81500 < now) && (now < 82200) && ((now-old_time) > 30)){
+		create_Dialog(400+error_pos,750,31,212,"demo")
+		error_pos += 20
+		old_time = now
+	}else if ((82200 < now) && (now < 82700) && ((now-old_time) > 60)){
+		if (!window_flag){
+			error_pos = 0
+			window_flag = 1
+			warn_count = 0
+		}
+		if (warn_count < 4){
+			create_Dialog(400,100+error_pos,31,212,"demo")
+			error_pos += 145
+		}else if (warn_count == 4){
+			create_Dialog(800,280,31,212,"demo")
+		}else if (warn_count == 6){
+			create_Dialog(800,530,31,212,"demo")
+		}
+		old_time = now
+		warn_count++
+	}else if ((82700 < now) && (now < 83700) && ((now-old_time) > 60)){
+		if (window_flag){
+			repeat(error_id-20){HideScreen(20+cnt)}
+			//console("HIEEDN!")
+			error_id = 20
+			error_pos = 0
+			window_flag = 0
+			warn_count = 0
+		}
+		create_Dialog(1350-error_pos,100+error_pos,33,212,"問題")
+		error_pos += 30
+		old_time = now
+	}else if ((83700 < now) && (now < 84500) && ((now-old_time) > 160)){
+		if (warn_count == 0){
+			create_Dialog(100,780,23,299,"Windows11より")
+		}else if (warn_count == 1){
+			create_Dialog(780,50,32,130,"警告")
+		}
+		warn_count++
+		old_time = now
+	}else if ((85000 < now) && (now < 94300)){
+		if (!window_flag){
+			repeat(error_id-20){HideScreen(20+cnt)}
+			//console("HIEEDN!")
+			error_id = 20
+			error_pos = 0
+			window_flag = 1
+			warn_count = 0
+			create_special_dialog(50,400)
+		}
+		if ((now-old_time) > 300){
+			if ((warn_count%2 == 0) || (warn_count == 7) || (warn_count == 23)) {
+				create_Dialog(1350-error_pos,100+error_pos,33,212,"問題")
+				error_pos += 30
+			}
+			warn_count++
+			old_time = now
+		}
+		
+		int err_ibt = 0.01*(now-85000)
+		err_ibt %= 12
+		if (((err_ibt < 8)&&(err_ibt%2)) || ((8 <= err_ibt) && (err_ibt < 12))){
+			if (err_ibt != flip_sw){
+				filp_special()
+				flip_sw = err_ibt
+			}
+		}
+	}else if (now > 94400){
+		HideScreen(19)
+		repeat(error_id-20){HideScreen(20+cnt)}
+		//console("HIEEDN!")
+		break
 	}
 	
 	redraw(0)
@@ -269,14 +442,354 @@ while (true){
 	await()
 }
 
-void create_Dialog(int pos_x,int pos_y,int image_ID = 20,int win_x = 270,string title_msg = "Runtime Error",int win_y = 114){
-	screen(error_id,title_msg,win_x,win_y,0,pos_x,pos_y)
+double final_time = gettime()
+//console(final_time)
+
+while (true){
+	if (getkey("ESC"))end()
+	//if (getkey("ENTER"))console(gettime()-time_offset)
+	double fbt = 0.01*(gettime()-final_time)
+	int ibt = int(fbt/10)
+	double real_cb05p = limit(fmod(fbt/10,1),0,0.5)*2
+	if (ibt >= 14)fbt = 0.0
+	
+	double cb1  = fmod(fbt/10,1)
+	double cbTrap = fmod(fbt/10-1,4)
+	double cb4s  = fmod(fbt/10,4)
+	double cbDialog1 = fmod(fbt/10-5,2)/2
+	cb1s = 1.0 - pow(cb1-1.0,2)
+	
+	
+	double SCREEN_R[4]
+	double SCREEN_G[4]
+	double SCREEN_B[4]
+	int SCREEN_A
+	if (ibt <= 1){
+ 		SCREEN_A = limit(cb1s*300,0,255)
+		if (ibt)SCREEN_A = 255-SCREEN_A
+
+		
+		//色の指定
+		SCREEN_R[0] = 255.0 * (sin(fbt) * 0.5 + 0.5)
+		SCREEN_G[0] = 255.0 * (sin(fbt + M_DOUBLE_PI / 3) * 0.5 + 0.5)
+		SCREEN_B[0] = 255.0 * (sin(fbt + M_FOUR_PI   / 3) * 0.5 + 0.5)
+		
+		SCREEN_R[1] = 255.0 * (cos(fbt) * 0.5 + 0.5)
+		SCREEN_G[1] = 255.0 * (cos(fbt + M_DOUBLE_PI / 3) * 0.5 + 0.5)
+		SCREEN_B[1] = 255.0 * (cos(fbt + M_FOUR_PI   / 3) * 0.5 + 0.5)
+		
+		SCREEN_R[2] = 255.0 * (-sin(fbt) * 0.5 + 0.5)
+		SCREEN_G[2] = 255.0 * (-sin(fbt + M_DOUBLE_PI / 3) * 0.5 + 0.5)
+		SCREEN_B[2] = 255.0 * (-sin(fbt + M_FOUR_PI   / 3) * 0.5 + 0.5)
+		
+		SCREEN_R[3] = 255.0 * (-cos(fbt) * 0.5 + 0.5)
+		SCREEN_G[3] = 255.0 * (-cos(fbt + M_DOUBLE_PI / 3) * 0.5 + 0.5)
+		SCREEN_B[3] = 255.0 * (-cos(fbt + M_FOUR_PI   / 3) * 0.5 + 0.5)
+	}
+	if (ibt >= 1){
+		Draw_Cubes()
+	}
+
+	redraw(0)
+		cls(0,0,0)
+		if (111500 < gettime()-time_offset){
+			pos(0,0)
+			if (gettime()-time_offset < 111800)DrawImage(50)
+			if (112300 < gettime()-time_offset){
+				dialog("Thank you for watching!!","demo")
+				end()
+			}
+		}else{
+			pos(0,0)
+			if (ibt == 0){
+				gcopy(SCR_BLUR)
+			}else{
+				gcopy(SCR_SUB)
+			}
+			if (ibt >= 14){
+				double FINAL_ALPHA = 128
+				if (ibt == 14)FINAL_ALPHA = real_cb05p*128
+				gmode(2)
+				color(255,255,255,FINAL_ALPHA)
+				rect(0,0,1600,900)
+			}
+			repeat(4){color(SCREEN_R[cnt],SCREEN_G[cnt],SCREEN_B[cnt],SCREEN_A,cnt)}
+			gmode(2)
+			if (ibt <= 1)rect(0,0,1600,900)
+		}
+	redraw(1)
+	await()
+}
+
+void Draw_Cubes(){
+	gsel(SCR_SUB)
 	redraw(0)
 	cls(0,0,0)
-	DrawImage(image_ID)
+	Set3DCamera(700.0,700.0*cos(fbt/10.0),700.0*sin(fbt/10.0),0,0,0)
+	texture(35)
+	//中央の本館
+	cubeTex(0,0,0,200,-fbt/6,-fbt/3,fbt/3)
+	
+	//飛び散るtraP
+	double r1 = 300.0+700.0*abs(sin(cbTrap*M_PI_2))
+	double r2 = 300.0+700.0*abs(sin(cbTrap*M_PI_2-M_PI_4))
+	double r3 = 300.0+700.0*abs(cos(cbTrap*M_PI_2))
+	double r4 = 300.0+700.0*abs(cos(cbTrap*M_PI_2-M_PI_4))
+	double r5 = 300.0+700.0*abs(sin(cbTrap*M_PI+M_PI_4))
+	double r6 = 300.0+700.0*abs(cos(cbTrap*M_PI+M_PI_4))
+	double r7 = 300.0+700.0*abs(sin(cbTrap*M_PI+M_1_PI))
+	double theta2 = M_PI_2*cbTrap
+	gmode(2)
+	repeat(20){
+		particle(PTC_TRAP   , r1*cos(M_PI_10*cnt), r1*sin(M_PI_10*cnt)*cos(theta2),r1*sin(M_PI_10*cnt)*sin(theta2),50)
+		particle(PTC_GAME   , r2*sin(M_PI_10*cnt), r2*sin(M_PI_10*cnt)*sin(theta2),r2*cos(M_PI_10*cnt)*sin(theta2),50)
+		particle(PTC_GRAPHIC, r3*sin(M_PI_10*cnt),-r3*sin(M_PI_10*cnt)*sin(theta2),r3*cos(M_PI_10*cnt)*cos(theta2),50)
+		particle(PTC_SYSAD  , r4*sin(M_PI_10*cnt),-r4*cos(M_PI_10*cnt)*sin(theta2),r4*cos(M_PI_10*cnt)*cos(theta2),50)
+		particle(PTC_SOUND  ,-r5*cos(M_PI_10*cnt), r5*sin(M_PI_10*cnt)*sin(theta2),r5*sin(M_PI_10*cnt)*cos(theta2),50)
+		particle(PTC_CTF    ,-r6*sin(M_PI_10*cnt), r6*cos(M_PI_10*cnt)*cos(theta2),r6*sin(M_PI_10*cnt)*cos(theta2),50)
+		particle(PTC_KAGGLE ,-r7*sin(M_PI_10*cnt),-r7*cos(M_PI_10*cnt)*cos(theta2),r7*cos(M_PI_10*cnt)*sin(theta2),50)
+	}
+	
+	gmode(2)
+	color(0,0,0,160)
+	randomize(0)
+	repeat (60){
+		particle( 1,  rnd(1000)-500, rnd(1000)-500, rnd(1000)-500,  9)
+		if rnd(3) == 0 {
+			color(0,0,0,26)
+			particlem(6,  72)
+			color(0,0,0,160)
+		}
+	}
+	
+	//dialogの表示
+	Reset3D()
+	gmode(0)
+	texture(-1)
+	double cb05p = limit(cb1,0.0,0.5)*2
+	double cb05m = limit(cb1-0.5,0.0,0.5)*2
+	
+	double cb05ps = cb05p*cb05p
+	double cb05ms = cb05m*cb05m
+	
+	if ((1 <= ibt)&&(ibt < 3)){
+		repeat((ibt == 1)?cb05p*30:30){
+			pos(120+cnt*20,50+cnt*20)
+			DrawImage(36)
+		}
+		repeat((ibt == 1)?cb05m*30:30){
+			pos(1300-cnt*20,50+cnt*15)
+			DrawImage(37)
+		}
+		if (ibt >= 2){
+			repeat((ibt == 2)?cb05p*20:20){
+				pos(130+cnt*30,700)
+				DrawImage(38)
+			}
+			repeat((ibt == 2)?cb05m*40:40){
+				pos(1400-cnt*30,150)
+				DrawImage(39)
+			}
+		}
+	}else if ((3 <= ibt)&&(ibt < 5)){
+		repeat((ibt == 3)?cb05p*20:20){
+			pos(10+cnt*20,40+cnt*20)
+			DrawImage(38)
+			pos(1330-cnt*20,40+cnt*20)
+			DrawImage(38)
+			pos(10+cnt*20,750-cnt*20)
+			DrawImage(38)
+			pos(1330-cnt*20,750-cnt*20)
+			DrawImage(38)
+		}
+		repeat((ibt == 3)?cb05m*10:10){
+			pos(300+cnt*20,40+cnt*30)
+			DrawImage(36)
+			pos(1000-cnt*20,40+cnt*30)
+			DrawImage(36)
+			pos(300+cnt*20,750-cnt*30)
+			DrawImage(36)
+			pos(1000-cnt*20,750-cnt*30)
+			DrawImage(36)
+		}
+		if (ibt >= 4){
+			repeat((ibt == 4)?cb05p*5:5){
+				pos(500+cnt*20,40+cnt*40)
+				DrawImage(37)
+				pos(800-cnt*20,40+cnt*40)
+				DrawImage(37)
+				pos(500+cnt*20,750-cnt*40)
+				DrawImage(37)
+				pos(800-cnt*20,750-cnt*40)
+				DrawImage(37)
+			}
+			repeat((ibt == 4)?cb05m*5:5){
+				if (cnt == 0){
+					pos(800,200)
+				}else if (cnt == 1){
+					pos(400,450)
+				}else if (cnt == 2){
+					pos(800,600)
+				}else if (cnt == 3){
+					pos(1200,450)
+				}else{
+					break
+				}
+				DrawImage(40,2.0,2.0)
+			}
+		}
+	}else if ((5 <= ibt)&&(ibt < 7)){
+		repeat((ibt == 5)?cb1*70:70){
+			pos(10+cnt*10,40+cnt*10)
+			DrawImage(41)
+		}
+		if (ibt >= 6){
+			repeat((ibt == 6)?cb1*60:60){
+				pos(1400-cnt*10,40+cnt*10)
+				DrawImage(42)
+			}
+		}
+	}else if (ibt == 7){
+		repeat(20){
+			pos(100+rnd(1200),-250-cnt*50+cb1*2000)
+			DrawImage(43)
+		}
+	}else if (ibt == 8){
+		repeat(cb05p*20){
+			pos(140,40+cnt*20+cb05p*900)
+			DrawImage(39)
+			pos(1200,900-cnt*20-cb05p*900)
+			DrawImage(39,1.0,-1.0)
+		}
+		if (cb05m){
+			repeat(cb05m*5){
+				if (cnt == 0){
+					pos(400,200)
+				}else if (cnt == 1){
+					pos(400,600)
+				}else if (cnt == 2){
+					pos(1200,200)
+				}else if (cnt == 3){
+					pos(1200,600)
+				}else{
+					break
+				}
+				DrawImage(40,2.0,2.0)
+			}
+		}
+	}else if (ibt == 9){
+		if (cb05m == 0.0){
+			repeat(4){
+				if (cnt == 0){
+					pos(296-cb05ps*600,168-cb05ps*500)
+				}else if (cnt == 1){
+					pos(800+cb05ps*600,168-cb05ps*500)
+				}else if (cnt == 2){
+					pos(296-cb05ps*600,450+cb05ps*500)
+				}else if (cnt == 3){
+					pos(800+cb05ps*600,450+cb05ps*500)
+				}
+				DrawImage(36,2.0,2.0)
+			}
+		}
+		if (cb05m){
+			repeat(4){
+				if (cnt == 0){
+					pos(372-cb05ms*600,168-cb05ms*500)
+				}else if (cnt == 1){
+					pos(800+cb05ms*600,168-cb05ms*500)
+				}else if (cnt == 2){
+					pos(372-cb05ms*600,450+cb05ms*500)
+				}else if (cnt == 3){
+					pos(800+cb05ms*600,450+cb05ms*500)
+				}
+				DrawImage(37,2.0,2.0)
+			}
+		}
+	}else if (ibt == 10){
+		repeat(cb05p*20){
+			pos(20+30*cnt,20+30*cnt)
+			DrawImage(37,2.0,2.0)
+			pos(1200-25*cnt,20+20*cnt)
+			DrawImage(37,2.0,2.0)
+		}
+		if (cb05m){
+			pos(50,50)
+			DrawImage(44)
+			pos(1350,50)
+			DrawImage(44)
+			pos(50,700)
+			DrawImage(44)
+			pos(1350,700)
+			DrawImage(44)
+		}
+	}else if (ibt >= 11){
+		pos(50,50)
+		DrawImage(44)
+		pos(1350,50)
+		DrawImage(44)
+		pos(50,700)
+		DrawImage(44)
+		pos(1350,700)
+		DrawImage(44)
+		
+		pos(300,250)
+		DrawImage(44)
+		pos(1100,250)
+		DrawImage(44)
+		pos(300,500)
+		DrawImage(44)
+		pos(1100,500)
+		DrawImage(44)
+		
+		if ((cb05m) || (ibt > 11)){
+			pos(550,300)
+			DrawImage(44)
+			pos(850,300)
+			DrawImage(44)
+			pos(550,450)
+			DrawImage(44)
+			pos(850,450)
+			DrawImage(44)
+		}
+		
+		if (ibt >= 12){
+			pos(800,450)
+			DrawImage(45)
+		}
+	}
 	gsel(0)
+}
+
+void create_Dialog(int pos_x,int pos_y,int image_ID = 20,int win_x = 270,string title_msg = "Runtime Error",int win_y = 114,double size = 1.0){
+	screen(error_id,title_msg,size*win_x,size*win_y,0,pos_x,pos_y)
+	redraw(0)
+	cls(0,0,0)
+	DrawImage(image_ID,size,size)
+	gsel(0)
+	//console("created:"+error_id)
 	error_id++
-	console("created:"+error_id)
+}
+
+void create_special_dialog(int pos_x,int pos_y){
+	screen(19,"",217,141,2,pos_x,pos_y)
+	redraw(0)
+	cls(0,0,0)
+	pos(135,70)
+	DrawImage(34)
+	gsel(0)
+	//console("created:special!")
+}
+
+void filp_special(){
+	gsel(19)
+	redraw(0)
+	cls(0,0,0)
+	pos(108,70)
+	double scale = flip?1.0:-1.0
+	DrawImage(34,scale,1.0)
+	flip = (flip+1)%2
+	gsel(0)
 }
 
 void galaxy(){
@@ -317,8 +830,8 @@ void galaxy(){
 			color(0,0,0, a * limit( alpha2, 0, 64 ))
 			particlem(PTC_XS, a * 45)
 			color(0,0,0,alpha1)
-		}//*/
-	}//*/
+		}
+	}
 	//X
 	color(255,255,255,alpha2)
 	particle   (6,  0, 0, 0,  500)

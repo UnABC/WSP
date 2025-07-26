@@ -76,7 +76,8 @@ public:
 	void Draw3DLine(float x1, float y1, float z1, float x2, float y2, float z2);
 	void Draw3DLine(float x1, float y1, float z1) { Draw3DLine(windows[WinID].pos.x, windows[WinID].pos.y, windows[WinID].pos.z, x1, y1, z1); };
 	void Draw3DBox(float x1, float y1, float z1, float x2, float y2, float z2);
-	void Draw3DRect(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4);
+	void Draw3DRect(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4,bool is_tex = false);
+	void Draw3DBoxTex(float x, float y, float z, float size, float x_angle = 0.0f, float y_angle = 0.0f, float z_angle = 0.0f);
 
 	void DrawImage(unsigned int id, float x_size = 1.0f, float y_size = 1.0f, float angle = 0.0f, int tex_x1 = -1, int tex_y1 = -1, int tex_width = -1, int tex_height = -1);
 

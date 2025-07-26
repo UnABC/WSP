@@ -1667,6 +1667,45 @@ void Evaluator::init_system_functions() {
 			CalcExpr(args.at(5)).GetValue<long double>()
 		);
 	};
+	FUNCTION(cubeTex) {
+		if (args.size() == 4) {
+			graphic.Draw3DBoxTex(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>()
+			);
+		} else if (args.size() == 5) {
+			graphic.Draw3DBoxTex(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>()
+			);
+		} else if (args.size() == 6) {
+			graphic.Draw3DBoxTex(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>()
+			);
+		} else if (args.size() == 7) {
+			graphic.Draw3DBoxTex(
+				CalcExpr(args.at(0)).GetValue<long double>(),
+				CalcExpr(args.at(1)).GetValue<long double>(),
+				CalcExpr(args.at(2)).GetValue<long double>(),
+				CalcExpr(args.at(3)).GetValue<long double>(),
+				CalcExpr(args.at(4)).GetValue<long double>(),
+				CalcExpr(args.at(5)).GetValue<long double>(),
+				CalcExpr(args.at(6)).GetValue<long double>()
+			);
+		} else {
+			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);
+		}
+	};
 	FUNCTION(texture3D) {
 		if (args.size() != 12)
 			throw RuntimeException("Invalid argument size.", lineNumber, columnNumber);

@@ -6,7 +6,7 @@ LoadImage("test/image/TSUBAME.png",4)
 double angle = 0.0
 while(1){
 	redraw(0)
-	cls(0,0,0)
+	cls(255,255,255)
 	pos(200,240)
 	gmode(1)
 	color(255,255,255,abs(sin(angle))*255)
@@ -19,7 +19,7 @@ while(1){
 	gmode(2)
 	color(255,255,100,100)
 	print("Titech")
-	gmode(2)
+	gmode(4)
 	pos(0,0)
 	DrawImage(3,1.0,1.0,0.0,210,210,50,50)
 	texture(3)

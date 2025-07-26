@@ -161,7 +161,7 @@ void Shape::SetTexture(image_data* image, bool enable, float tex_x, float tex_y,
 	}
 }
 
-void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, int isRect, float z1, float z2, float z3) {
+void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, SDL_Color color1, SDL_Color color2, SDL_Color color3, int gmode, int isRect, float z1, float z2, float z3, bool is_tex) {
 	if (!shaderProgram_triangle || !vbo || !vao)
 		throw ShapeException("Shape not initialized.");
 	// 色の設定
@@ -233,7 +233,7 @@ void Shape::draw_triangle(float x1, float y1, float x2, float y2, float x3, floa
 		AllVertexData new_data;
 		new_data.all_vertices = std::vector<float>();
 		new_data.gmode = local_gmode;
-		new_data.ID = 2; // 2: 三角形
+		new_data.ID = is_tex ? 8 : 2; // 2: 三角形, 8: 立方体
 		new_data.projection = *projection;
 		new_data.view = *view;
 		new_data.vao = vao;

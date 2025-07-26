@@ -1,7 +1,7 @@
-dialog("Windows 10 もうすぐサポート切れるってよ","Info",0)
-dialog("使用楽曲\n'Vijore' by onoken\nRED ZONE","けーこく",0,"わかった")
+dialog("そろそろ終わるよー","警告",1,"やっとか")
+dialog("＼(^o^)／＼(^o^)／＼(^o^)／\n＼(^o^)／＼(^o^)／＼(^o^)／","＼(^o^)／＼(^o^)／",1,"＼(^o^)／")
 dialog("強制終了しました","WSP",2)
-print(ChooseDialog("あ"*70+"\n"+"あ"*70+"\n"+"あ"*30,"選べ",2,"あ"*20,"あ"*20)?"Yes":"No")
+print(ChooseDialog("WSP重い…","WSP",1,"だから","なんだよ!!")?"Yes":"No")
 wait(1000)
 //0で除算エラー！
 a = 10/0
