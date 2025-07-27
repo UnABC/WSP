@@ -163,7 +163,7 @@ while(true){
 	
 	redraw(0)
 	randomize(0)
-	title(getfps())
+	//title(getfps())
 	pmode = 0
 	
 	c = 32.0 + cos(cb32 * 12.56637) * 16

@@ -8,7 +8,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/whitespace.wsp";
+		string file_name;// = "test/whitespace.wsp";
 		bool is_ws = false;
 		if (argc == 2) {
 			file_name = argv[1];
