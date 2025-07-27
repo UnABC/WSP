@@ -1,7 +1,7 @@
 #ifndef LEXER_HPP
 #define LEXER_HPP
 
-#define DEBUG_MODE	//デバッグモード
+//#define DEBUG_MODE	//デバッグモード
 
 #include <bits/stdc++.h>
 #include "exception.hpp"
@@ -41,21 +41,25 @@ class Lexer {
 private:
 	std::ifstream fileStream;	//ファイルストリーム
 	std::vector<Token> queue;	//トークンキュー
+	bool is_ws;	//Whitespaceを有効にするか
+	std::string whitespace_data;
 	bool blockComment;	//ブロックコメントフラグ
 	unsigned long long lineNumber;	//行番号
 
 	bool LoadTokens(int ReadTokensNum);
 	bool LoadNextLine();
+	void LoadWhitespace(std::string& currentLine);
 
 	//EOFトークン
 	TokenPtr EOFToken = std::make_shared<Token>(TokenType::EndOfFile, "", 0, 0);
 public:
-	explicit Lexer(std::string file_name) : fileStream(file_name), blockComment(false), lineNumber(0) {
+	explicit Lexer(std::string file_name, bool is_ws) : fileStream(file_name), is_ws(is_ws), blockComment(false), lineNumber(0) {
 		if (!fileStream.is_open()) throw std::runtime_error("File not found: " + file_name);
 	};
 	~Lexer() { fileStream.close(); };
 	TokenPtr ExtractNextToken();
 	TokenPtr PeekTokens(int ReadTokensNum);
+	std::string& GetWhitespaceData() { return whitespace_data; } //Whitespaceデータを取得
 #ifdef DEBUG_MODE
 	TokenPtr PeekToken(int ReadTokensNum) {
 		if (ReadTokensNum >= queue.size()) LoadTokens(ReadTokensNum);

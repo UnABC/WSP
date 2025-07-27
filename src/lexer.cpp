@@ -27,6 +27,15 @@ bool Lexer::LoadTokens(int ReadTokensNum) {
 	return true;
 }
 
+void Lexer::LoadWhitespace(string &currentLine){
+	if (!is_ws) return;
+	string line = currentLine;
+	for (char c : line)
+		if (c == ' ' || c == '\t')
+			whitespace_data += c;
+	whitespace_data += '\n';
+}
+
 bool Lexer::LoadNextLine() {
 	//次の行を読み込む
 	string currentLine;
@@ -35,6 +44,7 @@ bool Lexer::LoadNextLine() {
 		queue.emplace_back(Token(TokenType::EndOfFile, "", lineNumber, 0));
 		return false;
 	}
+	LoadWhitespace(currentLine); //Whitespaceを読み込む
 	if (currentLine.empty()) return true; //空行はスキップ
 
 	AnalysisLine line(currentLine, lineNumber);

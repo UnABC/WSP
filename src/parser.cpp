@@ -392,8 +392,8 @@ AST* Parser::Argument(int type) {
 	bool isReference = (type == 3);
 	//if (type == 3) {
 		//参照渡し
-		ast = new VariableNode(variableName, vector<AST*>(), currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
-		ast->SetType(type); //型をintで仮設定
+	ast = new VariableNode(variableName, vector<AST*>(), currentToken->lineNumber, currentToken->columnNumber); //変数ノードを作成
+	ast->SetType(type); //型をintで仮設定
 	// } else {
 	// 	//値渡し
 	// 	ast = new StaticVarNodeWithoutAssignment(variableName, type, vector<AST*>(), currentToken->lineNumber, currentToken->columnNumber);
@@ -408,4 +408,111 @@ AST* Parser::Argument(int type) {
 		//デフォルト引数無
 		return new ArgumentNode(ast, type, false, isReference, nullptr, currentToken->lineNumber, currentToken->columnNumber); //引数ノードを作成
 	}
+}
+
+int Parser::AnalysisArg(string& whitespaceData, unsigned long long& position, unsigned long long& lineNumber) {
+	string arg = "0";
+	bool Negative = (whitespaceData[position++] == '\t');
+	while (whitespaceData[position] != '\n') 
+		arg += (whitespaceData[position++] == ' ') ? '0' : '1';
+	lineNumber++;
+	position++;
+	return (Negative) ? -stoi(arg, nullptr, 2) : stoi(arg, nullptr, 2);
+}
+
+std::map<unsigned long long, std::vector<std::pair<int, int>>> Parser::Whitespace() {
+	//whitepaceの解析スタート！！
+	unsigned long long lineNumber = 0;
+	unsigned long long position = 0;
+	string whitespaceData = lexer.GetWhitespaceData();
+	while (position < whitespaceData.size()) {
+		char IMP = whitespaceData[position++];
+		//スタック操作
+		if (IMP == ' ') {
+			//スタックに積む
+			if (whitespaceData[position] == ' ') {
+				position++;
+				whitespace[lineNumber].push_back({ 0, AnalysisArg(whitespaceData, position, lineNumber) });
+				//複製
+			} else if (whitespaceData.substr(position, 2) == "\n ") {
+				position += 2;
+				whitespace[lineNumber].push_back({ 1, 0 });
+				lineNumber++;
+				//交換
+			} else if (whitespaceData.substr(position, 2) == "\n\t") {
+				position += 2;
+				whitespace[lineNumber].push_back({ 2, 0 });
+				lineNumber++;
+				//削除
+			} else if (whitespaceData.substr(position, 2) == "\n\n") {
+				position += 2;
+				whitespace[lineNumber].push_back({ 3, 0 });
+				lineNumber += 2;
+				//コピー
+			} else if (whitespaceData.substr(position, 2) == "\t ") {
+				position += 2;
+				whitespace[lineNumber].push_back({ 4, AnalysisArg(whitespaceData, position, lineNumber) });
+				//ジェノサイド
+			} else if (whitespaceData.substr(position, 2) == "\t\n") {
+				position += 2;
+				whitespace[lineNumber].push_back({ 5, AnalysisArg(whitespaceData, position, lineNumber) });
+				lineNumber++;
+				//shuffle
+			} else if (whitespaceData.substr(position, 3) == "\t\t ") {
+				position += 3;
+				whitespace[lineNumber].push_back({ 6, 0 });
+			}
+			//数値演算およびヒープ操作
+		} else if (IMP == '\t') {
+			IMP = whitespaceData[position++];
+			//数値演算
+			if (IMP == ' ') {
+				//加算
+				if (whitespaceData.substr(position, 2) == "  ") {
+					position += 2;
+					whitespace[lineNumber].push_back({ 7, 0 });
+					//減算
+				} else if (whitespaceData.substr(position, 2) == " \t") {
+					position += 2;
+					whitespace[lineNumber].push_back({ 8, 0 });
+					//乗算
+				} else if (whitespaceData.substr(position, 2) == " \n") {
+					position += 2;
+					whitespace[lineNumber].push_back({ 9, 0 });
+					lineNumber++;
+					//除算
+				} else if (whitespaceData.substr(position, 2) == "\t ") {
+					position += 2;
+					whitespace[lineNumber].push_back({ 10, 0 });
+					//剰余
+				} else if (whitespaceData.substr(position, 2) == "\t\t") {
+					position += 2;
+					whitespace[lineNumber].push_back({ 11, 0 });
+				} else {
+					//解析終了
+					break;
+				}
+				//ヒープ操作
+			} else if (IMP == '\t') {
+				//ヒープ書き込み
+				if (whitespaceData[position] == ' ') {
+					position++;
+					whitespace[lineNumber].push_back({ 12, AnalysisArg(whitespaceData, position, lineNumber) });
+				} else if (whitespaceData[position] == '\t') {
+					position++;
+					whitespace[lineNumber].push_back({ 13, 0 });
+				} else {
+					//解析終了
+					break;
+				}
+			} else {
+				//解析終了
+				break;
+			}
+		} else {
+			//解析終了
+			break;
+		}
+	}
+	return whitespace;
 }

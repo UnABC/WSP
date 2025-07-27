@@ -30,6 +30,11 @@ enum class Node {
 
 class AST {
 public:
+	AST(unsigned long long lineNumber, unsigned long long columnNumber)
+		: lineNumber(lineNumber), columnNumber(columnNumber) {
+	};
+	unsigned long long lineNumber;	//行番号
+	unsigned long long columnNumber;	//列番号
 	const virtual Node GetNodeType() = 0;	//ノードの種類を取得
 	const virtual int GetType() { return -3; };	//式の型を取得
 	virtual void SetType(int type) { throw std::runtime_error("Critical Error!(info:CheckType)"); };
@@ -39,10 +44,8 @@ class StatementNode : public AST {
 private:
 	AST* expr;
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	StatementNode(AST* expr, unsigned long long lineNumber, unsigned long long columnNumber)
-		: expr(expr), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: expr(expr), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::Statement; };
 	AST* GetExpression() { return expr; };
@@ -52,10 +55,8 @@ class BlockStatementNode : public AST {
 private:
 	std::vector<AST*> statements;	//文のリスト
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	BlockStatementNode(std::vector<AST*> statements, unsigned long long lineNumber, unsigned long long columnNumber)
-		: statements(statements), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: statements(statements), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::BlockStatement; };
 	AST* ReadStatement(unsigned long long listNumber) { return (listNumber < statements.size()) ? statements.at(listNumber) : nullptr; };
@@ -68,10 +69,8 @@ private:
 	//式の型(0:int,1:double)
 	int type = -2;
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	NumberNode(std::string value, int type, unsigned long long lineNumber, unsigned long long columnNumber)
-		: value(value), type(type), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: value(value), type(type), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::Number; };
 	const std::string GetValue() { return value; };
@@ -83,10 +82,8 @@ class StringNode : public AST {
 private:
 	std::string value;	//文字列リテラルの値
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	StringNode(std::string value, unsigned long long lineNumber, unsigned long long columnNumber)
-		: value(value), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: value(value), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::String; };
 	const std::string GetValue() { return value; };
@@ -98,10 +95,8 @@ private:
 	std::vector<AST*> elements;	//配列の要素
 	int type = -4;
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	ArrayNode(std::vector<AST*> elements, unsigned long long lineNumber, unsigned long long columnNumber)
-		: elements(elements), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: elements(elements), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::Array; };
 	std::vector<AST*> GetElements() { return elements; };
@@ -115,10 +110,8 @@ private:
 	int type = -5;	//式の型(0:int,1:double)
 	int operatorType = 0;	//演算子の種類(0:!,1:-)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	UnaryOperatorNode(AST* expression, int operatorType, unsigned long long lineNumber, unsigned long long columnNumber)
-		: expression(expression), operatorType(operatorType), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: expression(expression), operatorType(operatorType), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::UnaryOperator; };
 	AST* GetExpression() { return expression; };
@@ -134,10 +127,8 @@ private:
 	AST* right;	//右辺
 	int type = -2;	//式の型(0:int,1:double)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	BinaryOperatorNode(std::string operatorType, AST* left, AST* right, unsigned long long lineNumber, unsigned long long columnNumber)
-		: operatorType(operatorType), left(left), right(right), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: operatorType(operatorType), left(left), right(right), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::BinaryOperator; };
 	const std::string GetOperatorType() { return operatorType; };
@@ -155,10 +146,8 @@ private:
 	AST* falseExpr;	//偽の場合の式
 	int type;	//式の型(0:int,1:double)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	TernaryOperatorNode(std::string operatorType, AST* condition, AST* trueExpr, AST* falseExpr, unsigned long long lineNumber, unsigned long long columnNumber)
-		: operatorType(operatorType), condition(condition), trueExpr(trueExpr), falseExpr(falseExpr), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: operatorType(operatorType), condition(condition), trueExpr(trueExpr), falseExpr(falseExpr), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::TernaryOperator; };
 	const std::string GetOperatorType() { return operatorType; };
@@ -176,10 +165,8 @@ private:
 	AST* expression;	//式
 	int type;	//式の型(0:int,1:double)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	AssignmentNode(std::string variableName, AST* variable, AST* expression, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variableName(variableName), variable(variable), expression(expression), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: variableName(variableName), variable(variable), expression(expression), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::Assignment; };
 	const std::string GetVariableName() { return variableName; };
@@ -195,10 +182,8 @@ private:
 	int type = -2;	//式の型(0:int,1:double,2:string,3:var,10:int(配列),11:double(配列),12:string(配列),-1:不定,-2:未定義)
 	std::vector<AST*> arrayIndex;	//配列のインデックス(配列の場合のみ)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	VariableNode(std::string variableName, std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variableName(variableName), arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: variableName(variableName), arrayIndex(arrayIndex), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::Variable; };
 	const std::string GetVariableName() { return variableName; };
@@ -213,10 +198,8 @@ private:
 	std::vector<AST*> argument;	//引数
 	int type = -2;	//式の型(0:int,1:double,2:string,3:void)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	SystemFunctionNode(std::string functionName, std::vector<AST*> argument, unsigned long long lineNumber, unsigned long long columnNumber)
-		: functionName(functionName), argument(argument), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: functionName(functionName), argument(argument), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::Function; };
 	const std::string GetFunctionName() { return functionName; };
@@ -232,10 +215,8 @@ private:
 	AST* blockStatement;	//関数の中身
 	int type = -2;	//式の型(0:int,1:double,2:string,3:void)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	UserFunctionNode(std::string functionName, std::vector<AST*> argument, AST* blockStatement, int type, unsigned long long lineNumber, unsigned long long columnNumber)
-		: functionName(functionName), argument(argument), blockStatement(blockStatement), type(type), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: functionName(functionName), argument(argument), blockStatement(blockStatement), type(type), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::DefFunction; };
 	const std::string GetFunctionName() { return functionName; };
@@ -253,10 +234,8 @@ private:
 	bool isReference = false;	//参照渡しかどうか
 	AST* defaultValue;	//デフォルト値
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	ArgumentNode(AST* variable, int type, bool isAssigned, bool isReference, AST* defaultValue, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variable(variable), type(type), isAssigned(isAssigned), isReference(isReference), defaultValue(defaultValue), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: variable(variable), type(type), isAssigned(isAssigned), isReference(isReference), defaultValue(defaultValue), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::ArgumentNode; };
 	const int GetType() override { return type; };
@@ -272,10 +251,8 @@ private:
 	AST* trueStatement;	//真の場合の文
 	AST* falseStatement;	//偽の場合の文
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	IfStatementNode(AST* condition, AST* trueStatement, AST* falseStatement, unsigned long long lineNumber, unsigned long long columnNumber)
-		: condition(condition), trueStatement(trueStatement), falseStatement(falseStatement), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: condition(condition), trueStatement(trueStatement), falseStatement(falseStatement), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::IfStatement; };
 	AST* GetCondition() { return condition; };
@@ -288,10 +265,8 @@ private:
 	AST* assignment;
 	int type = -2;	//式の型(0:int,1:double)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	StaticVariableNode(AST* assignment, int type, unsigned long long lineNumber, unsigned long long columnNumber)
-		: assignment(assignment), type(type), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: assignment(assignment), type(type), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::StaticVarWithAssignment; };
 	const int GetType() override { return type; };
@@ -304,14 +279,12 @@ private:
 	int type = -2;	//式の型
 	std::vector<AST*> arrayIndex;	//配列のインデックス(配列の場合のみ)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	StaticVarNodeWithoutAssignment(std::string variableName, int type, std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
-		: type(type), arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: type(type), arrayIndex(arrayIndex), AST(lineNumber, columnNumber) {
 		variableNames.push_back(variableName);
 	};
 	StaticVarNodeWithoutAssignment(std::vector<std::string> variableNames, int type, std::vector<AST*> arrayIndex, unsigned long long lineNumber, unsigned long long columnNumber)
-		: variableNames(variableNames), type(type), arrayIndex(arrayIndex), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: variableNames(variableNames), type(type), arrayIndex(arrayIndex), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::StaticVarWithoutAssignment; };
 	const std::vector<std::string> GetVariableNames() { return variableNames; };
@@ -323,10 +296,8 @@ class ReturnStatementNode : public AST {
 private:
 	AST* expression;	//式(戻り値)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	ReturnStatementNode(AST* expression, unsigned long long lineNumber, unsigned long long columnNumber)
-		: expression(expression), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: expression(expression), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::ReturnStatement; };
 	AST* GetExpression() { return expression; };
@@ -338,10 +309,8 @@ private:
 	AST* Statements;	//ブロック文
 	int mode = 0;	//モード(0:while,1:repeat)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	WhileStatementNode(AST* condition, AST* statements, int mode, unsigned long long lineNumber, unsigned long long columnNumber)
-		: condition(condition), Statements(statements), mode(mode), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: condition(condition), Statements(statements), mode(mode), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::WhileStatement; };
 	AST* GetCondition() { return condition; };
@@ -353,10 +322,8 @@ class JumpStatementNode : public AST {
 private:
 	int jumpType;	//ジャンプの種類(2:break,3:continue)
 public:
-	unsigned long long lineNumber;	//行番号
-	unsigned long long columnNumber;	//列番号
 	JumpStatementNode(int jumpType, unsigned long long lineNumber, unsigned long long columnNumber)
-		: jumpType(jumpType), lineNumber(lineNumber), columnNumber(columnNumber) {
+		: jumpType(jumpType), AST(lineNumber, columnNumber) {
 	};
 	const Node GetNodeType() override { return Node::JumpStatement; };
 	const int GetJumpType() { return jumpType; };

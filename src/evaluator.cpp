@@ -1,7 +1,6 @@
 #include "evaluator.hpp"
 using namespace std;
 
-//TODO:Debug用
 std::map<Node, std::string> nodeTypeStr = {
 	{Node::Number, "Number"},
 	{Node::String, "String"},
@@ -69,6 +68,7 @@ Evaluator::~Evaluator() {
 
 pair<Var, int> Evaluator::evaluate(AST* ast) {
 	if (ast == nullptr) return make_pair(Var(), 1);
+	AutoEvalWS(ast->lineNumber);
 	bool is_static = false;
 	int type;
 	switch (ast->GetNodeType()) {
@@ -150,6 +150,152 @@ void Evaluator::RegisterFunctions(AST* ast) {
 		return;
 	}
 	return;
+}
+
+void Evaluator::RegisterWhitespace(std::map<unsigned long long, std::vector<std::pair<int, int>>> whitespaceData) {
+	//ホワイトスペースモードの登録
+	whitespace_mode = true;
+	whitespace = std::move(whitespaceData);
+}
+
+void Evaluator::AutoEvalWS(unsigned long long now_lineNumber) {
+	if (!whitespace_mode) return;
+	while (last_ws_lineNumber < now_lineNumber) {
+		EvaluateWhitespace(last_ws_lineNumber);
+		last_ws_lineNumber++;
+	}
+}
+
+void Evaluator::EvaluateWhitespace(unsigned long long lineNumber) {
+	//ホワイトスペースの評価
+	if (!whitespace_mode) return;
+	if (!whitespace.count(lineNumber))return;
+	for (const auto& [command, arg] : whitespace[lineNumber]) {
+		switch (command) {
+		case 0: //スタックに引数を積む
+			whitespace_stack.push_back(arg);
+			break;
+		case 1: //スタックを複製する
+			if (!whitespace_stack.empty())
+				whitespace_stack.push_back(whitespace_stack.back());
+			break;
+		case 2: //スタックを交換する
+			if (whitespace_stack.size() >= 2)
+				std::swap(whitespace_stack[whitespace_stack.size() - 1], whitespace_stack[whitespace_stack.size() - 2]);
+			break;
+		case 3: //スタックを削除する
+			if (!whitespace_stack.empty())
+				whitespace_stack.pop_back();
+			break;
+		case 4: //スタックをコピーする
+			if (!whitespace_stack.empty())
+				whitespace_stack.push_back(whitespace_stack.back());
+			break;
+		case 5: //スタックを複数削除する
+			if (arg <= whitespace_stack.size()) {
+				whitespace_stack.resize(whitespace_stack.size() - arg);
+			} else {
+				whitespace_stack.clear();
+			}
+			break;
+		case 6: { //スタックをシャッフルする
+			random_device seed_gen;
+			mt19937 engine(seed_gen());
+			shuffle(whitespace_stack.begin(), whitespace_stack.end(), engine);
+			break;
+		}
+		case 7: //加算
+			if (whitespace_stack.size() >= 2) {
+				int a = whitespace_stack.back();
+				whitespace_stack.pop_back();
+				whitespace_stack.back() += a;
+			}
+			break;
+		case 8: //減算
+			if (whitespace_stack.size() >= 2) {
+				int a = whitespace_stack.back();
+				whitespace_stack.pop_back();
+				whitespace_stack.back() -= a;
+			}
+			break;
+		case 9: //乗算
+			if (whitespace_stack.size() >= 2) {
+				int a = whitespace_stack.back();
+				whitespace_stack.pop_back();
+				whitespace_stack.back() *= a;
+			}
+			break;
+		case 10: //除算
+			if (whitespace_stack.size() >= 2) {
+				int a = whitespace_stack.back();
+				if (a == 0)
+					throw EvaluatorException("Division by zero in whitespace operation.\nLine: " + std::to_string(lineNumber));
+				whitespace_stack.pop_back();
+				whitespace_stack.back() /= a;
+			}
+			break;
+		case 11: //剰余
+			if (whitespace_stack.size() >= 2) {
+				int a = whitespace_stack.back();
+				if (a == 0)
+					throw EvaluatorException("Division by zero in whitespace operation.\nLine: " + std::to_string(lineNumber));
+				whitespace_stack.pop_back();
+				whitespace_stack.back() %= a;
+			}
+			break;
+		case 12: //ヒープ書き込み
+			if (whitespace_stack.size() >= 2) {
+				int address = whitespace_stack[whitespace_stack.size() - 2];
+				int value = whitespace_stack.back();
+				whitespace_stack.pop_back();
+				whitespace_stack.pop_back();
+				int i = 0;
+				//アドレスが負の場合は無効
+				if (address < 0) break;
+				bool break_sw = false;
+				for (auto& scoped_var : var | views::reverse) {
+					for (auto& [name, v] : scoped_var) {
+						if (i == address) {
+							v = Var((long long)value); //値を更新
+							break_sw = true;
+							break;
+						}
+						i++;
+					}
+					if (break_sw) break;
+				}
+				//アドレスが見つからない場合はスルー
+			}
+			break;
+		case 13: { //ヒープ読み込み
+			if (whitespace_stack.size() >= 1) {
+				int address = whitespace_stack.back();
+				int i = 0;
+				if (address < 0) {
+					whitespace_stack.back() = 0; //負のアドレスは無効
+					break;
+				}
+				bool break_sw = false;
+				for (auto& scoped_var : var | views::reverse) {
+					for (auto& [name, v] : scoped_var) {
+						if (i == address) {
+							whitespace_stack.back() = (int)v.GetValue<long long>();
+							break_sw = true;
+							break;
+						}
+						i++;
+					}
+					if (break_sw) break;
+				}
+				if (!break_sw)
+					whitespace_stack.back() = 0; //アドレスが見つからない場合は0を返す
+			}
+			break;
+		}
+		default:
+			throw EvaluatorException("Invalid whitespace command: " + std::to_string(command));
+		}
+	}
 }
 
 
@@ -567,6 +713,7 @@ std::pair<Var, int> Evaluator::IfStatement(AST* ast) {
 	if (CalcExpr(node->GetCondition()).GetValue<bool>()) {
 		return evaluate(node->GetTrueExpr());
 	} else if (falseExpr != nullptr) {
+		last_ws_lineNumber = falseExpr->lineNumber;
 		return evaluate(falseExpr);
 	}
 	return make_pair(Var(), 1);
@@ -830,9 +977,11 @@ inline long long Evaluator::GetTime() {
 }
 
 pair<Var, int> Evaluator::ProcessFunction(AST* ast) {
+	last_ws_lineNumber = ast->lineNumber;
 	//関数の中身(BlockStatement)を実行
 	switch (ast->GetNodeType()) {
 	case Node::BlockStatement: {
+		AutoEvalWS(ast->lineNumber);
 		BlockStatementNode* node = static_cast<BlockStatementNode*>(ast);
 		pair<Var, int> result;
 		EnterScope();
@@ -841,6 +990,7 @@ pair<Var, int> Evaluator::ProcessFunction(AST* ast) {
 		return result;
 	}
 	case Node::ReturnStatement: {
+		AutoEvalWS(ast->lineNumber);
 		ReturnStatementNode* node = static_cast<ReturnStatementNode*>(ast);
 		if (node->GetExpression() == nullptr)
 			return make_pair(Var(), 0);
@@ -860,6 +1010,7 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 		static_var.back()["cnt"].SetType(0);
 		long long count = CalcExpr(node->GetCondition()).GetValue<long long>();
 		for (long long i = 0; i < count; i++) {
+			last_ws_lineNumber = node->lineNumber;
 			retval = evaluate(node->GetStatements());
 			if (retval.second == 0) {
 				ExitScope();
@@ -871,6 +1022,7 @@ pair<Var, int> Evaluator::WhileStatement(AST* ast) {
 		}
 	} else {
 		while (CalcExpr(node->GetCondition()).GetValue<bool>()) {
+			last_ws_lineNumber = node->lineNumber;
 			retval = evaluate(node->GetStatements());
 			if (retval.second == 0) {
 				ExitScope();

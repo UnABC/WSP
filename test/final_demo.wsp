@@ -494,7 +494,7 @@ while (true){
 		cls(0,0,0)
 		if (111500 < gettime()-time_offset){
 			pos(0,0)
-			if (gettime()-time_offset < 111800)DrawImage(50)
+			if (gettime()-time_offset < 111700)DrawImage(50)
 			if (112300 < gettime()-time_offset){
 				dialog("Thank you for watching!!","demo")
 				end()

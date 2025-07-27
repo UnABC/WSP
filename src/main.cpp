@@ -8,9 +8,26 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	try {
-		string file_name = "test/final_demo.wsp";
-		if (argc == 2)file_name = argv[1];
-		Lexer lexer(file_name);
+		string file_name = "test/whitespace.wsp";
+		bool is_ws = false;
+		if (argc == 2) {
+			file_name = argv[1];
+		} else if (argc == 3) {
+			if (argv[1] == string("-ws")) {
+				file_name = argv[2];
+				is_ws = true;
+			} else if (argv[2] == string("-ws")) {
+				file_name = argv[1];
+				is_ws = true;
+			} else {
+				cerr << "Usage: " << argv[0] << " [-ws] <file_name>\n";
+				return 1;
+			}
+		} else if (argc > 3) {
+			cerr << "Usage: " << argv[0] << " [-ws] <file_name>\n";
+			return 1;
+		}
+		Lexer lexer(file_name, is_ws);
 		//Lexer実行
 		Parser parser(lexer);
 		Evaluator evaluator;
@@ -23,6 +40,7 @@ int main(int argc, char* argv[]) {
 			statements.push_back(ast); //ASTを保存
 			evaluator.RegisterFunctions(ast); //関数を登録
 		}
+		if (is_ws)evaluator.RegisterWhitespace(parser.Whitespace()); //ホワイトスペースを登録
 		//Evaluator実行
 		for (AST* ast : statements)
 			evaluator.evaluate(ast); //評価実行

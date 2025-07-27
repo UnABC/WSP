@@ -23,6 +23,10 @@ private:
 	long long frame_count;
 	long double fps = 60.0;	//フレームレート
 	float mousex, mousey;	//マウス座標
+	bool whitespace_mode = false;	//ホワイトスペースモード
+	std::map<unsigned long long, std::vector<std::pair<int, int>>> whitespace;	//ホワイトスペースのデータ
+	std::vector<int> whitespace_stack;	//ホワイトスペースのスタック
+	unsigned long long last_ws_lineNumber = 0;
 	//ユーザー定義関数
 	std::map<std::string, std::pair<std::vector<AST*>, AST*>> user_func;
 	//システム関数
@@ -44,6 +48,8 @@ private:
 	std::pair<Var, int> ProcessFunction(AST* ast);
 	inline long long GetTime();
 	long double GetFPS();
+	void EvaluateWhitespace(unsigned long long lineNumber);
+	void AutoEvalWS(unsigned long long now_lineNumber);
 	//Graphic関数
 	Graphic graphic;
 	Audio audio;
@@ -58,6 +64,7 @@ public:
 	~Evaluator();
 	std::pair<Var, int> evaluate(AST* ast);
 	void RegisterFunctions(AST* ast);
+	void RegisterWhitespace(std::map<unsigned long long, std::vector<std::pair<int, int>>> whitespaceData);
 	void Stop() { graphic.Stop(); };
 };
 #endif // EVALUATOR_HPP

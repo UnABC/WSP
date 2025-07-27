@@ -1,0 +1,13 @@
+print("This is whitespace test.") 		 //6をスタックに積む
+x = 0  	 //2をスタックに積む
+	print("Now x = "+x)//足し算    //0
+ 
+	//交換		  //ヒープ書き込み
+print("NEXT x = "+x) 	 	 //10
+x = 123  //0
+			//ヒープから読み出し 
+		  	//引き算    //0
+ 
+	//交換		 //書き込み
+print("FINAL x = "+x)
+
