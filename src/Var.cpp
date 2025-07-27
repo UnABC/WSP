@@ -653,8 +653,9 @@ StaticVar& StaticVar::operator=(const Var& value) {
 	case 10:
 	case 11:
 	case 12: {
-		for (Var& v : get<vector<Var>>(this->value))
-			v = value; // 配列の各要素に値を設定
+		this->value.emplace<vector<Var>>(value.GetValue<vector<Var>>());
+		// for (Var& v : get<vector<Var>>(this->value))
+		// 	v = value; // 配列の各要素に値を設定
 		static_array_value.clear(); // 静的配列用の値をクリア
 		static_array_value.reserve(get<vector<Var>>(this->value).size());
 		for (const auto& v : get<vector<Var>>(this->value))

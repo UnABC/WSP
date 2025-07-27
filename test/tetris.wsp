@@ -156,7 +156,7 @@ while (true){
 	//操作中のブロックを描画
 	if (1 < cnt){
 		color(block_colors[myID][0],block_colors[myID][1],block_colors[myID][2])
-		blockDraw(px,py)
+		blockDraw(px,min(py,predict[1]))
 		if (predict[0] > -1){
 			gmode(2)
 			color(block_colors[myID][0],block_colors[myID][1],block_colors[myID][2],64)
@@ -177,7 +177,7 @@ while (true){
 	
 	pos(0,0)
 	color(255,255,255)
-	print(getfps())
+	//print(getfps())
 	
 	redraw(1)
 	await()

@@ -903,14 +903,18 @@ void TSUBAME(){
 			TSUBAME_Z[2] = TSUBAME_Z[3] = tz+1000.0
 		}else{
 			double theta2 = theta/2
- 			TSUBAME_Y += 2000.0*cos(theta2)
+			repeat(4){
+ 				TSUBAME_Y[cnt] += 2000.0*cos(theta2)
+ 			}
 			
 			TSUBAME_Z[1] = TSUBAME_Z[0] = tz-1000.0*sin(theta2)
 			TSUBAME_Z[2] = TSUBAME_Z[3] = tz+1000.0*sin(theta2)
 		}
 		TSUBAME_ALPHA = (bcnt < 8)?cb8s*255:255
 		TSUBAME_GMODE = 1
-		TSUBAME_R = TSUBAME_G = TSUBAME_B = 0
+		repeat(4){
+			TSUBAME_R[cnt] = TSUBAME_G[cnt] = TSUBAME_B[cnt] = 0
+		}
 	} else {
 		y  = xb16s * 3000
 		tz = cb16s * 16000
@@ -923,7 +927,9 @@ void TSUBAME(){
 		TSUBAME_Y[0] = TSUBAME_Y[1] = 1000.0*sin(theta2) - 2000.0*cos(theta2)
 		TSUBAME_Y[3] = TSUBAME_Y[2] = -1000.0 -1000.0*cos(theta2)
 		
-		TSUBAME_Z = min(tz*1.6,16000)
+		repeat(4){
+			TSUBAME_Z[cnt] = min(tz*1.6,16000)
+		}
 		TSUBAME_Z[2] -= 1000.0*sin(2.0*theta2)
 		TSUBAME_Z[3] -= 1000.0*sin(2.0*theta2)
 		
