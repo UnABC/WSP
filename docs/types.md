@@ -4,27 +4,28 @@
 
 ```wsp
 int a = 10
+int b = "10" // 自動でint型に変換される
 
 // エラー!
-int b = "10"
+int c = "Hello, World"
 ```
 
 ## 倍精度浮動小数点型
 
 ```wsp
 double a = 3.14
+double b = "3.14" // 自動でdouble型に変換される
 
 // エラー!
-double b = "3.14"
+double c = "Hello, World"
 ```
 
 ## 文字列型
 
 ```wsp
 string a = "Hello, World!"
-
-// エラー!
-string b = 10
+string b = 10 // 自動でstring型に変換される => "10"
+string c = 3.14 // 自動でstring型に変換される => "3.14"
 ```
 
 ## 配列
